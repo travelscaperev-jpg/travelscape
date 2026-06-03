@@ -31,10 +31,10 @@ async function uploadToCloudinary(base64Data, folder = 'travelscape') {
   try {
     const isVideo = base64Data.includes('video');
     const resourceType = isVideo ? 'video' : 'image';
-    const uploadResult = await cloudinary.uploader.upload(base64Data, {
-      folder: folder,
-      resource_type: resourceType
-    });
+    const uploadResult = await (isVideo
+      ? cloudinary.uploader.upload_large(base64Data, { folder: folder, resource_type: 'video' })
+      : cloudinary.uploader.upload(base64Data, { folder: folder, resource_type: 'image' })
+    );
     return uploadResult.secure_url;
   } catch (error) {
     console.error('Cloudinary upload error:', error);

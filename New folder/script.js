@@ -204,6 +204,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
         : (useFallback ? 'http://localhost:3000/api' : window.location.origin.replace(/\/$/, '') + '/api'));
 
+  const fetchWithTimeout = async (url, options = {}) => {
+    const { timeout = 8000 } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (e) {
+      clearTimeout(id);
+      throw e;
+    }
+  };
+
   const api = {
     get: async (path) => {
       if (useFallback) {
@@ -216,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return localDb.getCollection(path);
       }
       try {
-        const res = await fetch(`${API_BASE}/${path}`);
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { timeout: 6000 });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
@@ -238,10 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return { success: true };
       }
       try {
-        const res = await fetch(`${API_BASE}/${path}`, {
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          timeout: path.includes('auth') ? 3500 : 35000
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
@@ -264,10 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return { success: true, item: data };
       }
       try {
-        const res = await fetch(`${API_BASE}/${path}`, {
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          timeout: 35000
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
@@ -290,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { success: false };
       }
       try {
-        const res = await fetch(`${API_BASE}/${path}`, { method: 'DELETE' });
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { method: 'DELETE', timeout: 10000 });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
@@ -1108,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               
-              ${(sessionStorage.getItem('admin_logged') === 'true' || sessionStorage.getItem('staff_logged') === 'true') ? `
+              ${(localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true') ? `
                 <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; margin-top: 0.5rem;">
                   <label style="display: block; color: #10b981; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Direct Payment Basis (Office Use)</label>
                   <select id="booking-payment-basis" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
@@ -1374,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ratePaid: ratePaid,
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: sessionStorage.getItem('admin_logged') === 'true' ? 'Admin' : (sessionStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
+            bookedBy: localStorage.getItem('admin_logged') === 'true' ? 'Admin' : (localStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
             deviceType: getDeviceType()
           };
 
@@ -1404,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               
-              ${(sessionStorage.getItem('admin_logged') === 'true' || sessionStorage.getItem('staff_logged') === 'true') ? `
+              ${(localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true') ? `
                 <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; margin-top: 0.5rem;">
                   <label style="display: block; color: #10b981; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Direct Payment Basis (Office Use)</label>
                   <select id="booking-payment-basis" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
@@ -1532,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: 'Pending',
             totalPrice: 0,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: sessionStorage.getItem('admin_logged') === 'true' ? 'Admin' : (sessionStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
+            bookedBy: localStorage.getItem('admin_logged') === 'true' ? 'Admin' : (localStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
             deviceType: getDeviceType()
           };
 
@@ -1592,8 +1608,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       document.getElementById('close-confirmation-modal').addEventListener('click', () => {
         modal.remove();
-        if (sessionStorage.getItem('admin_logged') || sessionStorage.getItem('staff_logged')) {
-          const role = sessionStorage.getItem('admin_logged') ? 'admin' : 'staff';
+        if (localStorage.getItem('admin_logged') || localStorage.getItem('staff_logged')) {
+          const role = localStorage.getItem('admin_logged') ? 'admin' : 'staff';
           loadUniversalDashboard(role);
         }
       });
@@ -1651,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const result = await api.post('auth/login', { role: 'admin', password: adminPassInput.value.trim() });
           if (result && result.success) {
             adminGate.style.display = 'none';
-            sessionStorage.setItem('admin_logged', 'true');
+            localStorage.setItem('admin_logged', 'true');
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
@@ -1672,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
       adminSubmit.addEventListener('click', triggerAdminUnlock);
       adminPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerAdminUnlock(); } });
 
-      if (sessionStorage.getItem('admin_logged') === 'true') {
+      if (localStorage.getItem('admin_logged') === 'true') {
         adminGate.style.display = 'none';
         loadAdminPanel();
       }
@@ -1694,7 +1710,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const result = await api.post('auth/login', { role: 'staff', password: staffPassInput.value.trim() });
           if (result && result.success) {
             staffGate.style.display = 'none';
-            sessionStorage.setItem('staff_logged', 'true');
+            localStorage.setItem('staff_logged', 'true');
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
@@ -1715,7 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
       staffSubmit.addEventListener('click', triggerStaffUnlock);
       staffPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerStaffUnlock(); } });
 
-      if (sessionStorage.getItem('staff_logged') === 'true') {
+      if (localStorage.getItem('staff_logged') === 'true') {
         staffGate.style.display = 'none';
         loadStaffPanel();
       }
