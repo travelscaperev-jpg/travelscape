@@ -96,10 +96,11 @@ async function setCacheValue(key, value) {
 }
 
 // --- Auth Endpoint ---
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { role, password } = req.body;
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
-  const staffPass = process.env.STAFF_PASSWORD || 'staff123';
+  const dbAuth = await getCacheValue('auth', { admin_password: 'admin123', staff_password: 'staff123' });
+  const adminPass = process.env.ADMIN_PASSWORD || dbAuth.admin_password || 'admin123';
+  const staffPass = process.env.STAFF_PASSWORD || dbAuth.staff_password || 'staff123';
 
   if (role === 'admin' && password === adminPass) {
     return res.json({ success: true, role: 'admin' });

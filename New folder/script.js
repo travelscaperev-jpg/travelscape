@@ -117,7 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     write: (data) => {
-      localStorage.setItem('travelscape_db', JSON.stringify(data));
+      try {
+        localStorage.setItem('travelscape_db', JSON.stringify(data));
+      } catch (e) {
+        console.error('LocalStorage write error:', e);
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+          alert('Local browser storage is full (5MB limit exceeded). Please start/connect the Render backend server to upload large video files to Cloudinary, or use smaller video files.');
+        }
+      }
     },
     getCollection: (key) => {
       const db = localDb.read();
@@ -2101,9 +2108,14 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please add at least one video to save.');
             return;
           }
-          await setHeroVideos(localHeroVideos);
-          initGlobalHeroVideo();
-          alert('Hero background video slider changes saved successfully!');
+          try {
+            await setHeroVideos(localHeroVideos);
+            initGlobalHeroVideo();
+            alert('Hero background video slider changes saved successfully!');
+          } catch (err) {
+            console.error('Slider save error:', err);
+            alert('Failed to save background slider changes. Check your network or database connection.');
+          }
         });
       }
 
