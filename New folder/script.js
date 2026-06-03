@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- API Helper ---
-  let useFallback = window.location.protocol === 'file:';
+  let useFallback = false;
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
   const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
   const API_BASE = window.location.origin.includes('github.io')
@@ -237,11 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return localDb.getCollection(path);
       }
       try {
-        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { timeout: 12000 });
+        // Use 45s timeout — Render cold start can take 30-60s
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { timeout: 45000 });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
-        console.error('API GET error:', path, e);
+        console.warn('API GET error:', path, e.message);
         throw e;
       }
     },
@@ -262,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
-          timeout: path.includes('auth') ? 55000 : 35000
+          timeout: path.includes('auth') ? 60000 : (path.includes('hero-videos') ? 120000 : 35000)
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
@@ -351,8 +352,8 @@ document.addEventListener('DOMContentLoaded', () => {
       reels: reels || [],
       gallery: gallery || [],
       offer: offer || {},
-      heroVideo: (heroVideoData && heroVideoData.video) || 'back.mp4',
-      heroVideos: heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : [(heroVideoData && heroVideoData.video) || 'back.mp4']),
+      heroVideo: (heroVideoData && heroVideoData.video) || '',
+      heroVideos: heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
       googleReview: (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
       instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
@@ -373,9 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const setReels = async (data) => { dataCache.reels = data; await api.post('reels', data); };
   const getGallery = () => dataCache.gallery || [];
   const setGallery = async (data) => { dataCache.gallery = data; await api.post('gallery', data); };
-  const getHeroVideo = () => dataCache.heroVideo || 'back.mp4';
-  const setHeroVideo = async (data) => { dataCache.heroVideo = data; await api.post('hero-video', { video: data }); };
-  const getHeroVideos = () => dataCache.heroVideos || ['back.mp4'];
+  const getHeroVideo  = () => dataCache.heroVideo  || '';
+  const setHeroVideo  = async (data) => { dataCache.heroVideo  = data; await api.post('hero-video', { video: data }); };
+  const getHeroVideos = () => dataCache.heroVideos || [];
   const setHeroVideos = async (data) => { dataCache.heroVideos = data; await api.post('hero-videos', { videos: data }); };
   const getBookings = () => dataCache.bookings || [];
   const setBookings = async (data) => { dataCache.bookings = data; await api.post('bookings', data); };
@@ -402,12 +403,123 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   };
 
-  // --- Main initialization after data is loaded ---
-  loadAllData().then(() => {
-    initApp();
-  }).catch(err => {
-    console.error('Failed to load data from API, check if server is running:', err);
-  });
+  // --- Smart startup: launch app immediately with defaults, then refresh from API ---
+  // This ensures home page layers are visible immediately, even if server is waking up.
+  const initDataCache = () => {
+    dataCache = {
+      excursions: [], private: [], freediving: [], resorts: [], bookings: [],
+      testimonials: [], reels: [], gallery: [], offer: {},
+      heroVideo: '', heroVideos: [],
+      googleReview: '', contactMessages: [],
+      instagramConfig: { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+    };
+  };
+
+  // Build dataCache from API results
+  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig]) => {
+    dataCache = {
+      excursions:    excursions    || [],
+      private:       privateBookings || [],
+      freediving:    freediving    || [],
+      resorts:       resorts       || [],
+      bookings:      bookings      || [],
+      testimonials:  testimonials  || [],
+      reels:         reels         || [],
+      gallery:       gallery       || [],
+      offer:         offer         || {},
+      heroVideo:     (heroVideoData  && heroVideoData.video)  || '',
+      heroVideos:    heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
+      googleReview:  (googleReviewData && googleReviewData.url) || '',
+      contactMessages: contactMessages || [],
+      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+    };
+  };
+
+  // Fetch all data from API (used both on initial load and on re-fetch)
+  async function fetchAllFromAPI() {
+    const settled = await Promise.allSettled([
+      api.get('excursions'),
+      api.get('private'),
+      api.get('freediving'),
+      api.get('resorts'),
+      api.get('bookings'),
+      api.get('testimonials'),
+      api.get('reels'),
+      api.get('gallery'),
+      api.get('offer'),
+      api.get('hero-video'),
+      api.get('hero-videos'),
+      api.get('google-review'),
+      api.get('contact_messages'),
+      api.get('instagram_config')
+    ]);
+    // Extract values (null for failed calls)
+    const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
+    applyDataFromAPI(results);
+    return dataCache;
+  }
+
+  // Re-run sections of initApp after API data arrives
+  const refreshHomePageSections = () => {
+    // Re-init hero video slider
+    if (typeof initGlobalHeroVideoFn === 'function') initGlobalHeroVideoFn();
+    // Re-render parallax layers
+    if (typeof setupParallaxLayerFn === 'function') {
+      setupParallaxLayerFn(2, 'EXCURSIONS', getExcursions(), 'Excursion');
+      setupParallaxLayerFn(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
+      setupParallaxLayerFn(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
+      setupParallaxLayerFn(5, 'RESORTS', getResorts(), 'Resort');
+    }
+    // Re-render cards
+    if (typeof renderCardGridFn === 'function') {
+      renderCardGridFn('excursions-grid', getExcursions(), 'Book Now', 'Excursion', 'excursion');
+      renderCardGridFn('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
+      renderCardGridFn('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
+      renderCardGridFn('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
+    }
+    // Re-render testimonials
+    const testimonialsGrid = document.getElementById('testimonials-grid');
+    if (testimonialsGrid) {
+      const list = getTestimonials();
+      testimonialsGrid.innerHTML = list.map(t => {
+        let stars = '';
+        for (let i = 0; i < 5; i++) { stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>'; }
+        return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
+      }).join('');
+    }
+  };
+
+  // Placeholder refs for re-render (set inside initApp)
+  let initGlobalHeroVideoFn = null;
+  let setupParallaxLayerFn  = null;
+  let renderCardGridFn      = null;
+  let refreshAdminTablesFn  = null; // refreshes admin/staff dashboard after data loads
+
+  // Fire a ping immediately to start waking the Render server (non-blocking)
+  if (!useFallback) {
+    fetch(`${API_BASE}/ping`).catch(() => {});
+  }
+
+  // LAUNCH IMMEDIATELY with empty defaults, then fetch in background
+  initDataCache();
+  initApp();
+
+  // After app is rendered, fetch real data from API and refresh all sections
+  if (!useFallback) {
+    fetchAllFromAPI().then(() => {
+      refreshHomePageSections();
+      if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+    }).catch(err => {
+      console.warn('Background API refresh failed (server may be waking up):', err.message);
+      // Retry after 35 seconds — enough time for Render cold start
+      setTimeout(() => {
+        fetchAllFromAPI().then(() => {
+          refreshHomePageSections();
+          if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+        }).catch(e => console.warn('Retry API refresh also failed:', e.message));
+      }, 35000);
+    });
+  }
 
   function initApp() {
 
@@ -531,6 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     };
+    // Store reference for background refresh
+    initGlobalHeroVideoFn = initGlobalHeroVideo;
     initGlobalHeroVideo();
 
     // Print individual booking receipt helper
@@ -780,6 +894,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
+    // Store reference for background refresh
+    renderCardGridFn = renderCardGrid;
+
     renderCardGrid('excursions-grid', getExcursions(), 'Book Now', 'Excursion', 'excursion');
     renderCardGrid('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
     renderCardGrid('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
@@ -914,6 +1031,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (e) { console.error(`Error in Layer ${layerNum} initialization:`, e); }
     };
+
+    // Store reference for background refresh
+    setupParallaxLayerFn = setupParallaxLayer;
 
     setupParallaxLayer(2, 'EXCURSIONS', getExcursions(), 'Excursion');
     setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
@@ -1666,11 +1786,20 @@ document.addEventListener('DOMContentLoaded', () => {
         adminSubmit.disabled = true;
         adminError.style.display = 'none';
         
+        // Send a ping to wake the Render server immediately (non-blocking)
+        if (!useFallback) {
+          fetch(`${API_BASE}/ping`).catch(() => {});
+        }
+        
         try {
           const result = await api.post('auth/login', { role: 'admin', password: adminPassInput.value.trim() });
           if (result && result.success) {
             adminGate.style.display = 'none';
             localStorage.setItem('admin_logged', 'true');
+            // Refresh data from API now that server is awake
+            if (!useFallback) {
+              fetchAllFromAPI().catch(() => {});
+            }
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
@@ -1680,7 +1809,7 @@ document.addEventListener('DOMContentLoaded', () => {
             adminError.style.display = 'block';
           }
         } catch (e) {
-          adminError.textContent = 'Connection error. Check your server status and try again.';
+          adminError.textContent = 'Server is still waking up. Please wait 10 seconds and try again.';
           adminError.style.display = 'block';
         } finally {
           adminSubmit.textContent = 'Unlock Dashboard';
@@ -1709,11 +1838,20 @@ document.addEventListener('DOMContentLoaded', () => {
         staffSubmit.disabled = true;
         staffError.style.display = 'none';
 
+        // Send a ping to wake the Render server immediately (non-blocking)
+        if (!useFallback) {
+          fetch(`${API_BASE}/ping`).catch(() => {});
+        }
+
         try {
           const result = await api.post('auth/login', { role: 'staff', password: staffPassInput.value.trim() });
           if (result && result.success) {
             staffGate.style.display = 'none';
             localStorage.setItem('staff_logged', 'true');
+            // Refresh data from API now that server is awake
+            if (!useFallback) {
+              fetchAllFromAPI().catch(() => {});
+            }
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
@@ -1723,7 +1861,7 @@ document.addEventListener('DOMContentLoaded', () => {
             staffError.style.display = 'block';
           }
         } catch (e) {
-          staffError.textContent = 'Connection error. Check your server status and try again.';
+          staffError.textContent = 'Server is still waking up. Please wait 10 seconds and try again.';
           staffError.style.display = 'block';
         } finally {
           staffSubmit.textContent = 'Unlock Dashboard';
@@ -1856,6 +1994,52 @@ document.addEventListener('DOMContentLoaded', () => {
       const getFileBase64 = (fileInput) => new Promise((resolve) => { if (!fileInput || !fileInput.files || fileInput.files.length === 0) { resolve(''); return; } const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => resolve(''); reader.readAsDataURL(fileInput.files[0]); });
       const getMultipleFilesBase64 = (fileInput) => new Promise(async (resolve) => { if (!fileInput || !fileInput.files || fileInput.files.length === 0) { resolve([]); return; } const promises = Array.from(fileInput.files).map(file => new Promise((res) => { const reader = new FileReader(); reader.onload = () => res(reader.result); reader.onerror = () => res(''); reader.readAsDataURL(file); })); resolve((await Promise.all(promises)).filter(r => r !== '')); });
 
+      const uploadFileToCloudinary = async (fileInput, folder = 'general') => {
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return '';
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', folder);
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/upload`, {
+            method: 'POST',
+            body: formData,
+            timeout: 180000 // 3 minutes
+          });
+          if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
+          const data = await res.json();
+          return data.url || '';
+        } catch (e) {
+          console.error('File upload to Cloudinary failed:', e);
+          alert('Upload failed: ' + e.message);
+          throw e;
+        }
+      };
+
+      const uploadMultipleFilesToCloudinary = async (fileInput, folder = 'general') => {
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return [];
+        const files = Array.from(fileInput.files);
+        const urls = [];
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', folder);
+          try {
+            const res = await fetchWithTimeout(`${API_BASE}/upload`, {
+              method: 'POST',
+              body: formData,
+              timeout: 180000
+            });
+            if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
+            const data = await res.json();
+            if (data.url) urls.push(data.url);
+          } catch (e) {
+            console.error('File upload failed:', e);
+          }
+        }
+        return urls;
+      };
+
       // --- Dynamic CRUD for Excursions, Private Bookings, Free Diving, Resorts ---
       const registerCRUD = (type, getData, setData, listContainerId, formId, prefix) => {
         const listContainer = document.getElementById(listContainerId);
@@ -1942,39 +2126,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
         form.onsubmit = async (e) => {
           e.preventDefault();
-          const idVal = document.getElementById(`${prefix}-id`).value;
-          const list = getData();
-          const title = document.getElementById(`${prefix}-title`).value;
-          const imageFileEl = document.getElementById(`${prefix}-image-file`);
-          let image = ''; if (imageFileEl && imageFileEl.files && imageFileEl.files.length > 0) { image = await getFileBase64(imageFileEl); } else { image = document.getElementById(`${prefix}-image`).value; }
-          const videoFileEl = document.getElementById(`${prefix}-video-file`);
-          let video = ''; if (videoFileEl && videoFileEl.files && videoFileEl.files.length > 0) { video = await getFileBase64(videoFileEl); } else { video = document.getElementById(`${prefix}-video`) ? document.getElementById(`${prefix}-video`).value : ''; }
-          const subImagesFileEl = document.getElementById(`${prefix}-sub-images-file`);
-          let subImages = []; if (subImagesFileEl && subImagesFileEl.files && subImagesFileEl.files.length > 0) { subImages = await getMultipleFilesBase64(subImagesFileEl); } else { const rawSubStr = document.getElementById(`${prefix}-sub-images`) ? document.getElementById(`${prefix}-sub-images`).value : ''; subImages = rawSubStr.split(',').map(x => x.trim()).filter(x => x !== ''); }
-          const subImg1 = subImages[0] || ''; const subImg2 = subImages[1] || '';
-          const description = document.getElementById(`${prefix}-desc`).value;
-          const fullDescription = document.getElementById(`${prefix}-full-desc`) ? document.getElementById(`${prefix}-full-desc`).value : '';
-          const duration = document.getElementById(`${prefix}-duration`) ? document.getElementById(`${prefix}-duration`).value : 'Full Day';
-          const highlights = document.getElementById(`${prefix}-highlights`) ? document.getElementById(`${prefix}-highlights`).value : '';
-
-          const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
-          itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
-          const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
-          const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
-          const maxCapacity = parseInt(document.getElementById(`${prefix}-max-capacity`).value) || 20;
-          itemData.kidAgeHalf = kidAgeHalf;
-          itemData.kidAgeFree = kidAgeFree;
-          itemData.maxCapacity = maxCapacity;
-          if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; itemData.mapLink = document.getElementById('ex-map-link').value; }
-          if (prefix === 'resort') {
-            itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
-            itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
-            itemData.dayFullStd = document.getElementById('resort-day-full-std').value; itemData.dayFullPrem = document.getElementById('resort-day-full-prem').value;
-            itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value;
-            const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
+          const submitBtn = document.getElementById(`${prefix}-submit-btn`);
+          const origBtnText = submitBtn ? submitBtn.textContent : '';
+          if (submitBtn) {
+            submitBtn.textContent = 'Uploading & Saving...';
+            submitBtn.disabled = true;
           }
-          if (!idVal) list.push(itemData);
-          await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
+
+          try {
+            const idVal = document.getElementById(`${prefix}-id`).value;
+            const list = getData();
+            const title = document.getElementById(`${prefix}-title`).value;
+            const imageFileEl = document.getElementById(`${prefix}-image-file`);
+            let image = '';
+            if (imageFileEl && imageFileEl.files && imageFileEl.files.length > 0) {
+              image = await uploadFileToCloudinary(imageFileEl, prefix);
+            } else {
+              image = document.getElementById(`${prefix}-image`).value;
+            }
+            
+            const videoFileEl = document.getElementById(`${prefix}-video-file`);
+            let video = '';
+            if (videoFileEl && videoFileEl.files && videoFileEl.files.length > 0) {
+              video = await uploadFileToCloudinary(videoFileEl, prefix);
+            } else {
+              video = document.getElementById(`${prefix}-video`) ? document.getElementById(`${prefix}-video`).value : '';
+            }
+            
+            const subImagesFileEl = document.getElementById(`${prefix}-sub-images-file`);
+            let subImages = [];
+            if (subImagesFileEl && subImagesFileEl.files && subImagesFileEl.files.length > 0) {
+              subImages = await uploadMultipleFilesToCloudinary(subImagesFileEl, prefix);
+            } else {
+              const rawSubStr = document.getElementById(`${prefix}-sub-images`) ? document.getElementById(`${prefix}-sub-images`).value : '';
+              subImages = rawSubStr.split(',').map(x => x.trim()).filter(x => x !== '');
+            }
+            const subImg1 = subImages[0] || ''; const subImg2 = subImages[1] || '';
+            const description = document.getElementById(`${prefix}-desc`).value;
+            const fullDescription = document.getElementById(`${prefix}-full-desc`) ? document.getElementById(`${prefix}-full-desc`).value : '';
+            const duration = document.getElementById(`${prefix}-duration`) ? document.getElementById(`${prefix}-duration`).value : 'Full Day';
+            const highlights = document.getElementById(`${prefix}-highlights`) ? document.getElementById(`${prefix}-highlights`).value : '';
+
+            const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
+            itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
+            const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
+            const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
+            const maxCapacity = parseInt(document.getElementById(`${prefix}-max-capacity`).value) || 20;
+            itemData.kidAgeHalf = kidAgeHalf;
+            itemData.kidAgeFree = kidAgeFree;
+            itemData.maxCapacity = maxCapacity;
+            if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; itemData.mapLink = document.getElementById('ex-map-link').value; }
+            if (prefix === 'resort') {
+              itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
+              itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
+              itemData.dayFullStd = document.getElementById('resort-day-full-std').value; itemData.dayFullPrem = document.getElementById('resort-day-full-prem').value;
+              itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value;
+              const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
+            }
+            if (!idVal) list.push(itemData);
+            await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
+          } catch (error) {
+            console.error(error);
+            alert('Failed to save excursion: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.textContent = origBtnText;
+              submitBtn.disabled = false;
+            }
+          }
         };
         renderList();
       };
@@ -2073,26 +2292,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       };
 
-      // Add Video functionality
+      // Add Video functionality — uses multipart upload for files, URL otherwise
       if (addHeroVideoBtn) {
         addHeroVideoBtn.addEventListener('click', async () => {
           const urlInput = document.getElementById('new-hero-video-url');
           const fileInput = document.getElementById('new-hero-video-file');
 
-          let videoSource = '';
           if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            videoSource = await getFileBase64(fileInput);
-          } else if (urlInput) {
-            videoSource = urlInput.value.trim();
-          }
-
-          if (videoSource) {
-            localHeroVideos.push(videoSource);
+            // Use multipart upload for files (no base64 size limit)
+            const file = fileInput.files[0];
+            const origText = addHeroVideoBtn.textContent;
+            addHeroVideoBtn.textContent = 'Uploading to Cloudinary...';
+            addHeroVideoBtn.disabled = true;
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('folder', 'hero');
+              const res = await fetchWithTimeout(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData,
+                timeout: 180000 // 3 min for large videos
+              });
+              if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+              const data = await res.json();
+              if (!data.url) throw new Error('No URL returned from upload');
+              localHeroVideos.push(data.url);
+              renderHeroVideosManager();
+              if (fileInput) fileInput.value = '';
+              if (urlInput) urlInput.value = '';
+            } catch (err) {
+              console.error('Video upload error:', err);
+              alert('Video upload failed: ' + err.message + '\nCheck Cloudinary settings in Render environment variables.');
+            } finally {
+              addHeroVideoBtn.textContent = origText;
+              addHeroVideoBtn.disabled = false;
+            }
+          } else if (urlInput && urlInput.value.trim()) {
+            // Direct URL — add as-is
+            localHeroVideos.push(urlInput.value.trim());
             renderHeroVideosManager();
-            if (urlInput) urlInput.value = '';
-            if (fileInput) fileInput.value = '';
+            urlInput.value = '';
           } else {
-            alert('Please specify a video URL or upload a file first.');
+            alert('Please specify a video URL or select a file to upload first.');
           }
         });
       }
@@ -2104,13 +2345,20 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please add at least one video to save.');
             return;
           }
+          const origText = saveHeroVideosBtn.textContent;
+          saveHeroVideosBtn.textContent = 'Saving...';
+          saveHeroVideosBtn.disabled = true;
           try {
             await setHeroVideos(localHeroVideos);
-            initGlobalHeroVideo();
-            alert('Hero background video slider changes saved successfully!');
+            // Update the live hero slider on the page
+            if (typeof initGlobalHeroVideoFn === 'function') initGlobalHeroVideoFn();
+            alert('Hero background video slider saved successfully!');
           } catch (err) {
             console.error('Slider save error:', err);
-            alert('Failed to save background slider changes. Check your network or database connection.');
+            alert('Failed to save: ' + err.message);
+          } finally {
+            saveHeroVideosBtn.textContent = origText;
+            saveHeroVideosBtn.disabled = false;
           }
         });
       }
@@ -2126,9 +2374,33 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       if (addReelBtn) { addReelBtn.addEventListener('click', async () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); await setReels(reels); renderReelsManager(); }); }
       const saveReelsBtn = document.getElementById('save-reels-btn');
-      if (saveReelsBtn) { saveReelsBtn.addEventListener('click', async () => { const reels = getReels(); for (let el of Array.from(document.querySelectorAll('.reel-file-input'))) { const reel = reels.find(x => x.id === el.dataset.id); if (reel && el.files && el.files.length > 0) { reel.image = await getFileBase64(el); } } await setReels(reels); renderReelsManager(); alert('Reels updated!'); }); }
+      if (saveReelsBtn) {
+        saveReelsBtn.addEventListener('click', async () => {
+          const reels = getReels();
+          const origText = saveReelsBtn.textContent;
+          saveReelsBtn.textContent = 'Uploading & Saving...';
+          saveReelsBtn.disabled = true;
+          try {
+            for (let el of Array.from(document.querySelectorAll('.reel-file-input'))) {
+              const reel = reels.find(x => x.id === el.dataset.id);
+              if (reel && el.files && el.files.length > 0) {
+                reel.image = await uploadFileToCloudinary(el, 'reels');
+              }
+            }
+            await setReels(reels);
+            renderReelsManager();
+            alert('Reels updated successfully!');
+          } catch (e) {
+            console.error('Reels update failed:', e);
+            alert('Failed to save reels: ' + e.message);
+          } finally {
+            saveReelsBtn.textContent = origText;
+            saveReelsBtn.disabled = false;
+          }
+        });
+      }
       renderReelsManager();
-
+ 
       // Gallery Videos Management
       const galleryListEl = document.getElementById('admin-gallery-list');
       const addGalleryBtn = document.getElementById('add-gallery-btn');
@@ -2138,9 +2410,45 @@ document.addEventListener('DOMContentLoaded', () => {
         galleryListEl.innerHTML = list.map((item, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom:1rem; position: relative;"><button class="delete-gallery-btn" data-id="${item.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete Card</button><h4 style="color:#fff; margin-bottom:1rem;">Gallery Card ${idx + 1}</h4><div style="display:grid; grid-template-columns: 1fr 1fr 1fr 150px; gap:1rem;"><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Title</label><input type="text" class="form-control gal-title" data-id="${item.id}" value="${item.title}"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Preview Image (Direct Upload)</label><input type="file" class="form-control gal-img-file" data-id="${item.id}" accept="image/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Video File (Direct Upload)</label><input type="file" class="form-control gal-vid-file" data-id="${item.id}" accept="video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Aspect Ratio</label><select class="form-control gal-ratio" data-id="${item.id}" style="background:#080d1a; color:#fff; height:42px;"><option value="16:9" ${item.aspectRatio === '9:16' ? '' : 'selected'}>16:9 (Standard)</option><option value="9:16" ${item.aspectRatio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option></select></div></div></div>`).join('');
         galleryListEl.querySelectorAll('.delete-gallery-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this gallery card?')) return; await setGallery(getGallery().filter(x => x.id !== e.target.dataset.id)); renderGalleryManager(); }); });
       };
-      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: 'back.mp4', aspectRatio: '16:9' }); await setGallery(gallery); renderGalleryManager(); }); }
+      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: '', aspectRatio: '16:9' }); await setGallery(gallery); renderGalleryManager(); }); }
       const saveGalleryBtn = document.getElementById('save-gallery-btn');
-      if (saveGalleryBtn) { saveGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); for (let input of Array.from(document.querySelectorAll('.gal-title'))) { const item = gallery.find(x => x.id === input.dataset.id); if (item) { item.title = input.value; const imgFile = document.querySelector(`.gal-img-file[data-id="${item.id}"]`); if (imgFile && imgFile.files && imgFile.files.length > 0) { item.image = await getFileBase64(imgFile); } const vidFile = document.querySelector(`.gal-vid-file[data-id="${item.id}"]`); if (vidFile && vidFile.files && vidFile.files.length > 0) { item.video = await getFileBase64(vidFile); } const ratioInput = document.querySelector(`.gal-ratio[data-id="${item.id}"]`); if (ratioInput) { item.aspectRatio = ratioInput.value || '16:9'; } } } await setGallery(gallery); renderGalleryManager(); alert('Gallery videos updated!'); }); }
+      if (saveGalleryBtn) {
+        saveGalleryBtn.addEventListener('click', async () => {
+          const gallery = getGallery();
+          const origText = saveGalleryBtn.textContent;
+          saveGalleryBtn.textContent = 'Uploading & Saving...';
+          saveGalleryBtn.disabled = true;
+          try {
+            for (let input of Array.from(document.querySelectorAll('.gal-title'))) {
+              const item = gallery.find(x => x.id === input.dataset.id);
+              if (item) {
+                item.title = input.value;
+                const imgFile = document.querySelector(`.gal-img-file[data-id="${item.id}"]`);
+                if (imgFile && imgFile.files && imgFile.files.length > 0) {
+                  item.image = await uploadFileToCloudinary(imgFile, 'gallery');
+                }
+                const vidFile = document.querySelector(`.gal-vid-file[data-id="${item.id}"]`);
+                if (vidFile && vidFile.files && vidFile.files.length > 0) {
+                  item.video = await uploadFileToCloudinary(vidFile, 'gallery');
+                }
+                const ratioInput = document.querySelector(`.gal-ratio[data-id="${item.id}"]`);
+                if (ratioInput) {
+                  item.aspectRatio = ratioInput.value || '16:9';
+                }
+              }
+            }
+            await setGallery(gallery);
+            renderGalleryManager();
+            alert('Gallery videos updated successfully!');
+          } catch (e) {
+            console.error('Gallery update failed:', e);
+            alert('Failed to save gallery: ' + e.message);
+          } finally {
+            saveGalleryBtn.textContent = origText;
+            saveGalleryBtn.disabled = false;
+          }
+        });
+      }
       renderGalleryManager();
 
       // Finally render bookings (FIXED: no longer trapped in reviewInput block)

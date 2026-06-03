@@ -7,77 +7,115 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Multer memory storage for file uploads
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } }); // 500MB
+// Multer memory storage for file uploads (500MB limit for large videos)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// ─── Middleware ──────────────────────────────────────────────────────────────
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
-// Serve static files
-app.use(express.static(__dirname, {
-  index: 'index.html',
-  extensions: ['html']
-}));
+// Serve all static frontend files (HTML, CSS, JS, images)
+app.use(express.static(__dirname, { index: 'index.html', extensions: ['html'] }));
 
-// Cloudinary Configuration
+// ─── Cloudinary ───────────────────────────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Helper function to handle base64 image/video uploads to Cloudinary
-async function uploadToCloudinary(base64Data, folder = 'travelscape') {
-  if (!base64Data || !base64Data.startsWith('data:')) return base64Data;
+// Upload base64 OR buffer to Cloudinary
+async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false, mimeType = '') {
   try {
-    const isVideo = base64Data.includes('video');
+    if (!data) return '';
+    const isVideo = isBuffer ? mimeType.startsWith('video/') : (typeof data === 'string' && data.includes('video'));
     const resourceType = isVideo ? 'video' : 'image';
-    const uploadResult = await (isVideo
-      ? cloudinary.uploader.upload_large(base64Data, { folder: folder, resource_type: 'video' })
-      : cloudinary.uploader.upload(base64Data, { folder: folder, resource_type: 'image' })
-    );
-    return uploadResult.secure_url;
+
+    if (isBuffer) {
+      // Stream upload (for multipart uploads via /api/upload)
+      return await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder, resource_type: resourceType, chunk_size: 6000000 },
+          (err, result) => { if (err) reject(err); else resolve(result.secure_url); }
+        );
+        stream.end(data);
+      });
+    }
+
+    if (typeof data === 'string' && data.startsWith('data:')) {
+      // Base64 upload
+      const result = isVideo
+        ? await cloudinary.uploader.upload_large(data, { folder, resource_type: 'video' })
+        : await cloudinary.uploader.upload(data, { folder, resource_type: 'image' });
+      return result.secure_url;
+    }
+
+    return data; // already a URL, return as-is
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    return base64Data; // Return original if upload fails
+    console.error('Cloudinary upload error:', error.message);
+    return typeof data === 'string' ? data : ''; // return original string if possible
   }
 }
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Atlas Connected'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
+// ─── MongoDB ─────────────────────────────────────────────────────────────────
+let isDbConnected = false;
 
-// MongoDB Schema & Models
+mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 30000,
+}).then(() => {
+  isDbConnected = true;
+  console.log('✅ MongoDB Atlas Connected');
+  seedDatabaseIfEmpty();
+}).catch(err => {
+  console.error('❌ MongoDB Connection Error:', err.message);
+  // Retry after 5 seconds
+  setTimeout(() => {
+    mongoose.connect(process.env.MONGODB_URI).then(() => {
+      isDbConnected = true;
+      console.log('✅ MongoDB Atlas Connected (retry)');
+      seedDatabaseIfEmpty();
+    }).catch(e => console.error('❌ MongoDB retry failed:', e.message));
+  }, 5000);
+});
+
+mongoose.connection.on('disconnected', () => {
+  isDbConnected = false;
+  console.warn('⚠️ MongoDB disconnected — attempting reconnect');
+});
+mongoose.connection.on('reconnected', () => {
+  isDbConnected = true;
+  console.log('✅ MongoDB reconnected');
+});
+
+// MongoDB Schema
 const DataCacheSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true },
+  key:   { type: String, required: true, unique: true },
   value: mongoose.Schema.Types.Mixed
 }, { timestamps: true });
 
 const DataCache = mongoose.model('DataCache', DataCacheSchema);
 
-// Initial local fallbacks for data loading
-const initialCollections = [
-  'excursions',
-  'private_bookings',
-  'freediving',
-  'resorts',
-  'bookings',
-  'contact_messages',
-  'testimonials',
-  'reels',
-  'gallery',
-  'hero_videos'
-];
+// Wait for DB to be ready (used in endpoints that need DB)
+async function waitForDB(maxWait = 20000) {
+  if (isDbConnected) return true;
+  const start = Date.now();
+  while (Date.now() - start < maxWait) {
+    await new Promise(r => setTimeout(r, 300));
+    if (isDbConnected) return true;
+  }
+  return false;
+}
 
-// Helper to get collection value or default
-async function getCacheValue(key, defaultValue = []) {
+// Get value from MongoDB
+async function getCacheValue(key, defaultValue = null) {
   try {
+    await waitForDB();
     const doc = await DataCache.findOne({ key });
     return doc ? doc.value : defaultValue;
   } catch (e) {
@@ -86,14 +124,11 @@ async function getCacheValue(key, defaultValue = []) {
   }
 }
 
-// Helper to set cache value
+// Set value in MongoDB
 async function setCacheValue(key, value) {
   try {
-    await DataCache.findOneAndUpdate(
-      { key },
-      { value },
-      { upsert: true, new: true }
-    );
+    await waitForDB();
+    await DataCache.findOneAndUpdate({ key }, { value }, { upsert: true, new: true });
     return true;
   } catch (e) {
     console.error(`Error writing key ${key}:`, e.message);
@@ -101,250 +136,242 @@ async function setCacheValue(key, value) {
   }
 }
 
-// --- Ping Endpoint (for server warm-up) ---
+// ─── Health & Ping ───────────────────────────────────────────────────────────
 app.get('/api/ping', (req, res) => {
-  res.json({ status: 'ok', ts: Date.now() });
+  res.json({ status: 'ok', db: isDbConnected ? 'connected' : 'connecting', ts: Date.now() });
 });
 
-// --- Direct File Upload Endpoint (multipart, for large videos) ---
+app.get('/api/health', async (req, res) => {
+  const dbOk = await waitForDB(5000);
+  res.json({
+    status:     'ok',
+    db:         dbOk ? 'connected' : 'unavailable',
+    cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME),
+    ts:         Date.now()
+  });
+});
+
+// ─── File Upload Endpoint (multipart) ────────────────────────────────────────
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file provided' });
+    if (!req.file) return res.status(400).json({ success: false, error: 'No file provided' });
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      return res.status(500).json({ success: false, error: 'Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in Render environment variables.' });
     }
-    const isVideo = req.file.mimetype.startsWith('video/');
+
     const folder = req.body.folder || 'travelscape';
-    const resourceType = isVideo ? 'video' : 'image';
-
-    const uploadPromise = new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder, resource_type: resourceType, chunk_size: 6000000 },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(req.file.buffer);
-    });
-
-    const result = await uploadPromise;
-    res.json({ success: true, url: result.secure_url });
+    const url = await uploadToCloudinary(req.file.buffer, folder, true, req.file.mimetype);
+    res.json({ success: true, url });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('Upload error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// --- Auth Endpoint ---
+// ─── Auth Endpoint ───────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
-  const { role, password } = req.body;
-  const dbAuth = await getCacheValue('auth', { admin_password: 'admin123', staff_password: 'staff123' });
-  const adminPass = process.env.ADMIN_PASSWORD || dbAuth.admin_password || 'admin123';
-  const staffPass = process.env.STAFF_PASSWORD || dbAuth.staff_password || 'staff123';
+  try {
+    const { role, password } = req.body;
 
-  if (role === 'admin' && password === adminPass) {
-    return res.json({ success: true, role: 'admin' });
+    // Priority: Render environment variables → MongoDB → hardcoded fallback
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const staffPass = process.env.STAFF_PASSWORD || 'staff123';
+
+    if (role === 'admin' && password === adminPass) {
+      return res.json({ success: true, role: 'admin' });
+    }
+    if (role === 'staff' && password === staffPass) {
+      return res.json({ success: true, role: 'staff' });
+    }
+    return res.status(401).json({ success: false, message: 'Incorrect password' });
+  } catch (e) {
+    console.error('Auth error:', e.message);
+    res.status(500).json({ success: false, message: 'Server error during authentication' });
   }
-  if (role === 'staff' && password === staffPass) {
-    return res.json({ success: true, role: 'staff' });
-  }
-  return res.status(401).json({ success: false, message: 'Incorrect password' });
 });
 
-// --- Generic CRUD for array collections ---
+// ─── Generic CRUD for array collections ─────────────────────────────────────
 function registerCollectionRoutes(routePath, dbKey) {
-  // GET all
+  // GET all items
   app.get(`/api/${routePath}`, async (req, res) => {
-    const list = await getCacheValue(dbKey, []);
-    res.json(list);
+    try {
+      const list = await getCacheValue(dbKey, []);
+      res.json(list || []);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
-  // POST - save entire array (replace) with Cloudinary auto-upload support
+  // POST - replace entire collection (auto-uploads any base64 to Cloudinary)
   app.post(`/api/${routePath}`, async (req, res) => {
-    let list = req.body;
-    if (Array.isArray(list)) {
-      list = await Promise.all(list.map(async (item) => {
-        // Upload main images and videos
-        if (item.image && item.image.startsWith('data:')) {
-          item.image = await uploadToCloudinary(item.image, dbKey);
-        }
-        if (item.video && item.video.startsWith('data:')) {
-          item.video = await uploadToCloudinary(item.video, dbKey);
-        }
-        if (item.subImg1 && item.subImg1.startsWith('data:')) {
-          item.subImg1 = await uploadToCloudinary(item.subImg1, dbKey);
-        }
-        if (item.subImg2 && item.subImg2.startsWith('data:')) {
-          item.subImg2 = await uploadToCloudinary(item.subImg2, dbKey);
-        }
-        // SubImages array if present
-        if (Array.isArray(item.subImages)) {
-          item.subImages = await Promise.all(item.subImages.map(async (sub) => {
-            return sub.startsWith('data:') ? await uploadToCloudinary(sub, dbKey) : sub;
-          }));
-        }
-        return item;
-      }));
+    try {
+      let list = req.body;
+      if (Array.isArray(list)) {
+        list = await Promise.all(list.map(async (item) => {
+          if (item.image    && item.image.startsWith('data:'))    item.image    = await uploadToCloudinary(item.image,    dbKey);
+          if (item.video    && item.video.startsWith('data:'))    item.video    = await uploadToCloudinary(item.video,    dbKey);
+          if (item.subImg1  && item.subImg1.startsWith('data:'))  item.subImg1  = await uploadToCloudinary(item.subImg1,  dbKey);
+          if (item.subImg2  && item.subImg2.startsWith('data:'))  item.subImg2  = await uploadToCloudinary(item.subImg2,  dbKey);
+          if (Array.isArray(item.subImages)) {
+            item.subImages = await Promise.all(item.subImages.map(s => s.startsWith('data:') ? uploadToCloudinary(s, dbKey) : s));
+          }
+          return item;
+        }));
+      }
+      await setCacheValue(dbKey, list);
+      res.json({ success: true });
+    } catch (e) {
+      console.error(`POST ${routePath} error:`, e.message);
+      res.status(500).json({ success: false, error: e.message });
     }
-    await setCacheValue(dbKey, list);
-    res.json({ success: true });
   });
 
   // PUT - add or update single item
   app.put(`/api/${routePath}/:id`, async (req, res) => {
-    const list = await getCacheValue(dbKey, []);
-    const idx = list.findIndex(item => item.id === req.params.id);
-    let item = req.body;
+    try {
+      const list = await getCacheValue(dbKey, []) || [];
+      const idx  = list.findIndex(item => item.id === req.params.id);
+      let item   = req.body;
 
-    if (item.image && item.image.startsWith('data:')) {
-      item.image = await uploadToCloudinary(item.image, dbKey);
-    }
-    if (item.video && item.video.startsWith('data:')) {
-      item.video = await uploadToCloudinary(item.video, dbKey);
-    }
-    if (item.subImg1 && item.subImg1.startsWith('data:')) {
-      item.subImg1 = await uploadToCloudinary(item.subImg1, dbKey);
-    }
-    if (item.subImg2 && item.subImg2.startsWith('data:')) {
-      item.subImg2 = await uploadToCloudinary(item.subImg2, dbKey);
-    }
-    if (Array.isArray(item.subImages)) {
-      item.subImages = await Promise.all(item.subImages.map(async (sub) => {
-        return sub.startsWith('data:') ? await uploadToCloudinary(sub, dbKey) : sub;
-      }));
-    }
+      if (item.image    && item.image.startsWith('data:'))    item.image    = await uploadToCloudinary(item.image,    dbKey);
+      if (item.video    && item.video.startsWith('data:'))    item.video    = await uploadToCloudinary(item.video,    dbKey);
+      if (item.subImg1  && item.subImg1.startsWith('data:'))  item.subImg1  = await uploadToCloudinary(item.subImg1,  dbKey);
+      if (item.subImg2  && item.subImg2.startsWith('data:'))  item.subImg2  = await uploadToCloudinary(item.subImg2,  dbKey);
+      if (Array.isArray(item.subImages)) {
+        item.subImages = await Promise.all(item.subImages.map(s => s.startsWith('data:') ? uploadToCloudinary(s, dbKey) : s));
+      }
 
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...item };
-    } else {
-      list.push(item);
+      if (idx >= 0) list[idx] = { ...list[idx], ...item };
+      else list.push(item);
+
+      await setCacheValue(dbKey, list);
+      res.json({ success: true, item });
+    } catch (e) {
+      console.error(`PUT ${routePath} error:`, e.message);
+      res.status(500).json({ success: false, error: e.message });
     }
-    await setCacheValue(dbKey, list);
-    res.json({ success: true, item });
   });
 
   // DELETE - remove single item
   app.delete(`/api/${routePath}/:id`, async (req, res) => {
-    let list = await getCacheValue(dbKey, []);
-    list = list.filter(item => item.id !== req.params.id);
-    await setCacheValue(dbKey, list);
-    res.json({ success: true });
+    try {
+      let list = await getCacheValue(dbKey, []) || [];
+      list = list.filter(item => item.id !== req.params.id);
+      await setCacheValue(dbKey, list);
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
   });
 }
 
-// Register all collection routes
-registerCollectionRoutes('excursions', 'excursions');
-registerCollectionRoutes('private', 'private_bookings');
-registerCollectionRoutes('freediving', 'freediving');
-registerCollectionRoutes('resorts', 'resorts');
-registerCollectionRoutes('bookings', 'bookings');
-registerCollectionRoutes('testimonials', 'testimonials');
-registerCollectionRoutes('reels', 'reels');
-registerCollectionRoutes('gallery', 'gallery');
+// Register all collections
+registerCollectionRoutes('excursions',       'excursions');
+registerCollectionRoutes('private',          'private_bookings');
+registerCollectionRoutes('freediving',       'freediving');
+registerCollectionRoutes('resorts',          'resorts');
+registerCollectionRoutes('bookings',         'bookings');
+registerCollectionRoutes('testimonials',     'testimonials');
+registerCollectionRoutes('reels',            'reels');
+registerCollectionRoutes('gallery',          'gallery');
 registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 
-// --- Singular value endpoints ---
+// ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
-// Offer
+// Seasonal Offer
 app.get('/api/offer', async (req, res) => {
-  const offer = await getCacheValue('offer', {});
-  res.json(offer);
+  try { res.json(await getCacheValue('offer', {})); }
+  catch (e) { res.status(500).json({}); }
 });
 app.post('/api/offer', async (req, res) => {
-  await setCacheValue('offer', req.body);
-  res.json({ success: true });
+  try { await setCacheValue('offer', req.body); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 app.delete('/api/offer', async (req, res) => {
-  await setCacheValue('offer', {});
-  res.json({ success: true });
+  try { await setCacheValue('offer', {}); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Hero Video
+// Hero Video (single)
 app.get('/api/hero-video', async (req, res) => {
-  const video = await getCacheValue('hero_video', 'back.mp4');
-  res.json({ video });
+  try { res.json({ video: await getCacheValue('hero_video', '') }); }
+  catch (e) { res.json({ video: '' }); }
 });
 app.post('/api/hero-video', async (req, res) => {
-  let videoVal = req.body.video || 'back.mp4';
-  if (videoVal.startsWith('data:')) {
-    videoVal = await uploadToCloudinary(videoVal, 'hero');
-  }
-  await setCacheValue('hero_video', videoVal);
-  res.json({ success: true });
+  try {
+    let v = req.body.video || '';
+    if (v.startsWith('data:')) v = await uploadToCloudinary(v, 'hero');
+    await setCacheValue('hero_video', v);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Hero Videos
+// Hero Videos (slider array)
 app.get('/api/hero-videos', async (req, res) => {
-  const videos = await getCacheValue('hero_videos', ['back.mp4']);
-  res.json({ videos });
+  try { res.json({ videos: await getCacheValue('hero_videos', []) }); }
+  catch (e) { res.json({ videos: [] }); }
 });
 app.post('/api/hero-videos', async (req, res) => {
-  let videosList = req.body.videos || ['back.mp4'];
-  if (Array.isArray(videosList)) {
-    videosList = await Promise.all(videosList.map(async (vid) => {
-      return vid.startsWith('data:') ? await uploadToCloudinary(vid, 'hero') : vid;
-    }));
-  }
-  await setCacheValue('hero_videos', videosList);
-  if (videosList.length > 0) {
-    await setCacheValue('hero_video', videosList[0]);
-  }
-  res.json({ success: true });
+  try {
+    let list = req.body.videos || [];
+    if (Array.isArray(list)) {
+      list = await Promise.all(list.map(v => v.startsWith('data:') ? uploadToCloudinary(v, 'hero') : v));
+    }
+    await setCacheValue('hero_videos', list);
+    if (list.length > 0) await setCacheValue('hero_video', list[0]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Google Review
+// Google Review Link
 app.get('/api/google-review', async (req, res) => {
-  const googleReview = await getCacheValue('google_review', '');
-  res.json({ url: googleReview });
+  try { res.json({ url: await getCacheValue('google_review', '') }); }
+  catch (e) { res.json({ url: '' }); }
 });
 app.post('/api/google-review', async (req, res) => {
-  const urlVal = req.body.url || '';
-  await setCacheValue('google_review', urlVal);
-  res.json({ success: true });
+  try { await setCacheValue('google_review', req.body.url || ''); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Initialize database with static fallbacks if empty
+// ─── Database Seeding ────────────────────────────────────────────────────────
 async function seedDatabaseIfEmpty() {
   try {
     const count = await DataCache.countDocuments();
-    if (count === 0) {
-      console.log('Seeding MongoDB database with fallback configuration...');
-      let fallbackDb = {};
-      try {
-        const fallbackDbRaw = fs.readFileSync(path.join(__dirname, 'data', 'db.json'), 'utf-8');
-        fallbackDb = JSON.parse(fallbackDbRaw);
-      } catch (readErr) {
-        console.warn('Could not read db.json for seeding, using empty defaults.');
-      }
-      const promises = [
-        setCacheValue('excursions', fallbackDb.excursions || []),
-        setCacheValue('private_bookings', fallbackDb.private_bookings || []),
-        setCacheValue('freediving', fallbackDb.freediving || []),
-        setCacheValue('resorts', fallbackDb.resorts || []),
-        setCacheValue('bookings', fallbackDb.bookings || []),
-        setCacheValue('contact_messages', fallbackDb.contact_messages || []),
-        setCacheValue('testimonials', fallbackDb.testimonials || []),
-        setCacheValue('reels', fallbackDb.reels || []),
-        setCacheValue('gallery', fallbackDb.gallery || []),
-        setCacheValue('hero_videos', fallbackDb.hero_videos || ['back.mp4']),
-        setCacheValue('hero_video', fallbackDb.hero_video || 'back.mp4'),
-        setCacheValue('google_review', fallbackDb.google_review || ''),
-        setCacheValue('offer', fallbackDb.offer || {})
-      ];
-      await Promise.all(promises);
-      console.log('MongoDB Seed complete.');
+    if (count > 0) {
+      console.log(`📦 MongoDB has ${count} records — skipping seed.`);
+      return;
     }
+    console.log('🌱 MongoDB empty — seeding initial records...');
+    const promises = [
+      setCacheValue('excursions',       []),
+      setCacheValue('private_bookings', []),
+      setCacheValue('freediving',       []),
+      setCacheValue('resorts',          []),
+      setCacheValue('bookings',         []),
+      setCacheValue('contact_messages', []),
+      setCacheValue('testimonials',     []),
+      setCacheValue('reels',            []),
+      setCacheValue('gallery',          []),
+      setCacheValue('hero_videos',      []),
+      setCacheValue('hero_video',       ''),
+      setCacheValue('google_review',    ''),
+      setCacheValue('offer',            {}),
+    ];
+    await Promise.all(promises);
+    console.log('✅ MongoDB seed complete.');
   } catch (err) {
-    console.error('Seeding warning:', err.message);
+    console.error('⚠️ Seeding error:', err.message);
   }
 }
 
-// --- Start Server ---
-app.listen(PORT, async () => {
+// ─── Start Server ─────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
   console.log(`\n  🌊 Travelscape Maldives Production Server`);
   console.log(`  ──────────────────────────────────────────`);
-  console.log(`  🚀 Running at: http://localhost:${PORT}`);
-  console.log(`  📁 Serving from: ${__dirname}`);
-  await seedDatabaseIfEmpty();
+  console.log(`  🚀 Port: ${PORT}`);
+  console.log(`  🗄️  MongoDB: ${process.env.MONGODB_URI ? 'URI configured' : '❌ MISSING MONGODB_URI'}`);
+  console.log(`  ☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'configured' : '❌ MISSING CLOUDINARY vars'}`);
+  console.log(`  🔑 Admin Password: ${process.env.ADMIN_PASSWORD ? 'set from env' : 'using default admin123'}`);
 });
