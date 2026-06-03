@@ -1,0 +1,1984 @@
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Logo Drag & Drop Logic (Home Page Only) ---
+  const logoContainer = document.querySelector('.logo-reveal-container');
+  if (logoContainer) {
+    setTimeout(() => {
+      logoContainer.classList.add('ready');
+    }, 6000);
+  }
+
+  const draggables = document.querySelectorAll('.logo-icon-wrap');
+  draggables.forEach(draggable => {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const dragStart = (e) => {
+      if (!logoContainer || !logoContainer.classList.contains('ready')) return;
+      isDragging = true;
+      draggable.classList.add('active-drag');
+      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+      startX = clientX - currentX;
+      startY = clientY - currentY;
+    };
+
+    const dragMove = (e) => {
+      if (!isDragging) return;
+      if (e.cancelable) e.preventDefault();
+      const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+      currentX = clientX - startX;
+      currentY = clientY - startY;
+      draggable.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+    };
+
+    const dragEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      draggable.classList.remove('active-drag');
+      draggable.style.transition = 'transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.35)';
+      draggable.style.transform = 'translate3d(0, 0, 0)';
+      currentX = 0;
+      currentY = 0;
+      setTimeout(() => {
+        draggable.style.transition = '';
+      }, 800);
+    };
+
+    draggable.addEventListener('mousedown', dragStart);
+    window.addEventListener('mousemove', dragMove);
+    window.addEventListener('mouseup', dragEnd);
+    draggable.addEventListener('touchstart', dragStart, { passive: true });
+    window.addEventListener('touchmove', dragMove, { passive: false });
+    window.addEventListener('touchend', dragEnd);
+  });
+
+  // --- DEFAULT_DB fallback ---
+  const DEFAULT_DB = {
+    "auth": {
+      "admin_password": "admin123",
+      "staff_password": "staff123"
+    },
+    "excursions": [
+      { "id": "1", "title": "Dolphin Watching", "duration": "2 Hours", "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Experience the joy of seeing playful dolphins in their natural habitat at sunset.", "lat": 4.35, "lng": 73.60, "mapLink": "https://maps.google.com/?q=Dolphin+Lagoon+Maldives", "subImg1": "https://images.unsplash.com/photo-1570473541596-0237e6f80905?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1568430462989-4b16f61d2cfc?auto=format&fit=crop&w=400&q=80" },
+      { "id": "2", "title": "Coral Snorkeling", "duration": "3 Hours", "image": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Dive into crystal clear waters and explore vibrant coral reefs teeming with life.", "lat": 3.90, "lng": 73.40, "mapLink": "https://maps.google.com/?q=Banana+Reef+Maldives", "subImg1": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1468413253725-0d5181026218?auto=format&fit=crop&w=400&q=80" },
+      { "id": "3", "title": "Sandbank Picnic", "duration": "Half Day", "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Relax on a secluded sandbank with a private picnic surrounded by the azure ocean.", "lat": 4.10, "lng": 73.30, "mapLink": "https://maps.google.com/?q=Sandbank+Maldives", "subImg1": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=400&q=80" },
+      { "id": "4", "title": "Sunset Cruise", "duration": "2 Hours", "image": "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Sail the azure waters during golden hour with fruit platters and refreshments.", "lat": 4.25, "lng": 73.55, "mapLink": "https://maps.google.com/?q=Sunset+Cruise+Maldives", "subImg1": "https://images.unsplash.com/photo-1520520731457-9283dd14aa66?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=400&q=80" },
+      { "id": "5", "title": "Local Island Tour", "duration": "4 Hours", "image": "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Immerse yourself in Maldivian culture, taste local food, and explore local craft shops.", "lat": 3.70, "lng": 72.95, "mapLink": "https://maps.google.com/?q=Maafushi+Island+Maldives", "subImg1": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80" },
+      { "id": "6", "title": "Manta Ray Snorkeling", "duration": "3 Hours", "image": "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Snorkel side-by-side with majestic, gentle giant oceanic Manta Rays.", "lat": 4.55, "lng": 73.10, "mapLink": "https://maps.google.com/?q=Hanifaru+Bay+Maldives", "subImg1": "https://images.unsplash.com/photo-1544552766-83fa7ef31273?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=400&q=80" },
+      { "id": "7", "title": "Whale Shark Dive", "duration": "Full Day", "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Swim with the gentle giants of the ocean in the crystal clear waters of South Ari Atoll.", "lat": 3.5, "lng": 72.8, "mapLink": "https://maps.google.com/?q=South+Ari+Atoll", "subImg1": "https://images.unsplash.com/photo-1568430462989-4b16f61d2cfc?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80" },
+      { "id": "8", "title": "Private Island Escape", "duration": "Overnight", "image": "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80", "video": "back.mp4", "description": "Spend a night on an uninhabited island with a private chef and luxury glamping setup.", "lat": 4.15, "lng": 73.45, "mapLink": "https://maps.google.com/?q=Private+Island+Maldives", "subImg1": "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1468413253725-0d5181026218?auto=format&fit=crop&w=400&q=80" }
+    ],
+    "private_bookings": [
+      { "id": "p1", "title": "Private Sandbank Picnic", "duration": "Half Day", "image": "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Your own private slice of paradise in the middle of the ocean.", "subImg1": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=400&q=80" },
+      { "id": "p2", "title": "Coral Snorkeling Safari", "duration": "3 Hours", "image": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Explore hidden vibrant coral reefs with your private divemaster.", "subImg1": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1468413253725-0d5181026218?auto=format&fit=crop&w=400&q=80" },
+      { "id": "p3", "title": "Exclusive Sunset Cruise", "duration": "2 Hours", "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Sail off into the horizon on a private yacht with premium catering.", "subImg1": "https://images.unsplash.com/photo-1520520731457-9283dd14aa66?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=400&q=80" },
+      { "id": "p4", "title": "Manta Ray Encounter", "duration": "4 Hours", "image": "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Swim privately alongside gentle oceanic giants.", "subImg1": "https://images.unsplash.com/photo-1544552766-83fa7ef31273?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=400&q=80" }
+    ],
+    "freediving": [
+      { "id": "fd1", "title": "Deep Blue Freediving", "duration": "Half Day", "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Train your breath and explore the depth of the Maldivian lagoons with certified freedive instructors.", "subImg1": "https://images.unsplash.com/photo-1570473541596-0237e6f80905?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1568430462989-4b16f61d2cfc?auto=format&fit=crop&w=400&q=80" },
+      { "id": "fd2", "title": "Shipwreck Exploration", "duration": "3 Hours", "image": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Freedive down to a spectacular sunken shipwreck surrounded by colorful marine life.", "subImg1": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1468413253725-0d5181026218?auto=format&fit=crop&w=400&q=80" }
+    ],
+    "resorts": [
+      { "id": "rs1", "title": "Anantara Veli Day Pass", "duration": "Full Day", "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Enjoy luxury overwater bungalows, pools, and gourmet dining options with a resort day pass.", "subImg1": "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=400&q=80" },
+      { "id": "rs2", "title": "Hard Rock Hotel Pass", "duration": "Full Day", "image": "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=1200&q=80", "video": "back.mp4", "description": "Experience the rockstar lifestyle at the Hard Rock Resort Maldives with exclusive lagoon access.", "subImg1": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=400&q=80", "subImg2": "https://images.unsplash.com/photo-1520520731457-9283dd14aa66?auto=format&fit=crop&w=400&q=80" }
+    ],
+    "bookings": [],
+    "contact_messages": [],
+    "testimonials": [
+      { "id": "1", "name": "Sophia Loren", "rating": 5, "text": "Our trip to the Coral Reef was magical! Travelscape Maldives provided outstanding hospitality." },
+      { "id": "2", "name": "Liam Neeson", "rating": 5, "text": "The private Sandbank picnic was quiet, beautiful, and absolutely perfect. Worth every penny." },
+      { "id": "3", "name": "Aria Stark", "rating": 4, "text": "Dolphin watching was fun! We saw a whole pod playing in the waves. The crew was super friendly." }
+    ],
+    "reels": [
+      { "id": "r1", "image": "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=400&q=80" },
+      { "id": "r2", "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=400&q=80" },
+      { "id": "r3", "image": "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?auto=format&fit=crop&w=400&q=80" },
+      { "id": "r4", "image": "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=400&q=80" }
+    ],
+    "gallery": [
+      { "id": "g1", "title": "Dolphins", "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80", "video": "back.mp4" },
+      { "id": "g2", "title": "Sandbank", "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80", "video": "back.mp4" },
+      { "id": "g3", "title": "Local Island", "image": "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=800&q=80", "video": "back.mp4" }
+    ],
+    "hero_videos": ["back.mp4"],
+    "hero_video": "back.mp4",
+    "google_review": "",
+    "instagram_config": {
+      "accessToken": "",
+      "postCount": 4,
+      "profileUrl": "https://instagram.com/travelscapemaldives",
+      "enabled": false,
+      "cachedPosts": [],
+      "lastFetched": null
+    },
+    "offer": {
+      "title": "Summer Paradise Escape",
+      "discount": "25% OFF",
+      "description": "Book any excursion this summer and receive a 25% discount. Dive into crystal clear waters and explore vibrant coral reefs.",
+      "code": "SUMMER25",
+      "validity": "Valid until Aug 31, 2026"
+    }
+  };
+
+  // --- LocalStorage Helpers for Fallback ---
+  const localDb = {
+    init: () => {
+      if (!localStorage.getItem('travelscape_db')) {
+        localStorage.setItem('travelscape_db', JSON.stringify(DEFAULT_DB));
+      }
+    },
+    read: () => {
+      localDb.init();
+      try {
+        return JSON.parse(localStorage.getItem('travelscape_db'));
+      } catch (e) {
+        return DEFAULT_DB;
+      }
+    },
+    write: (data) => {
+      localStorage.setItem('travelscape_db', JSON.stringify(data));
+    },
+    getCollection: (key) => {
+      const db = localDb.read();
+      const dbKey = key === 'private' ? 'private_bookings' : key;
+      return db[dbKey] || [];
+    },
+    setCollection: (key, data) => {
+      const db = localDb.read();
+      const dbKey = key === 'private' ? 'private_bookings' : key;
+      db[dbKey] = data;
+      localDb.write(db);
+    },
+    getOffer: () => {
+      return localDb.read().offer || {};
+    },
+    setOffer: (data) => {
+      const db = localDb.read();
+      db.offer = data;
+      localDb.write(db);
+    },
+    getHeroVideo: () => {
+      return { video: localDb.read().hero_video || 'back.mp4' };
+    },
+    setHeroVideo: (video) => {
+      const db = localDb.read();
+      db.hero_video = video;
+      localDb.write(db);
+    },
+    getHeroVideos: () => {
+      const db = localDb.read();
+      return { videos: db.hero_videos || [db.hero_video || 'back.mp4'] };
+    },
+    setHeroVideos: (videos) => {
+      const db = localDb.read();
+      db.hero_videos = videos;
+      db.hero_video = videos[0] || 'back.mp4';
+      localDb.write(db);
+    },
+    getGoogleReview: () => {
+      return { url: localDb.read().google_review || '' };
+    },
+    setGoogleReview: (url) => {
+      const db = localDb.read();
+      db.google_review = url;
+      localDb.write(db);
+    },
+    getContactMessages: () => {
+      const db = localDb.read();
+      return db.contact_messages || [];
+    },
+    setContactMessages: (data) => {
+      const db = localDb.read();
+      db.contact_messages = data;
+      localDb.write(db);
+    },
+    getInstagramConfig: () => {
+      const db = localDb.read();
+      return db.instagram_config || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null };
+    },
+    setInstagramConfig: (data) => {
+      const db = localDb.read();
+      db.instagram_config = data;
+      localDb.write(db);
+    },
+    login: (role, password) => {
+      const db = localDb.read();
+      if (role === 'admin' && password === db.auth.admin_password) {
+        return { success: true, role: 'admin' };
+      }
+      if (role === 'staff' && password === db.auth.staff_password) {
+        return { success: true, role: 'staff' };
+      }
+      return { success: false, message: 'Incorrect password' };
+    }
+  };
+
+  // --- API Helper ---
+  let useFallback = window.location.protocol === 'file:';
+  // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
+  const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
+  const API_BASE = window.location.origin.includes('github.io')
+    ? RENDER_SERVER_URL + '/api'
+    : (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
+        : (useFallback ? 'http://localhost:3000/api' : window.location.origin.replace(/\/$/, '') + '/api'));
+
+  const api = {
+    get: async (path) => {
+      if (useFallback) {
+        if (path === 'offer') return localDb.getOffer();
+        if (path === 'hero-video') return localDb.getHeroVideo();
+        if (path === 'hero-videos') return localDb.getHeroVideos();
+        if (path === 'google-review') return localDb.getGoogleReview();
+        if (path === 'contact_messages') return localDb.getContactMessages();
+        if (path === 'instagram_config') return localDb.getInstagramConfig();
+        return localDb.getCollection(path);
+      }
+      try {
+        const res = await fetch(`${API_BASE}/${path}`);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.warn('API GET error, switching to client-side fallback mode:', path, e);
+        useFallback = true;
+        return api.get(path);
+      }
+    },
+    post: async (path, data) => {
+      if (useFallback) {
+        if (path === 'auth/login') return localDb.login(data.role, data.password);
+        if (path === 'offer') { localDb.setOffer(data); return { success: true }; }
+        if (path === 'hero-video') { localDb.setHeroVideo(data.video); return { success: true }; }
+        if (path === 'hero-videos') { localDb.setHeroVideos(data.videos); return { success: true }; }
+        if (path === 'google-review') { localDb.setGoogleReview(data.url); return { success: true }; }
+        if (path === 'contact_messages') { localDb.setContactMessages(data); return { success: true }; }
+        if (path === 'instagram_config') { localDb.setInstagramConfig(data); return { success: true }; }
+        localDb.setCollection(path, data);
+        return { success: true };
+      }
+      try {
+        const res = await fetch(`${API_BASE}/${path}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.warn('API POST error, switching to client-side fallback mode:', path, e);
+        useFallback = true;
+        return api.post(path, data);
+      }
+    },
+    put: async (path, data) => {
+      if (useFallback) {
+        const list = localDb.getCollection(path);
+        const idx = list.findIndex(item => item.id === data.id);
+        if (idx >= 0) {
+          list[idx] = { ...list[idx], ...data };
+        } else {
+          list.push(data);
+        }
+        localDb.setCollection(path, list);
+        return { success: true, item: data };
+      }
+      try {
+        const res = await fetch(`${API_BASE}/${path}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.warn('API PUT error, switching to client-side fallback mode:', path, e);
+        useFallback = true;
+        return api.put(path, data);
+      }
+    },
+    del: async (path) => {
+      if (useFallback) {
+        if (path === 'offer') { localDb.setOffer({}); return { success: true }; }
+        const parts = path.split('/');
+        if (parts.length === 2) {
+          const [collection, id] = parts;
+          const list = localDb.getCollection(collection).filter(item => item.id !== id);
+          localDb.setCollection(collection, list);
+          return { success: true };
+        }
+        return { success: false };
+      }
+      try {
+        const res = await fetch(`${API_BASE}/${path}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.warn('API DELETE error, switching to client-side fallback mode:', path, e);
+        useFallback = true;
+        return api.del(path);
+      }
+    }
+  };
+
+  // --- Data cache (loaded once, then kept in memory) ---
+  let dataCache = {};
+
+  async function loadAllData() {
+    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig] = await Promise.all([
+      api.get('excursions'),
+      api.get('private'),
+      api.get('freediving'),
+      api.get('resorts'),
+      api.get('bookings'),
+      api.get('testimonials'),
+      api.get('reels'),
+      api.get('gallery'),
+      api.get('offer'),
+      api.get('hero-video'),
+      api.get('hero-videos'),
+      api.get('google-review'),
+      api.get('contact_messages'),
+      api.get('instagram_config')
+    ]);
+
+    dataCache = {
+      excursions: excursions || [],
+      private: privateBookings || [],
+      freediving: freediving || [],
+      resorts: resorts || [],
+      bookings: bookings || [],
+      testimonials: testimonials || [],
+      reels: reels || [],
+      gallery: gallery || [],
+      offer: offer || {},
+      heroVideo: (heroVideoData && heroVideoData.video) || 'back.mp4',
+      heroVideos: heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : [(heroVideoData && heroVideoData.video) || 'back.mp4']),
+      googleReview: (googleReviewData && googleReviewData.url) || '',
+      contactMessages: contactMessages || [],
+      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+    };
+    return dataCache;
+  }
+
+  // Convenience getters/setters that work with cache + API
+  const getExcursions = () => dataCache.excursions || [];
+  const setExcursions = async (data) => { dataCache.excursions = data; await api.post('excursions', data); };
+  const getPrivate = () => dataCache.private || [];
+  const setPrivate = async (data) => { dataCache.private = data; await api.post('private', data); };
+  const getFreeDiving = () => dataCache.freediving || [];
+  const setFreeDiving = async (data) => { dataCache.freediving = data; await api.post('freediving', data); };
+  const getResorts = () => dataCache.resorts || [];
+  const setResorts = async (data) => { dataCache.resorts = data; await api.post('resorts', data); };
+  const getReels = () => dataCache.reels || [];
+  const setReels = async (data) => { dataCache.reels = data; await api.post('reels', data); };
+  const getGallery = () => dataCache.gallery || [];
+  const setGallery = async (data) => { dataCache.gallery = data; await api.post('gallery', data); };
+  const getHeroVideo = () => dataCache.heroVideo || 'back.mp4';
+  const setHeroVideo = async (data) => { dataCache.heroVideo = data; await api.post('hero-video', { video: data }); };
+  const getHeroVideos = () => dataCache.heroVideos || ['back.mp4'];
+  const setHeroVideos = async (data) => { dataCache.heroVideos = data; await api.post('hero-videos', { videos: data }); };
+  const getBookings = () => dataCache.bookings || [];
+  const setBookings = async (data) => { dataCache.bookings = data; await api.post('bookings', data); };
+  const getOffer = () => dataCache.offer || {};
+  const setOffer = async (data) => { dataCache.offer = data; await api.post('offer', data); };
+  const getTestimonials = () => dataCache.testimonials || [];
+  const setTestimonials = async (data) => { dataCache.testimonials = data; await api.post('testimonials', data); };
+  const getGoogleReview = () => dataCache.googleReview || '';
+  const setGoogleReview = async (data) => { dataCache.googleReview = data; await api.post('google-review', { url: data }); };
+  const getContactMessages = () => dataCache.contactMessages || [];
+  const setContactMessages = async (data) => { dataCache.contactMessages = data; await api.post('contact_messages', data); };
+  const getInstagramConfig = () => dataCache.instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null };
+  const setInstagramConfig = async (data) => { dataCache.instagramConfig = data; await api.post('instagram_config', data); };
+
+  const getOfferBadgeHTML = (category, isCard = false) => {
+    const offer = getOffer();
+    if (offer && offer.title && (offer.category === 'All' || offer.category === category)) {
+      if (isCard) {
+        return `<span class="offer-card-badge" style="background: #ef4444; color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase;">${offer.discount}</span>`;
+      }
+      return `<span class="offer-slide-badge" style="background: #ef4444; color: #fff; padding: 0.35rem 0.8rem; border-radius: 50px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); text-transform: uppercase; margin-left: 10px;">${offer.discount}</span>`;
+    }
+    return '';
+  };
+
+  // --- Main initialization after data is loaded ---
+  loadAllData().then(() => {
+    initApp();
+  }).catch(err => {
+    console.error('Failed to load data from API, check if server is running:', err);
+  });
+
+  function initApp() {
+
+    // --- Promo bar widget ---
+    const displayGlobalPromoBar = () => {
+      if (document.getElementById('admin-password-gate') || document.getElementById('staff-password-gate')) return;
+      const offer = getOffer();
+      if (!offer || !offer.title) return;
+
+      const container = document.createElement('div');
+      container.id = 'floating-offer-widget';
+      container.style.cssText = `position: fixed; bottom: 30px; right: 30px; z-index: 999999; font-family: 'Inter', sans-serif;`;
+
+      const catText = offer.category && offer.category !== 'All' ? ` on ${offer.category}s` : '';
+
+      container.innerHTML = `
+        <div id="offer-detail-card" style="display: none; position: absolute; bottom: 75px; right: 0; width: 320px; background: rgba(8, 13, 26, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 1.5rem; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); color: #fff; transform: translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;">
+          <button id="close-offer-card" style="position: absolute; top: 10px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; outline: none;">&times;</button>
+          <span style="background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 0.75rem;">${offer.discount}</span>
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.3;">${offer.title}</h4>
+          <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">${offer.description}${catText}</p>
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <div style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Promo Code</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fde047; font-size: 1rem; margin-top: 2px;">${offer.code || 'None'}</div>
+            </div>
+            ${offer.code ? `<button id="copy-offer-code" style="background: #38bdf8; color: #080d1a; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;">Copy</button>` : ''}
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8; text-align: left; display: flex; align-items: center; gap: 5px;"><i class="fa-regular fa-clock"></i> <span>${offer.validity}</span></div>
+        </div>
+        <button id="offer-trigger-circle" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #b91c1c); border: 2px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5); color: #fff; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s; outline: none;">
+          <i class="fa-solid fa-gift" style="font-size: 1.2rem; margin-bottom: 2px; animation: giftPulse 2s infinite;"></i>
+          <span style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2px;">Offer</span>
+        </button>
+        <style>
+          @keyframes giftPulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+          #offer-trigger-circle:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 15px 30px rgba(239, 68, 68, 0.7); }
+        </style>
+      `;
+
+      document.body.appendChild(container);
+
+      const trigger = container.querySelector('#offer-trigger-circle');
+      const card = container.querySelector('#offer-detail-card');
+      const closeBtn = container.querySelector('#close-offer-card');
+      const copyBtn = container.querySelector('#copy-offer-code');
+
+      let isOpen = false;
+      const toggleCard = () => {
+        isOpen = !isOpen;
+        if (isOpen) {
+          card.style.display = 'block';
+          setTimeout(() => { card.style.transform = 'translateY(0)'; card.style.opacity = '1'; }, 10);
+        } else {
+          card.style.transform = 'translateY(20px)'; card.style.opacity = '0';
+          setTimeout(() => { card.style.display = 'none'; }, 400);
+        }
+      };
+
+      trigger.addEventListener('click', toggleCard);
+      closeBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleCard(); });
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(offer.code).then(() => {
+            copyBtn.textContent = 'Copied!'; copyBtn.style.background = '#10b981'; copyBtn.style.color = '#fff';
+            setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.style.background = '#38bdf8'; copyBtn.style.color = '#080d1a'; }, 2000);
+          });
+        });
+      }
+    };
+    displayGlobalPromoBar();
+
+    // Dynamic Background Video / Slider Injection
+    const initGlobalHeroVideo = () => {
+      const sliderContainer = document.getElementById('hero-video-slider');
+      const videos = getHeroVideos();
+
+      if (sliderContainer && videos.length > 0) {
+        // Clear existing slides
+        sliderContainer.innerHTML = '';
+
+        // Create video slides
+        const slideElements = [];
+        videos.forEach((videoPath, index) => {
+          const videoEl = document.createElement('video');
+          videoEl.autoplay = true;
+          videoEl.loop = true;
+          videoEl.muted = true;
+          videoEl.playsInline = true;
+          videoEl.className = 'global-hero-video-slide' + (index === 0 ? ' active' : '');
+
+          const sourceEl = document.createElement('source');
+          sourceEl.src = videoPath;
+          sourceEl.type = 'video/mp4';
+          videoEl.appendChild(sourceEl);
+
+          sliderContainer.appendChild(videoEl);
+          slideElements.push(videoEl);
+        });
+
+        // Slideshow interval
+        if (videos.length > 1) {
+          let currentSlideIndex = 0;
+          setInterval(() => {
+            slideElements[currentSlideIndex].classList.remove('active');
+            currentSlideIndex = (currentSlideIndex + 1) % slideElements.length;
+            slideElements[currentSlideIndex].classList.add('active');
+          }, 6000); // Transitions every 6 seconds
+        }
+      } else {
+        // Fallback for pages with static video backgrounds
+        const activeVideo = videos[0] || getHeroVideo();
+        document.querySelectorAll('.global-hero-video').forEach(vid => {
+          const source = vid.querySelector('source');
+          if (source && source.getAttribute('src') !== activeVideo) {
+            source.setAttribute('src', activeVideo);
+            vid.load();
+          }
+        });
+      }
+    };
+    initGlobalHeroVideo();
+
+    // Print individual booking receipt helper
+    const printIndividualBooking = (id) => {
+      const bookings = getBookings();
+      const b = bookings.find(item => item.id === id);
+      if (!b) return;
+
+      const allItems = [
+        ...getExcursions(),
+        ...getPrivate(),
+        ...getFreeDiving(),
+        ...getResorts()
+      ];
+      const item = allItems.find(x => x.id === b.excursionId);
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html><head><title>Booking Receipt - ${b.id}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 2rem; color: #333; }
+            .receipt-card { border: 2px solid #38bdf8; border-radius: 8px; padding: 2rem; max-width: 550px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h2 { color: #0284c7; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+            .detail-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1px dashed #f1f5f9; padding-bottom: 0.4rem; }
+            .label { font-weight: bold; color: #64748b; font-size: 0.9rem; } .value { color: #0f172a; font-weight: 500; font-size: 0.9rem; }
+            .badge { background: #e0f2fe; color: #0369a1; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+            .section-title { font-size: 1.05rem; font-weight: bold; color: #0284c7; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
+            .policy-section { margin-top: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 6px; }
+            .policy-title { font-size: 0.85rem; font-weight: bold; color: #ef4444; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.3px; }
+            .policy-section p { margin: 0 0 0.5rem 0; font-size: 0.78rem; color: #475569; line-height: 1.45; }
+            .policy-section p:last-child { margin-bottom: 0; }
+            .footer { text-align: center; margin-top: 2rem; font-size: 0.85rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 1rem; }
+          </style></head><body>
+          <div class="receipt-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem;">
+              <img src="1.png" alt="Travelscape Maldives" style="height: 45px; width: auto; display: block;">
+              <div>
+                <h2 style="margin: 0; color: #0284c7; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">Travelscape Maldives</h2>
+                <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px;">Travel • Tours • Trips</div>
+              </div>
+            </div>
+            <div class="detail-row"><span class="label">Contact No:</span><span class="value">${b.customerContact || 'N/A'}</span></div>
+            <div class="detail-row"><span class="label">Email ID:</span><span class="value">${b.customerEmail}</span></div>
+            <div class="detail-row"><span class="label">Booking ID:</span><span class="value">${b.id}</span></div>
+            <div class="detail-row"><span class="label">Guest Name:</span><span class="value">${b.customerName}</span></div>
+            <div class="detail-row"><span class="label">Excursion:</span><span class="value">${b.excursionTitle}</span></div>
+            <div class="detail-row"><span class="label">Date:</span><span class="value">${b.bookingDate}</span></div>
+            <div class="detail-row"><span class="label">Trip Category:</span><span class="value">${b.isPrivate ? 'Private Charter' : 'Standard'}</span></div>
+            <div class="detail-row"><span class="label">Booking Type:</span><span class="value">${b.bookingType || 'Individual'}</span></div>
+            ${b.bookingType === 'Group' ? `
+            <div class="detail-row"><span class="label">Adults:</span><span class="value">${b.adults || 1}</span></div>
+            <div class="detail-row"><span class="label">Kids:</span><span class="value">${b.kids || 0}</span></div>
+            ${b.kids > 0 ? `<div class="detail-row"><span class="label">Kids' Ages:</span><span class="value">${b.kidsAges || 'N/A'}</span></div>` : ''}
+            ` : ''}
+            <div class="detail-row"><span class="label">Payment Basis:</span><span class="value">${b.paymentBasis || 'Cash'}</span></div>
+            <div class="detail-row"><span class="label">Status:</span><span class="value"><span class="badge">${b.status}</span></span></div>
+            
+            ${item ? `
+            <div class="section-title">Package Details</div>
+            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; line-height: 1.5;">${item.description || ''}</div>
+            ${item.fullDescription ? `<div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; font-style: italic; line-height: 1.5;">${item.fullDescription}</div>` : ''}
+            ${item.duration ? `<div class="detail-row"><span class="label">Duration:</span><span class="value">${item.duration}</span></div>` : ''}
+            ${item.highlights ? `
+            <div style="margin-top: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+              <span class="label" style="display: block; margin-bottom: 0.25rem;">Package Highlights:</span>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.82rem; color: #475569; line-height: 1.5;">
+                ${item.highlights.split(',').map(h => `<li>${h.trim()}</li>`).join('')}
+              </ul>
+            </div>
+            ` : ''}
+            ` : ''}
+
+            <div class="policy-section">
+              <div class="policy-title">Company Cancellation Policy</div>
+              <p>To receive a full refund, travellers may cancel up to 14 hours before the experience start date in the local timezone. No refunds will be given after that time period.</p>
+              <p>We reserve the right to cancel a customer's booking for a full refund in case of bad weather or insufficient travelers.</p>
+            </div>
+            <div class="footer">Thank you for choosing Travelscape Maldives!</div>
+          </div>
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body></html>
+      `);
+      printWindow.document.close();
+    };
+
+    // Print filtered bookings manifest helper
+    const printFilteredList = (bookings, title) => {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html><head><title>${title}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 2rem; color: #333; }
+            h2 { color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+            table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+            th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+            th { background-color: #f8fafc; color: #475569; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .badge { background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+            .badge-confirmed { background: #d1fae5; color: #065f46; } .badge-pending { background: #fef3c7; color: #92400e; }
+            .footer { margin-top: 3rem; text-align: center; font-size: 0.85rem; color: #94a3b8; }
+          </style></head><body>
+          <h2>Travelscape Maldives - Booking Manifest</h2>
+          <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()} | <strong>Filter Mode:</strong> Active</p>
+          <table><thead><tr><th>Guest Name</th><th>Excursion</th><th>Date</th><th>Trip Type</th><th>Payment Basis</th><th>Status</th></tr></thead>
+          <tbody>${bookings.map(b => `<tr><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'}">${b.status}</span></td></tr>`).join('')}</tbody></table>
+          <div class="footer">End of Report</div>
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body></html>
+      `);
+      printWindow.document.close();
+    };
+
+    // Render Seasonal Offer on Home Page
+    const offerSection = document.getElementById('seasonal-offer-section');
+    if (offerSection) {
+      const offer = getOffer();
+      if (offer && offer.title) {
+        offerSection.innerHTML = `
+          <div class="offer-card">
+            <div class="particles"><span class="particle p1"></span><span class="particle p2"></span><span class="particle p3"></span><span class="particle p4"></span><span class="particle p5"></span></div>
+            <div class="offer-content">
+              <div class="badge-wrapper"><span class="offer-badge">${offer.discount}</span></div>
+              <h2 class="offer-title-text">${offer.title}</h2>
+              <p class="offer-description">${offer.description}</p>
+            </div>
+            <div class="offer-action-group">
+              ${offer.code ? `<div class="offer-promo-code-container"><div class="promo-reveal-hint">Hover to Scan Lagoon Code</div><div class="offer-promo-code">${offer.code}</div><div class="scanner-line"></div></div>` : ''}
+              <span class="offer-validity-tag">${offer.validity}</span>
+            </div>
+          </div>
+        `;
+        offerSection.style.display = 'block';
+      } else {
+        offerSection.style.display = 'none';
+      }
+    }
+
+    // --- Excursion Details Modal Creator ---
+    const openExcursionDetailsModal = (ex) => {
+      const existing = document.getElementById('excursion-details-modal');
+      if (existing) existing.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'excursion-details-modal';
+      modal.className = 'modal-minimal';
+      modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
+
+      const subImg1 = ex.subImg1 || (ex.subImages && ex.subImages[0]) || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80";
+      const subImg2 = ex.subImg2 || (ex.subImages && ex.subImages[1]) || "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=400&q=80";
+      const isResort = (ex.id && ex.id.startsWith('rs')) || ex.hasOwnProperty('hasDayVisit') || ex.hasOwnProperty('hasStayNight');
+
+      modal.innerHTML = `
+        <div class="modal-content-minimal" style="max-width: 600px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default;">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #fff; margin: 0; font-size: 1.5rem;">${ex.title}</h3>
+            <button id="close-details-modal" class="close-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #858e8e;">&times;</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+              <div style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
+                <div style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
+              </div>
+            </div>
+            <div>
+              <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
+              <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; background: #000;">
+                <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
+                  <source src="${ex.video || getHeroVideo()}" type="video/mp4">
+                </video>
+              </div>
+            </div>
+            <div>
+              <span class="duration-badge" style="display: inline-block; background: rgba(6, 182, 212, 0.08); color: #06b6d4; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(6, 182, 212, 0.15); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${ex.duration}</span>
+              <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0;">${ex.description}</p>
+              ${ex.fullDescription ? `<p style="color: #94a3b8; line-height: 1.6; font-size: 0.95rem; margin: 0;">${ex.fullDescription}</p>` : ''}
+            </div>
+            ${ex.highlights ? `<div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;"><h4 style="color: #fff; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">Highlights</h4><ul style="margin: 0; padding-left: 1.25rem; color: #cbd5e1; list-style-type: disc; font-size: 0.9rem; line-height: 1.6;">${ex.highlights.split(',').map(h => `<li>${h.trim()}</li>`).join('')}</ul></div>` : ''}
+            ${isResort ? `
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; color: #cbd5e1;">
+              <h4 style="color: #38bdf8; margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 700;">Package Rates & Pricing</h4>
+              <div style="display: flex; flex-direction: column; gap: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                ${ex.hasDayVisit ? `<div><div style="font-weight:700; color:#fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; margin-bottom: 0.5rem; font-size: 0.9rem;">Day Visit Options (${ex.dayVisitType === 'both' ? 'Half & Full Day' : (ex.dayVisitType === 'half_day' ? 'Half Day' : 'Full Day')})</div>
+                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Option</th><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody>
+                ${(ex.dayVisitType === 'half_day' || ex.dayVisitType === 'both') ? `<tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding:6px 0; color:#fff; font-weight:600;">Half Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfNone || 'N/A'}</td></tr>` : ''}
+                ${(ex.dayVisitType === 'full_day' || ex.dayVisitType === 'both') ? `<tr><td style="padding:6px 0; color:#fff; font-weight:600;">Full Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullNone || 'N/A'}</td></tr>` : ''}
+                </tbody></table></div>` : ''}
+                ${ex.hasStayNight ? `<div style="margin-top: 0.5rem;"><div style="font-weight:700; color:#fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; margin-bottom: 0.5rem; font-size: 0.9rem;">Stay Night Visit Packages</div>
+                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody><tr><td style="padding:6px 0; color:#38bdf8;">$${ex.stayStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayNone || 'N/A'}</td></tr></tbody></table></div>` : ''}
+              </div>
+            </div>` : ''}
+            ${!isResort ? `<div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem; margin-top: 0.5rem; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
+              <h4 style="color: #fff; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-circle-info" style="color: #38bdf8;"></i> Cancellation Policy</h4>
+              <p style="margin: 0 0 1rem 0; color: #94a3b8;">To receive a full refund, travellers may cancel up to 14 hours before the experience start date in the local timezone. No refunds will be given after that time period.</p>
+              <h4 style="color: #fff; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">Other post-booking policies</h4>
+              <p style="margin: 0 0 0.5rem 0; color: #94a3b8;">We may reserve the right to cancel a customer's booking for a full refund in case of:</p>
+              <ul style="margin: 0; padding-left: 1.25rem; color: #94a3b8; list-style-type: disc;"><li>Bad weather</li><li>Not enough travelers</li></ul>
+            </div>` : ''}
+            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
+              ${ex.mapLink ? `<a href="${ex.mapLink}" target="_blank" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 700; text-transform: uppercase; font-size: 0.9rem;"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px;"></i> Location</a>` : ''}
+              <button id="details-modal-book" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: rgba(56, 189, 248, 0.25) !important;">Book Now</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      modal.querySelector('#close-details-modal').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+      modal.querySelector('#details-modal-book').addEventListener('click', () => { modal.remove(); openBookingModal(ex.id, ex.title); });
+    };
+
+    // --- Render grids helper ---
+    const renderCardGrid = (gridId, list, bookLabel, offerCategory, idPrefix) => {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      const isFeaturedOnly = grid.dataset.featured === 'true';
+      const itemsToRender = isFeaturedOnly ? list.slice(0, 3) : list;
+
+      grid.innerHTML = itemsToRender.map(ex => `
+        <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
+          <div class="card-img" style="background: url('${ex.image}') center/cover;"></div>
+          <div class="card-body">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
+              ${getOfferBadgeHTML(offerCategory, true)}
+            </div>
+            <h3 class="card-title">${ex.title}</h3>
+            <p class="card-description">${ex.description}</p>
+            <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.book-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); openBookingModal(e.target.dataset.id, e.target.dataset.title); });
+      });
+      grid.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.classList.contains('book-btn')) return;
+          const id = card.id.replace(`${idPrefix}-card-`, '');
+          const ex = list.find(item => item.id === id);
+          if (ex) openExcursionDetailsModal(ex);
+        });
+      });
+    };
+
+    renderCardGrid('excursions-grid', getExcursions(), 'Book Now', 'Excursion', 'excursion');
+    renderCardGrid('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
+    renderCardGrid('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
+    renderCardGrid('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
+
+    // --- Render Testimonials (Home Page) ---
+    const testimonialsGrid = document.getElementById('testimonials-grid');
+    if (testimonialsGrid) {
+      const list = getTestimonials();
+      testimonialsGrid.innerHTML = list.map(t => {
+        let stars = '';
+        for (let i = 0; i < 5; i++) { stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>'; }
+        return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
+      }).join('');
+    }
+
+    // --- Google Review Button ---
+    const googleReviewBtnContainer = document.getElementById('google-review-btn-container');
+    const googleReviewBtn = document.getElementById('google-review-btn');
+    if (googleReviewBtnContainer && googleReviewBtn) {
+      const link = getGoogleReview();
+      if (link.trim() !== '') { googleReviewBtn.href = link; googleReviewBtnContainer.style.display = 'block'; }
+      else { googleReviewBtnContainer.style.display = 'none'; }
+    }
+
+    // --- Render Instagram Reels (Home Page) ---
+    const reelsGrid = document.getElementById('reels-grid');
+    if (reelsGrid) {
+      const list = getReels().slice(-4);
+      reelsGrid.innerHTML = list.map(reel => {
+        const isVideo = reel.image.startsWith('data:video') || reel.image.endsWith('.mp4') || reel.image.includes('video');
+        if (isVideo) {
+          return `
+            <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
+              <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="${reel.image}" type="video/mp4">
+              </video>
+              <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
+              <img src="${reel.image}" alt="Reel">
+              <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    // --- Render Gallery Videos (Gallery Page) ---
+    const galleryGrid = document.getElementById('gallery-grid');
+    if (galleryGrid) {
+      const list = getGallery();
+      galleryGrid.innerHTML = list.map(item => {
+        const hasVideo = item.video && item.video.trim() !== '';
+        const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
+        if (hasVideo) {
+          return `
+            <div class="video-card ${ratioClass}" style="cursor: default;">
+              <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="${item.video}" type="video/mp4">
+              </video>
+              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="video-card ${ratioClass}" style="cursor: default;">
+              <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
+              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    // --- Render Parallax Layer Sliders ---
+    const setupParallaxLayer = (layerNum, titlePrefix, listData, offerType) => {
+      const bgSlidesContainer = document.getElementById(`layer${layerNum}-bg-slides`);
+      const detailsOverlay = document.getElementById(`layer${layerNum}-details-overlay`);
+
+      try {
+        if (bgSlidesContainer && detailsOverlay) {
+          const list = listData;
+          bgSlidesContainer.innerHTML = list.map((ex, idx) => `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="background-image: url('${ex.image}');"></div>`).join('');
+
+          const renderActiveDetails = (ex) => {
+            detailsOverlay.innerHTML = `
+              <h2 class="ex-tag-title" style="margin-top: 6rem;">0${layerNum} // ${titlePrefix}</h2>
+              <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                <span class="ex-duration" style="margin-bottom: 0;">${ex.duration}</span>
+                ${getOfferBadgeHTML(offerType)}
+              </div>
+              <h1 class="ex-title">${ex.title}</h1>
+              <p class="ex-desc">${ex.description}</p>
+              <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center;">
+                <button class="glass-btn layer${layerNum}-floating-details" data-id="${ex.id}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Details</button>
+                <button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>
+              </div>
+            `;
+            detailsOverlay.querySelector(`.layer${layerNum}-floating-book`).addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
+            detailsOverlay.querySelector(`.layer${layerNum}-floating-details`).addEventListener('click', (e) => {
+              const id = e.target.dataset.id;
+              const found = listData.find(item => item.id === id);
+              if (found) openExcursionDetailsModal(found);
+            });
+          };
+
+          if (list.length > 0) {
+            renderActiveDetails(list[0]);
+            let currentIdx = 0;
+            const bgSlides = bgSlidesContainer.querySelectorAll(`.layer${layerNum}-bg-slide`);
+            const changeSlide = (nextIdx) => {
+              if (nextIdx === currentIdx) return;
+              detailsOverlay.classList.remove('fade-in'); detailsOverlay.classList.add('fade-out');
+              if (bgSlides[currentIdx]) bgSlides[currentIdx].classList.remove('active');
+              setTimeout(() => {
+                if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
+                renderActiveDetails(list[nextIdx]);
+                detailsOverlay.classList.remove('fade-out'); detailsOverlay.classList.add('fade-in');
+                currentIdx = nextIdx;
+              }, 500);
+            };
+            let sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500);
+            window.addEventListener('blur', () => clearInterval(sliderInterval));
+            window.addEventListener('focus', () => { clearInterval(sliderInterval); sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500); });
+          } else {
+            detailsOverlay.innerHTML = `<h2 class="ex-tag-title" style="margin-top: 6rem;">0${layerNum} // ${titlePrefix}</h2><p style="color: #cbd5e1;">No items currently available.</p>`;
+          }
+        }
+      } catch (e) { console.error(`Error in Layer ${layerNum} initialization:`, e); }
+    };
+
+    setupParallaxLayer(2, 'EXCURSIONS', getExcursions(), 'Excursion');
+    setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
+    setupParallaxLayer(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
+    setupParallaxLayer(5, 'RESORTS', getResorts(), 'Resort');
+
+    // Request native OS notification permission on load
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
+    const showSystemNotification = (booking) => {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification("New Booking Received! 🌊", {
+          body: `${booking.customerName} booked ${booking.excursionTitle} for ${booking.bookingDate}.`,
+          icon: "1.png"
+        });
+      }
+    };
+
+    const showToastNotification = (booking) => {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#121824; border:1px solid #38bdf8; padding:1rem; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:999999; display:flex; gap:10px; align-items:center; animation: toastSlideIn 0.3s ease; color:#fff; font-family:"Inter", sans-serif;';
+      toast.innerHTML = `
+        <div style="font-size:1.5rem;">🔔</div>
+        <div>
+          <div style="font-weight:700; color:#38bdf8;">New Booking Alert</div>
+          <div style="font-size:0.85rem; color:#cbd5e1; margin-top:2px;"><strong>${booking.customerName}</strong> booked ${booking.excursionTitle}</div>
+        </div>
+        <button style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; margin-left:10px;" onclick="this.parentElement.remove()">&times;</button>
+      `;
+
+      if (!document.getElementById('toast-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'toast-styles';
+        styles.innerHTML = `
+          @keyframes toastSlideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        `;
+        document.head.appendChild(styles);
+      }
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 6000);
+    };
+
+    // --- Contact Message Notification Functions ---
+    const showContactSystemNotification = (msg) => {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification("New Contact Message! ✉️", {
+          body: `${msg.name} (${msg.email}): ${msg.subject || 'No subject'}`,
+          icon: "1.png"
+        });
+      }
+    };
+
+    const showContactToastNotification = (msg) => {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#121824; border:1px solid #a855f7; padding:1rem; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:999999; display:flex; gap:10px; align-items:center; animation: toastSlideIn 0.3s ease; color:#fff; font-family:"Inter", sans-serif; max-width:380px;';
+      toast.innerHTML = `
+        <div style="font-size:1.5rem;">✉️</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; color:#a855f7;">New Contact Message</div>
+          <div style="font-size:0.85rem; color:#cbd5e1; margin-top:2px;"><strong>${msg.name}</strong> — ${msg.subject || 'General Inquiry'}</div>
+          <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${msg.message}</div>
+        </div>
+        <button style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; margin-left:10px; flex-shrink:0;" onclick="this.parentElement.remove()">&times;</button>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 7000);
+    };
+
+    // --- Booking Modal Actions ---
+    const bookingModal = document.getElementById('booking-modal');
+
+    const openBookingModal = (id, title) => {
+      if (!bookingModal) return;
+      const isPrivateCharter = id.startsWith('p');
+      const isResort = id.startsWith('rs');
+      const resort = isResort ? (getResorts().find(item => item.id === id) || {}) : {};
+
+      if (isResort) {
+        bookingModal.innerHTML = `
+          <div class="modal-content-minimal" style="max-width: 480px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">Book Resort Pass</h3>
+              <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
+            </div>
+            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Selected: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
+            <form id="booking-form-dynamic" style="display: flex; flex-direction: column; gap: 1rem;">
+              <input type="hidden" id="booking-excursion-id" value="${id}">
+              <input type="hidden" id="booking-excursion-title" value="${title}">
+              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              
+              <!-- Resort dynamic configuration options -->
+              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <h5 style="color: #38bdf8; margin: 0; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Pass Package Settings</h5>
+                
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Select Package</label>
+                  <select id="resort-package-type" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    ${resort.hasDayVisit && (resort.dayVisitType === 'half_day' || resort.dayVisitType === 'both') ? '<option value="half_day">Half Day Pass</option>' : ''}
+                    ${resort.hasDayVisit && (resort.dayVisitType === 'full_day' || resort.dayVisitType === 'both') ? '<option value="full_day">Full Day Pass</option>' : ''}
+                    ${resort.hasStayNight ? '<option value="stay_night">Night Stay</option>' : ''}
+                  </select>
+                </div>
+
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Package Tier</label>
+                  <select id="resort-package-tier" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                  </select>
+                </div>
+              </div>
+
+              <!-- Private Trip and Group settings -->
+              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;">
+                  <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
+                </div>
+
+                <div id="booking-type-container">
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
+                  <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    <option value="Individual">Individual Booking</option>
+                    <option value="Group">Group Booking</option>
+                  </select>
+                </div>
+
+                <div id="booking-group-details" style="display: none; flex-direction: column; gap: 1rem;">
+                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Adults</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                  <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                </div>
+
+                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                  <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
+                  <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
+            </form>
+          </div>
+        `;
+
+        const closeBtn = bookingModal.querySelector('#close-booking-modal-btn');
+        closeBtn.addEventListener('click', closeBookingModal);
+
+        const packageTypeSelect = bookingModal.querySelector('#resort-package-type');
+        const tierSelect = bookingModal.querySelector('#resort-package-tier');
+
+        const privateCheck = bookingModal.querySelector('#booking-private');
+        const typeContainer = bookingModal.querySelector('#booking-type-container');
+        const typeSelect = bookingModal.querySelector('#booking-type');
+        const groupDetails = bookingModal.querySelector('#booking-group-details');
+        const adultsInput = bookingModal.querySelector('#booking-adults');
+        const kidsInput = bookingModal.querySelector('#booking-kids');
+        const kidsAgesGroup = bookingModal.querySelector('#booking-kids-ages-group');
+        const priceDisplay = bookingModal.querySelector('#booking-price-display');
+
+        const updateTierOptions = () => {
+          const packageType = packageTypeSelect ? packageTypeSelect.value : '';
+
+          let stdPrice, premPrice;
+          if (packageType === 'half_day') {
+            stdPrice = resort.dayHalfStd;
+            premPrice = resort.dayHalfPrem;
+          } else if (packageType === 'full_day') {
+            stdPrice = resort.dayFullStd;
+            premPrice = resort.dayFullPrem;
+          } else if (packageType === 'stay_night') {
+            stdPrice = resort.stayStd;
+            premPrice = resort.stayPrem;
+          }
+
+          let html = '';
+          if (stdPrice) html += `<option value="Standard" data-price="${stdPrice}">Standard ($${stdPrice})</option>`;
+          if (premPrice) html += `<option value="Premium" data-price="${premPrice}">Premium ($${premPrice})</option>`;
+          tierSelect.innerHTML = html || '<option value="Standard" data-price="0">N/A ($0)</option>';
+          updateTotalPrice();
+        };
+
+        const updateTotalPrice = () => {
+          if (!tierSelect || !priceDisplay) return;
+          const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
+          const basePrice = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
+
+          const isPrivate = privateCheck.checked;
+          const isGroup = isPrivate || typeSelect.value === 'Group';
+          const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
+          const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
+
+          let total = basePrice * adults;
+          if (kids > 0) {
+            const kidsAgesStr = bookingModal.querySelector('#booking-kids-ages').value || '';
+            const kidsAges = kidsAgesStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+            const limitHalf = parseInt(resort.kidAgeHalf) || 0;
+            const limitFree = parseInt(resort.kidAgeFree) || 0;
+
+            for (let i = 0; i < kids; i++) {
+              const age = kidsAges[i] !== undefined ? kidsAges[i] : 99;
+              if (limitFree > 0 && age <= limitFree) {
+                total += 0;
+              } else if (limitHalf > 0 && age <= limitHalf) {
+                total += basePrice * 0.5;
+              } else {
+                total += basePrice;
+              }
+            }
+          }
+          priceDisplay.textContent = `$${total}`;
+        };
+
+        if (packageTypeSelect) {
+          packageTypeSelect.addEventListener('change', updateTierOptions);
+        }
+        tierSelect.addEventListener('change', updateTotalPrice);
+
+        privateCheck.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            typeSelect.value = 'Group';
+            typeContainer.style.display = 'none';
+            groupDetails.style.display = 'flex';
+          } else {
+            typeContainer.style.display = 'block';
+            groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
+          }
+          updateTotalPrice();
+        });
+
+        typeSelect.addEventListener('change', (e) => {
+          groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none';
+          updateTotalPrice();
+        });
+
+        kidsInput.addEventListener('input', (e) => {
+          kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none';
+          updateTotalPrice();
+        });
+        const kidsAgesInput = bookingModal.querySelector('#booking-kids-ages');
+        if (kidsAgesInput) {
+          kidsAgesInput.addEventListener('input', updateTotalPrice);
+        }
+        adultsInput.addEventListener('input', updateTotalPrice);
+
+        // Init options and prices
+        updateTierOptions();
+
+        const form = bookingModal.querySelector('#booking-form-dynamic');
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const customerName = form.querySelector('#booking-name').value;
+          const contactNumber = form.querySelector('#booking-contact').value;
+          const emailId = form.querySelector('#booking-email').value;
+          const bookingDate = form.querySelector('#booking-date').value;
+
+          const isPrivate = privateCheck.checked;
+          const bookingType = isPrivate ? 'Group' : typeSelect.value;
+          const isGroup = bookingType === 'Group';
+          const adults = isGroup ? (parseInt(form.querySelector('#booking-adults').value) || 1) : 1;
+          const kids = isGroup ? (parseInt(form.querySelector('#booking-kids').value) || 0) : 0;
+          const kidsAges = isGroup ? form.querySelector('#booking-kids-ages').value : '';
+
+          const packageType = packageTypeSelect ? packageTypeSelect.value : '';
+          const selectedTier = tierSelect.value;
+          const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
+          const ratePaid = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
+
+          let packageLabel = '';
+          if (packageType === 'half_day') packageLabel = 'Half Day Pass';
+          else if (packageType === 'full_day') packageLabel = 'Full Day Pass';
+          else if (packageType === 'stay_night') packageLabel = 'Night Stay';
+
+          const detailedTitle = `${title} (${packageLabel} - ${selectedTier})`;
+
+          const newBooking = {
+            id: Date.now().toString(),
+            excursionId: id,
+            excursionTitle: detailedTitle,
+            customerName,
+            customerEmail: emailId,
+            customerContact: contactNumber,
+            bookingDate,
+            paymentBasis: 'N/A',
+            bookingType,
+            adults,
+            kids,
+            kidsAges,
+            isPrivate: isPrivate,
+            numPersons: isGroup ? (adults + kids) : 1,
+            status: 'Pending',
+            ratePaid: ratePaid
+          };
+
+          const currentBookings = getBookings();
+          currentBookings.push(newBooking);
+          await setBookings(currentBookings);
+          showSystemNotification(newBooking);
+
+          alert("Resort booking confirmed! Your itinerary will be received in 1 hour in your mail. If not received, contact +9609388008.");
+          closeBookingModal();
+        });
+
+      } else {
+        // Standard Excursion or Private Charter Form
+        bookingModal.innerHTML = `
+          <div class="modal-content-minimal" style="max-width: 460px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">${isPrivateCharter ? 'Book Private Charter' : 'Book Excursion & Service'}</h3>
+              <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
+            </div>
+            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Selected: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
+            <form id="booking-form-dynamic" style="display: flex; flex-direction: column; gap: 1rem;">
+              <input type="hidden" id="booking-excursion-id" value="${id}">
+              <input type="hidden" id="booking-excursion-title" value="${title}">
+              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;" ${isPrivateCharter ? 'checked disabled' : ''}>
+                <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
+              </div>
+
+              <div id="booking-type-container">
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
+                <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                  <option value="Individual">Individual Booking</option>
+                  <option value="Group">Group Booking</option>
+                </select>
+              </div>
+
+              <div id="booking-group-details" style="display: none; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; flex-direction: column; gap: 1rem;">
+                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Adults</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
+            </form>
+          </div>
+        `;
+
+        const closeBtn = bookingModal.querySelector('#close-booking-modal-btn');
+        closeBtn.addEventListener('click', closeBookingModal);
+
+        const privateCheck = bookingModal.querySelector('#booking-private');
+        const typeContainer = bookingModal.querySelector('#booking-type-container');
+        const typeSelect = bookingModal.querySelector('#booking-type');
+        const groupDetails = bookingModal.querySelector('#booking-group-details');
+        const kidsInput = bookingModal.querySelector('#booking-kids');
+        const kidsAgesGroup = bookingModal.querySelector('#booking-kids-ages-group');
+
+        const syncBookingTypeFields = () => {
+          const isPrivate = privateCheck.checked || isPrivateCharter;
+          if (isPrivate) {
+            typeSelect.value = 'Group';
+            typeContainer.style.display = 'none';
+            groupDetails.style.display = 'flex';
+          } else {
+            typeContainer.style.display = 'block';
+            groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
+          }
+        };
+
+        privateCheck.addEventListener('change', syncBookingTypeFields);
+        typeSelect.addEventListener('change', (e) => { groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none'; });
+        kidsInput.addEventListener('input', (e) => { kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none'; });
+
+        // Run sync initially for default check states
+        syncBookingTypeFields();
+
+        const form = bookingModal.querySelector('#booking-form-dynamic');
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const customerName = form.querySelector('#booking-name').value;
+          const contactNumber = form.querySelector('#booking-contact').value;
+          const emailId = form.querySelector('#booking-email').value;
+          const bookingDate = form.querySelector('#booking-date').value;
+
+          const isPrivate = privateCheck.checked || isPrivateCharter;
+          const bookingType = isPrivate ? 'Group' : typeSelect.value;
+          const isGroup = bookingType === 'Group';
+          const adults = isGroup ? (parseInt(form.querySelector('#booking-adults').value) || 1) : 1;
+          const kids = isGroup ? (parseInt(form.querySelector('#booking-kids').value) || 0) : 0;
+          const kidsAges = isGroup ? form.querySelector('#booking-kids-ages').value : '';
+
+          const newBooking = {
+            id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
+            customerContact: contactNumber, bookingDate, paymentBasis: 'N/A', bookingType, adults, kids, kidsAges,
+            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: 'Pending'
+          };
+
+          const currentBookings = getBookings();
+          currentBookings.push(newBooking);
+          await setBookings(currentBookings);
+          showSystemNotification(newBooking);
+
+          alert("Booking confirmed! Your itinerary will be received in 1 hour in your mail. If not received, contact +9609388008.");
+          closeBookingModal();
+        });
+      }
+
+      bookingModal.style.display = 'flex';
+    };
+
+    const closeBookingModal = () => { if (bookingModal) bookingModal.style.display = 'none'; };
+
+    // --- Contact Form Handler ---
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('contact-name').value.trim();
+        const email = document.getElementById('contact-email').value.trim();
+        const subject = document.getElementById('contact-subject').value.trim() || 'General Inquiry';
+        const message = document.getElementById('contact-message').value.trim();
+
+        if (!name || !email || !message) return;
+
+        const newMessage = {
+          id: 'cm-' + Date.now(),
+          name,
+          email,
+          subject,
+          message,
+          timestamp: new Date().toISOString(),
+          status: 'Unread'
+        };
+
+        const messages = getContactMessages();
+        messages.unshift(newMessage);
+        await setContactMessages(messages);
+
+        contactForm.reset();
+        const successEl = document.getElementById('contact-success');
+        if (successEl) {
+          successEl.style.display = 'block';
+          setTimeout(() => { successEl.style.display = 'none'; }, 5000);
+        }
+      });
+    }
+
+    // --- Password Gate Modals (Admin & Staff) ---
+    const adminGate = document.getElementById('admin-password-gate');
+    if (adminGate) {
+      const adminPassInput = document.getElementById('admin-password');
+      const adminSubmit = document.getElementById('admin-gate-submit');
+      const adminError = document.getElementById('admin-gate-error');
+
+      const triggerAdminUnlock = async () => {
+        const result = await api.post('auth/login', { role: 'admin', password: adminPassInput.value.trim() });
+        if (result && result.success) {
+          adminGate.style.display = 'none';
+          sessionStorage.setItem('admin_logged', 'true');
+          loadAdminPanel();
+        } else {
+          adminError.style.display = 'block';
+        }
+      };
+
+      adminSubmit.addEventListener('click', triggerAdminUnlock);
+      adminPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerAdminUnlock(); } });
+
+      if (sessionStorage.getItem('admin_logged') === 'true') {
+        adminGate.style.display = 'none';
+        loadAdminPanel();
+      }
+    }
+
+    const staffGate = document.getElementById('staff-password-gate');
+    if (staffGate) {
+      const staffPassInput = document.getElementById('staff-password');
+      const staffSubmit = document.getElementById('staff-gate-submit');
+      const staffError = document.getElementById('staff-gate-error');
+
+      const triggerStaffUnlock = async () => {
+        const result = await api.post('auth/login', { role: 'staff', password: staffPassInput.value.trim() });
+        if (result && result.success) {
+          staffGate.style.display = 'none';
+          sessionStorage.setItem('staff_logged', 'true');
+          loadStaffPanel();
+        } else {
+          staffError.style.display = 'block';
+        }
+      };
+
+      staffSubmit.addEventListener('click', triggerStaffUnlock);
+      staffPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerStaffUnlock(); } });
+
+      if (sessionStorage.getItem('staff_logged') === 'true') {
+        staffGate.style.display = 'none';
+        loadStaffPanel();
+      }
+    }
+
+    // --- Universal Admin & Staff Panel CRUD & tab handlers ---
+    function loadUniversalDashboard(role) {
+      const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
+      const bookingsTable = document.getElementById(tableId);
+
+      const filterExcursion = document.getElementById('filter-excursion');
+      const filterDate = document.getElementById('filter-date');
+      const filterPayment = document.getElementById('filter-payment');
+      const clearFilters = document.getElementById('clear-filters');
+
+      const populateExcursionFilter = () => {
+        if (!filterExcursion) return;
+        const excursions = getExcursions();
+        filterExcursion.innerHTML = '<option value="">All Excursions</option>';
+        excursions.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.title; opt.textContent = ex.title; filterExcursion.appendChild(opt); });
+      };
+      populateExcursionFilter();
+
+      const renderBookings = () => {
+        if (!bookingsTable) return;
+        let bookings = getBookings();
+        const exVal = filterExcursion ? filterExcursion.value : '';
+        const dateVal = filterDate ? filterDate.value : '';
+        const payVal = filterPayment ? filterPayment.value : '';
+        if (exVal) bookings = bookings.filter(b => b.excursionTitle === exVal);
+        if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
+        if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
+
+        if (bookings.length === 0) { bookingsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#94a3b8;">No bookings found.</td></tr>`; return; }
+        bookingsTable.innerHTML = bookings.map(b => `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <td style="padding: 1rem 0;"><strong style="color: #fff;">${b.customerName}</strong>${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}<div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div></td>
+            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div></td>
+            <td style="padding: 1rem 0;">${b.bookingDate}</td>
+            <td style="padding: 1rem 0;">${b.paymentBasis || 'Cash'}</td>
+            <td style="padding: 1rem 0; color: ${b.status === 'Confirmed' ? '#10b981' : '#f59e0b'};">${b.status}</td>
+            <td style="padding: 1rem 0;">
+              ${b.status === 'Pending' && role === 'admin' ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
+              <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
+              <button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>
+            </td>
+          </tr>
+        `).join('');
+
+        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await setBookings(list); renderBookings(); } }); });
+        document.querySelectorAll('.print-booking-btn').forEach(btn => { btn.addEventListener('click', (e) => printIndividualBooking(e.target.dataset.id)); });
+        document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const list = getBookings(); await setBookings(list.filter(item => item.id !== e.target.dataset.id)); renderBookings(); }); });
+      };
+
+      if (filterExcursion) filterExcursion.addEventListener('change', renderBookings);
+      if (filterDate) filterDate.addEventListener('change', renderBookings);
+      if (filterPayment) filterPayment.addEventListener('change', renderBookings);
+      if (clearFilters) { clearFilters.addEventListener('click', () => { if (filterExcursion) filterExcursion.value = ''; if (filterDate) filterDate.value = ''; if (filterPayment) filterPayment.value = ''; renderBookings(); }); }
+
+      const printFilteredListBtn = document.getElementById('print-filtered-list');
+      if (printFilteredListBtn) {
+        printFilteredListBtn.addEventListener('click', () => {
+          let bookings = getBookings();
+          const exVal = filterExcursion ? filterExcursion.value : '';
+          const dateVal = filterDate ? filterDate.value : '';
+          const payVal = filterPayment ? filterPayment.value : '';
+          if (exVal) bookings = bookings.filter(b => b.excursionTitle === exVal);
+          if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
+          if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
+          printFilteredList(bookings, `${role.toUpperCase()} Bookings Manifest`);
+        });
+      }
+
+      // File upload helpers
+      const getFileBase64 = (fileInput) => new Promise((resolve) => { if (!fileInput || !fileInput.files || fileInput.files.length === 0) { resolve(''); return; } const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => resolve(''); reader.readAsDataURL(fileInput.files[0]); });
+      const getMultipleFilesBase64 = (fileInput) => new Promise(async (resolve) => { if (!fileInput || !fileInput.files || fileInput.files.length === 0) { resolve([]); return; } const promises = Array.from(fileInput.files).map(file => new Promise((res) => { const reader = new FileReader(); reader.onload = () => res(reader.result); reader.onerror = () => res(''); reader.readAsDataURL(file); })); resolve((await Promise.all(promises)).filter(r => r !== '')); });
+
+      // --- Dynamic CRUD for Excursions, Private Bookings, Free Diving, Resorts ---
+      const registerCRUD = (type, getData, setData, listContainerId, formId, prefix) => {
+        const listContainer = document.getElementById(listContainerId);
+        const form = document.getElementById(formId);
+        if (!listContainer || !form) return;
+
+        if (prefix === 'resort') {
+          const dayVisitCheckbox = document.getElementById('resort-has-day-visit');
+          const dayVisitDetails = document.getElementById('resort-day-visit-details');
+          const dayVisitTypeSelect = document.getElementById('resort-day-visit-type');
+          const halfDayRates = document.getElementById('resort-half-day-rates');
+          const fullDayRates = document.getElementById('resort-full-day-rates');
+
+          const updateDayRatesVisibility = () => {
+            if (!dayVisitTypeSelect || !halfDayRates || !fullDayRates) return;
+            const val = dayVisitTypeSelect.value;
+            halfDayRates.style.display = (val === 'half_day' || val === 'both') ? 'flex' : 'none';
+            fullDayRates.style.display = (val === 'full_day' || val === 'both') ? 'flex' : 'none';
+          };
+
+          if (dayVisitCheckbox && dayVisitDetails) {
+            dayVisitCheckbox.addEventListener('change', (e) => {
+              dayVisitDetails.style.display = e.target.checked ? 'flex' : 'none';
+              updateDayRatesVisibility();
+            });
+          }
+          if (dayVisitTypeSelect) {
+            dayVisitTypeSelect.addEventListener('change', updateDayRatesVisibility);
+          }
+
+          const stayNightCheckbox = document.getElementById('resort-has-stay-night');
+          const stayNightDetails = document.getElementById('resort-stay-night-details');
+          if (stayNightCheckbox && stayNightDetails) { stayNightCheckbox.addEventListener('change', (e) => { stayNightDetails.style.display = e.target.checked ? 'block' : 'none'; }); }
+        }
+
+        const renderList = () => {
+          const list = getData();
+          listContainer.innerHTML = list.map(item => `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
+              <div><h4 style="color:#fff;">${item.title}</h4><p style="color:#38bdf8; font-size:0.9rem;">${prefix === 'resort' ? 'Resort Pass' : 'Duration: ' + item.duration}</p></div>
+              <div>
+                <button class="btn edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
+                <button class="btn delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
+              </div>
+            </div>
+          `).join('');
+
+          listContainer.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm(`Are you sure you want to delete this ${type}?`)) return; const items = getData().filter(x => x.id !== e.target.dataset.id); await setData(items); renderList(); populateExcursionFilter(); }); });
+          listContainer.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const item = getData().find(x => x.id === e.target.dataset.id);
+              if (!item) return;
+              document.getElementById(`${prefix}-id`).value = item.id;
+              const titleEl = document.getElementById(`${prefix}-title`); if (titleEl) titleEl.value = item.title || '';
+              const durationEl = document.getElementById(`${prefix}-duration`); if (durationEl) durationEl.value = item.duration || '';
+              const highlightsEl = document.getElementById(`${prefix}-highlights`); if (highlightsEl) highlightsEl.value = item.highlights || '';
+              const imageEl = document.getElementById(`${prefix}-image`); if (imageEl) imageEl.value = (item.image && !item.image.startsWith('data:')) ? item.image : '';
+              const videoEl = document.getElementById(`${prefix}-video`); if (videoEl) videoEl.value = (item.video && !item.video.startsWith('data:')) ? item.video : '';
+              const descEl = document.getElementById(`${prefix}-desc`); if (descEl) descEl.value = item.description || '';
+              const fullDescEl = document.getElementById(`${prefix}-full-desc`); if (fullDescEl) fullDescEl.value = item.fullDescription || '';
+              const subImagesEl = document.getElementById(`${prefix}-sub-images`);
+              if (subImagesEl) { const urls = []; if (item.image && !item.image.startsWith('data:')) urls.push(item.image); if (item.subImg1 && !item.subImg1.startsWith('data:')) urls.push(item.subImg1); if (item.subImg2 && !item.subImg2.startsWith('data:')) urls.push(item.subImg2); subImagesEl.value = urls.join(', '); }
+              if (prefix === 'ex') { document.getElementById('ex-lat').value = item.lat || '4.1755'; document.getElementById('ex-lng').value = item.lng || '73.5093'; document.getElementById('ex-map-link').value = item.mapLink || ''; }
+              if (prefix === 'resort') {
+                const hasDayVisitEl = document.getElementById('resort-has-day-visit'); if (hasDayVisitEl) { hasDayVisitEl.checked = !!item.hasDayVisit; hasDayVisitEl.dispatchEvent(new Event('change')); }
+                const dayVisitTypeEl = document.getElementById('resort-day-visit-type'); if (dayVisitTypeEl) { dayVisitTypeEl.value = item.dayVisitType || 'half_day'; dayVisitTypeEl.dispatchEvent(new Event('change')); }
+                document.getElementById('resort-day-half-std').value = item.dayHalfStd || ''; document.getElementById('resort-day-half-prem').value = item.dayHalfPrem || '';
+                document.getElementById('resort-day-full-std').value = item.dayFullStd || ''; document.getElementById('resort-day-full-prem').value = item.dayFullPrem || '';
+                const hasStayNightEl = document.getElementById('resort-has-stay-night'); if (hasStayNightEl) { hasStayNightEl.checked = !!item.hasStayNight; hasStayNightEl.dispatchEvent(new Event('change')); }
+                document.getElementById('resort-stay-std').value = item.stayStd || ''; document.getElementById('resort-stay-prem').value = item.stayPrem || '';
+              }
+              const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
+              const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
+              document.getElementById(`${prefix}-form-title`).textContent = `Edit ${type}`;
+              document.getElementById(`${prefix}-submit-btn`).textContent = `Save Changes`;
+              document.getElementById(`${prefix}-cancel-btn`).style.display = 'block';
+            });
+          });
+        };
+
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } };
+        const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
+
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const idVal = document.getElementById(`${prefix}-id`).value;
+          const list = getData();
+          const title = document.getElementById(`${prefix}-title`).value;
+          const imageFileEl = document.getElementById(`${prefix}-image-file`);
+          let image = ''; if (imageFileEl && imageFileEl.files && imageFileEl.files.length > 0) { image = await getFileBase64(imageFileEl); } else { image = document.getElementById(`${prefix}-image`).value; }
+          const videoFileEl = document.getElementById(`${prefix}-video-file`);
+          let video = ''; if (videoFileEl && videoFileEl.files && videoFileEl.files.length > 0) { video = await getFileBase64(videoFileEl); } else { video = document.getElementById(`${prefix}-video`) ? document.getElementById(`${prefix}-video`).value : ''; }
+          const subImagesFileEl = document.getElementById(`${prefix}-sub-images-file`);
+          let subImages = []; if (subImagesFileEl && subImagesFileEl.files && subImagesFileEl.files.length > 0) { subImages = await getMultipleFilesBase64(subImagesFileEl); } else { const rawSubStr = document.getElementById(`${prefix}-sub-images`) ? document.getElementById(`${prefix}-sub-images`).value : ''; subImages = rawSubStr.split(',').map(x => x.trim()).filter(x => x !== ''); }
+          const subImg1 = subImages[0] || ''; const subImg2 = subImages[1] || '';
+          const description = document.getElementById(`${prefix}-desc`).value;
+          const fullDescription = document.getElementById(`${prefix}-full-desc`) ? document.getElementById(`${prefix}-full-desc`).value : '';
+          const duration = document.getElementById(`${prefix}-duration`) ? document.getElementById(`${prefix}-duration`).value : 'Full Day';
+          const highlights = document.getElementById(`${prefix}-highlights`) ? document.getElementById(`${prefix}-highlights`).value : '';
+
+          const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
+          itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
+          const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
+          const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
+          itemData.kidAgeHalf = kidAgeHalf;
+          itemData.kidAgeFree = kidAgeFree;
+          if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; itemData.mapLink = document.getElementById('ex-map-link').value; }
+          if (prefix === 'resort') {
+            itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
+            itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
+            itemData.dayFullStd = document.getElementById('resort-day-full-std').value; itemData.dayFullPrem = document.getElementById('resort-day-full-prem').value;
+            itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value;
+            const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
+          }
+          if (!idVal) list.push(itemData);
+          await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
+        };
+        renderList();
+      };
+
+      registerCRUD('Excursion', getExcursions, setExcursions, 'admin-excursions-list', 'admin-add-excursion-form', 'ex');
+      registerCRUD('Private Excursion', getPrivate, setPrivate, 'admin-private-list', 'admin-add-private-form', 'private');
+      registerCRUD('Free Diving Option', getFreeDiving, setFreeDiving, 'admin-fd-list', 'admin-add-fd-form', 'fd');
+      registerCRUD('Resort Deal', getResorts, setResorts, 'admin-resorts-list', 'admin-add-resort-form', 'resort');
+
+      // --- Seasonal Offers Tab ---
+      const offerContainer = document.getElementById('admin-offer-status-container');
+      const renderOfferSection = () => {
+        if (!offerContainer) return;
+        const offer = getOffer();
+        if (offer && offer.title) {
+          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${offer.category || 'All Categories'}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
+          document.getElementById('admin-edit-offer-btn').addEventListener('click', () => showOfferForm(offer));
+          document.getElementById('admin-delete-offer-btn').addEventListener('click', async () => { if (confirm('Are you sure you want to delete this seasonal offer?')) { await api.del('offer'); dataCache.offer = {}; renderOfferSection(); } });
+        } else { showOfferForm(); }
+      };
+
+      const showOfferForm = (existingOffer = null) => {
+        if (!offerContainer) return;
+        offerContainer.innerHTML = `<form id="admin-offer-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;"><div class="form-group" style="grid-column: span 2; margin-bottom: 0;"><h4 style="color: #38bdf8; font-size: 1rem; font-weight: 600;">${existingOffer ? 'Edit Seasonal Offer Details' : 'Create New Seasonal Offer'}</h4></div><div class="form-group"><label for="offer-title">Offer Title</label><input type="text" id="offer-title" class="form-control" value="${existingOffer ? existingOffer.title : ''}" required></div><div class="form-group"><label for="offer-discount">Discount Tag / Badge</label><input type="text" id="offer-discount" class="form-control" value="${existingOffer ? existingOffer.discount : ''}" required></div><div class="form-group" style="grid-column: span 2;"><label for="offer-desc">Offer Description</label><textarea id="offer-desc" rows="3" class="form-control" required>${existingOffer ? existingOffer.description : ''}</textarea></div><div class="form-group"><label for="offer-category">Applies To Category</label><select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; border:1px solid rgba(255,255,255,0.1); width:100%; height:42px; border-radius:6px; padding:0 10px;"><option value="All" ${existingOffer && existingOffer.category === 'All' ? 'selected' : ''}>All Categories</option><option value="Excursion" ${existingOffer && existingOffer.category === 'Excursion' ? 'selected' : ''}>Excursions (02)</option><option value="Private Booking" ${existingOffer && existingOffer.category === 'Private Booking' ? 'selected' : ''}>Private Bookings (03)</option><option value="Free Diving" ${existingOffer && existingOffer.category === 'Free Diving' ? 'selected' : ''}>Free Diving (04)</option><option value="Resort" ${existingOffer && existingOffer.category === 'Resort' ? 'selected' : ''}>Resorts (05)</option></select></div><div class="form-group"><label for="offer-code">Promo Code</label><input type="text" id="offer-code" class="form-control" value="${existingOffer ? existingOffer.code : ''}"></div><div class="form-group" style="grid-column: span 2;"><label for="offer-validity">Validity Info</label><input type="text" id="offer-validity" class="form-control" value="${existingOffer ? existingOffer.validity : ''}" required></div><div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 0.5rem;"><button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Publish Seasonal Offer</button>${existingOffer ? `<button type="button" id="cancel-edit-offer-btn" class="btn" style="background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>` : ''}</div></form>`;
+        const offerForm = document.getElementById('admin-offer-form');
+        if (offerForm) { offerForm.addEventListener('submit', async (e) => { e.preventDefault(); await setOffer({ title: document.getElementById('offer-title').value, discount: document.getElementById('offer-discount').value, description: document.getElementById('offer-desc').value, category: document.getElementById('offer-category').value, code: document.getElementById('offer-code').value.toUpperCase(), validity: document.getElementById('offer-validity').value }); renderOfferSection(); alert('Seasonal offer published!'); }); }
+        const cancel = document.getElementById('cancel-edit-offer-btn'); if (cancel) cancel.addEventListener('click', renderOfferSection);
+      };
+      renderOfferSection();
+
+      // --- Testimonials Tab ---
+      const testimoniesList = document.getElementById('admin-testimonies-list');
+      const renderTestimonialsTab = () => {
+        if (!testimoniesList) return;
+        const list = getTestimonials();
+        testimoniesList.innerHTML = list.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border: 1px solid rgba(255,255,255,0.05);"><div style="flex: 1; margin-right: 1rem;"><h4 style="color:#fff;">${t.name} <span style="color:#fde047; font-size:0.85rem; margin-left:10px;">★ ${t.rating}</span></h4><p style="color:#94a3b8; font-size:0.9rem; margin-top:0.25rem;">"${t.text}"</p></div><div><button class="btn edit-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button><button class="btn delete-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button></div></div>`).join('');
+        testimoniesList.querySelectorAll('.delete-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this testimony?')) return; await setTestimonials(getTestimonials().filter(t => t.id !== e.target.dataset.id)); renderTestimonialsTab(); }); });
+        testimoniesList.querySelectorAll('.edit-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const t = getTestimonials().find(x => x.id === e.target.dataset.id); if (!t) return; const newName = prompt('Edit Name:', t.name); const newRating = prompt('Edit Rating (1-5):', t.rating); const newText = prompt('Edit Testimony:', t.text); if (newName && newRating && newText) { t.name = newName; t.rating = parseInt(newRating) || 5; t.text = newText; await setTestimonials(getTestimonials().map(x => x.id === t.id ? t : x)); renderTestimonialsTab(); } }); });
+      };
+
+      const addTestForm = document.getElementById('admin-add-testimony-form');
+      if (addTestForm) { addTestForm.onsubmit = async (e) => { e.preventDefault(); const all = getTestimonials(); all.push({ id: Date.now().toString(), name: document.getElementById('testimony-name').value, rating: parseInt(document.getElementById('testimony-rating').value), text: document.getElementById('testimony-text').value }); await setTestimonials(all); addTestForm.reset(); renderTestimonialsTab(); alert('Testimony added!'); }; }
+      renderTestimonialsTab();
+
+      // --- Google Review ---
+      const reviewInput = document.getElementById('google-review-url');
+      if (reviewInput) {
+        reviewInput.value = getGoogleReview();
+        const saveGoogleReviewBtn = document.getElementById('save-google-review-btn');
+        if (saveGoogleReviewBtn) { saveGoogleReviewBtn.addEventListener('click', async () => { await setGoogleReview(reviewInput.value); alert('Google Review link saved!'); }); }
+      }
+
+      // --- Media Assets Tab (Background Video Slider) ---
+      const heroVideosList = document.getElementById('admin-hero-videos-list');
+      const addHeroVideoBtn = document.getElementById('add-hero-video-btn');
+      const saveHeroVideosBtn = document.getElementById('save-hero-videos-btn');
+
+      // Local state for hero videos being edited in this panel session
+      let localHeroVideos = [...getHeroVideos()];
+
+      const renderHeroVideosManager = () => {
+        if (!heroVideosList) return;
+        if (localHeroVideos.length === 0) {
+          heroVideosList.innerHTML = `<div style="padding: 1rem; color: #94a3b8; text-align: center; background: rgba(255,255,255,0.01); border-radius: 8px;">No videos in the slider. Add at least one video to play in background.</div>`;
+          return;
+        }
+
+        heroVideosList.innerHTML = localHeroVideos.map((videoPath, idx) => `
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; min-width: 0;">
+              <span style="font-weight: 700; color: #38bdf8; font-size: 1.1rem;">#${idx + 1}</span>
+              <div style="position: relative; width: 140px; height: 80px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
+                <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
+                  <source src="${videoPath}" type="video/mp4">
+                </video>
+              </div>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Video Source</div>
+                <div style="font-family: monospace; font-size: 0.9rem; color: #cbd5e1; word-break: break-all; margin-top: 2px;">
+                  ${videoPath.startsWith('data:') ? 'Uploaded base64 video data' : videoPath}
+                </div>
+              </div>
+            </div>
+            <button class="btn delete-hero-vid-btn" data-index="${idx}" style="padding: 0.4rem 0.8rem; background: #ef4444; color: #fff; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
+          </div>
+        `).join('');
+
+        // Attach event listeners to delete buttons
+        heroVideosList.querySelectorAll('.delete-hero-vid-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const indexToDelete = parseInt(e.target.dataset.index);
+            localHeroVideos.splice(indexToDelete, 1);
+            renderHeroVideosManager();
+          });
+        });
+      };
+
+      // Add Video functionality
+      if (addHeroVideoBtn) {
+        addHeroVideoBtn.addEventListener('click', async () => {
+          const urlInput = document.getElementById('new-hero-video-url');
+          const fileInput = document.getElementById('new-hero-video-file');
+
+          let videoSource = '';
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            videoSource = await getFileBase64(fileInput);
+          } else if (urlInput) {
+            videoSource = urlInput.value.trim();
+          }
+
+          if (videoSource) {
+            localHeroVideos.push(videoSource);
+            renderHeroVideosManager();
+            if (urlInput) urlInput.value = '';
+            if (fileInput) fileInput.value = '';
+          } else {
+            alert('Please specify a video URL or upload a file first.');
+          }
+        });
+      }
+
+      // Save changes to database / cache / backend
+      if (saveHeroVideosBtn) {
+        saveHeroVideosBtn.addEventListener('click', async () => {
+          if (localHeroVideos.length === 0) {
+            alert('Please add at least one video to save.');
+            return;
+          }
+          await setHeroVideos(localHeroVideos);
+          initGlobalHeroVideo();
+          alert('Hero background video slider changes saved successfully!');
+        });
+      }
+
+      // Reels Management
+      const reelsList = document.getElementById('admin-reels-list');
+      const addReelBtn = document.getElementById('add-reel-btn');
+      const renderReelsManager = () => {
+        if (!reelsList) return;
+        const list = getReels();
+        reelsList.innerHTML = list.map((reel, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${reel.image.startsWith('data:video') || reel.image.endsWith('.mp4') || reel.image.includes('video') ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`).join('');
+        reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });
+      };
+      if (addReelBtn) { addReelBtn.addEventListener('click', async () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); await setReels(reels); renderReelsManager(); }); }
+      const saveReelsBtn = document.getElementById('save-reels-btn');
+      if (saveReelsBtn) { saveReelsBtn.addEventListener('click', async () => { const reels = getReels(); for (let el of Array.from(document.querySelectorAll('.reel-file-input'))) { const reel = reels.find(x => x.id === el.dataset.id); if (reel && el.files && el.files.length > 0) { reel.image = await getFileBase64(el); } } await setReels(reels); renderReelsManager(); alert('Reels updated!'); }); }
+      renderReelsManager();
+
+      // Gallery Videos Management
+      const galleryListEl = document.getElementById('admin-gallery-list');
+      const addGalleryBtn = document.getElementById('add-gallery-btn');
+      const renderGalleryManager = () => {
+        if (!galleryListEl) return;
+        const list = getGallery();
+        galleryListEl.innerHTML = list.map((item, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom:1rem; position: relative;"><button class="delete-gallery-btn" data-id="${item.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete Card</button><h4 style="color:#fff; margin-bottom:1rem;">Gallery Card ${idx + 1}</h4><div style="display:grid; grid-template-columns: 1fr 1fr 1fr 150px; gap:1rem;"><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Title</label><input type="text" class="form-control gal-title" data-id="${item.id}" value="${item.title}"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Preview Image (Direct Upload)</label><input type="file" class="form-control gal-img-file" data-id="${item.id}" accept="image/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Video File (Direct Upload)</label><input type="file" class="form-control gal-vid-file" data-id="${item.id}" accept="video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Aspect Ratio</label><select class="form-control gal-ratio" data-id="${item.id}" style="background:#080d1a; color:#fff; height:42px;"><option value="16:9" ${item.aspectRatio === '9:16' ? '' : 'selected'}>16:9 (Standard)</option><option value="9:16" ${item.aspectRatio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option></select></div></div></div>`).join('');
+        galleryListEl.querySelectorAll('.delete-gallery-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this gallery card?')) return; await setGallery(getGallery().filter(x => x.id !== e.target.dataset.id)); renderGalleryManager(); }); });
+      };
+      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: 'back.mp4', aspectRatio: '16:9' }); await setGallery(gallery); renderGalleryManager(); }); }
+      const saveGalleryBtn = document.getElementById('save-gallery-btn');
+      if (saveGalleryBtn) { saveGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); for (let input of Array.from(document.querySelectorAll('.gal-title'))) { const item = gallery.find(x => x.id === input.dataset.id); if (item) { item.title = input.value; const imgFile = document.querySelector(`.gal-img-file[data-id="${item.id}"]`); if (imgFile && imgFile.files && imgFile.files.length > 0) { item.image = await getFileBase64(imgFile); } const vidFile = document.querySelector(`.gal-vid-file[data-id="${item.id}"]`); if (vidFile && vidFile.files && vidFile.files.length > 0) { item.video = await getFileBase64(vidFile); } const ratioInput = document.querySelector(`.gal-ratio[data-id="${item.id}"]`); if (ratioInput) { item.aspectRatio = ratioInput.value || '16:9'; } } } await setGallery(gallery); renderGalleryManager(); alert('Gallery videos updated!'); }); }
+      renderGalleryManager();
+
+      // Finally render bookings (FIXED: no longer trapped in reviewInput block)
+      renderBookings();
+
+      let lastBookingIds = new Set(getBookings().map(b => b.id));
+      const pollForNewBookings = async () => {
+        const latest = await api.get('bookings') || [];
+        const newBookings = latest.filter(b => !lastBookingIds.has(b.id));
+        if (newBookings.length > 0) {
+          newBookings.forEach(b => {
+            showSystemNotification(b);
+            showToastNotification(b);
+            lastBookingIds.add(b.id);
+          });
+          renderBookings();
+        }
+      };
+
+      const pollInterval = setInterval(pollForNewBookings, 4000);
+      window.addEventListener('blur', () => clearInterval(pollInterval));
+
+      // --- Contact Messages Tab Rendering ---
+      const contactMsgTable = document.getElementById('admin-contact-messages-table');
+      const contactMsgEmpty = document.getElementById('admin-no-messages');
+      const contactMsgBadge = document.getElementById('contact-msg-badge');
+
+      const renderContactMessages = () => {
+        if (!contactMsgTable) return;
+        const messages = getContactMessages();
+
+        // Update badge
+        const unreadCount = messages.filter(m => m.status === 'Unread').length;
+        if (contactMsgBadge) {
+          if (unreadCount > 0) {
+            contactMsgBadge.textContent = unreadCount;
+            contactMsgBadge.style.display = 'inline-block';
+          } else {
+            contactMsgBadge.style.display = 'none';
+          }
+        }
+
+        if (messages.length === 0) {
+          contactMsgTable.innerHTML = '';
+          if (contactMsgEmpty) contactMsgEmpty.style.display = 'block';
+          return;
+        }
+        if (contactMsgEmpty) contactMsgEmpty.style.display = 'none';
+
+        contactMsgTable.innerHTML = messages.map(m => {
+          const date = new Date(m.timestamp);
+          const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const isUnread = m.status === 'Unread';
+          const isResponded = m.status === 'Responded';
+          
+          let statusBadgeColor = 'rgba(168, 85, 247, 0.15)';
+          let statusTextColor = '#a855f7';
+          if (m.status === 'Read') {
+            statusBadgeColor = 'rgba(59, 130, 246, 0.15)';
+            statusTextColor = '#3b82f6';
+          } else if (m.status === 'Responded') {
+            statusBadgeColor = 'rgba(16, 185, 129, 0.15)';
+            statusTextColor = '#10b981';
+          }
+
+          return `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); ${isUnread ? 'background: rgba(168, 85, 247, 0.05);' : ''}">
+              <td style="padding: 1rem 0;">
+                <strong style="color: #fff;">${m.name}</strong>
+                ${isUnread ? '<span style="display:inline-block; width:8px; height:8px; background:#a855f7; border-radius:50%; margin-left:6px; vertical-align:middle;"></span>' : ''}
+                <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">${m.email}</div>
+              </td>
+              <td style="padding: 1rem 0; color: #cbd5e1; font-weight: 600;">${m.subject || 'General Inquiry'}</td>
+              <td style="padding: 1rem 0; color: #94a3b8; font-size: 0.85rem; max-width: 300px;"><div style="overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${m.message}</div></td>
+              <td style="padding: 1rem 0; color: #64748b; font-size: 0.85rem; white-space: nowrap;">${timeStr}</td>
+              <td style="padding: 1rem 0;">
+                <span style="display:inline-block; background:${statusBadgeColor}; color:${statusTextColor}; padding:0.2rem 0.6rem; border-radius:4px; font-size:0.8rem; font-weight:600;">${m.status}</span>
+              </td>
+              <td style="padding: 1rem 0;">
+                ${isUnread ? `<button class="btn mark-read-msg" data-id="${m.id}" style="padding:0.25rem 0.6rem; background:#3b82f6; color:#fff; font-size:0.78rem; margin-right:5px;"><i class="fa-solid fa-check" style="margin-right:3px;"></i>Read</button>` : ''}
+                ${!isResponded ? `<button class="btn mark-responded-msg" data-id="${m.id}" style="padding:0.25rem 0.6rem; background:#10b981; color:#fff; font-size:0.78rem; margin-right:5px;"><i class="fa-solid fa-reply" style="margin-right:3px;"></i>Responded</button>` : ''}
+                <button class="btn reply-msg" data-email="${m.email}" data-name="${m.name}" style="padding:0.25rem 0.6rem; background:#64748b; color:#fff; font-size:0.78rem; margin-right:5px;"><i class="fa-solid fa-envelope" style="margin-right:3px;"></i>Reply</button>
+                ${role === 'admin' ? `<button class="btn delete-msg" data-id="${m.id}" style="padding:0.25rem 0.6rem; background:#ef4444; color:#fff; font-size:0.78rem;"><i class="fa-solid fa-trash" style="margin-right:3px;"></i></button>` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Event listeners for message actions
+        contactMsgTable.querySelectorAll('.mark-read-msg').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const msgs = getContactMessages();
+            const found = msgs.find(m => m.id === e.currentTarget.dataset.id);
+            if (found) { found.status = 'Read'; await setContactMessages(msgs); renderContactMessages(); }
+          });
+        });
+
+        contactMsgTable.querySelectorAll('.mark-responded-msg').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const msgs = getContactMessages();
+            const found = msgs.find(m => m.id === e.currentTarget.dataset.id);
+            if (found) { found.status = 'Responded'; await setContactMessages(msgs); renderContactMessages(); }
+          });
+        });
+
+        contactMsgTable.querySelectorAll('.reply-msg').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const email = e.currentTarget.dataset.email;
+            const name = e.currentTarget.dataset.name;
+            // Also mark as Responded on reply click
+            const msgs = getContactMessages();
+            const found = msgs.find(m => m.email === email);
+            if (found && found.status !== 'Responded') { found.status = 'Responded'; await setContactMessages(msgs); renderContactMessages(); }
+            window.open(`mailto:${email}?subject=Re: Your inquiry to Travelscape Maldives&body=Dear ${name},%0D%0A%0D%0AThank you for reaching out to Travelscape Maldives.%0D%0A%0D%0A`, '_blank');
+          });
+        });
+
+        contactMsgTable.querySelectorAll('.delete-msg').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (role !== 'admin') return;
+            if (!confirm('Delete this message?')) return;
+            const msgs = getContactMessages().filter(m => m.id !== e.currentTarget.dataset.id);
+            await setContactMessages(msgs);
+            renderContactMessages();
+          });
+        });
+      };
+
+      // Mark all read button
+      const markAllReadBtn = document.getElementById('mark-all-read-btn');
+      if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', async () => {
+          const msgs = getContactMessages();
+          msgs.forEach(m => { if (m.status === 'Unread') m.status = 'Read'; });
+          await setContactMessages(msgs);
+          renderContactMessages();
+        });
+      }
+
+      // Clear all messages button
+      const clearAllMsgBtn = document.getElementById('clear-all-messages-btn');
+      if (clearAllMsgBtn) {
+        if (role === 'admin') {
+          clearAllMsgBtn.style.display = 'inline-block';
+          clearAllMsgBtn.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to delete ALL contact messages?')) return;
+            await setContactMessages([]);
+            renderContactMessages();
+          });
+        } else {
+          clearAllMsgBtn.style.display = 'none';
+        }
+      }
+
+      // Initial render
+      renderContactMessages();
+
+      // Poll for new contact messages
+      let lastContactMsgIds = new Set(getContactMessages().map(m => m.id));
+      const pollForNewMessages = async () => {
+        const latest = await api.get('contact_messages') || [];
+        dataCache.contactMessages = latest;
+        const newMessages = latest.filter(m => !lastContactMsgIds.has(m.id));
+        if (newMessages.length > 0) {
+          newMessages.forEach(m => {
+            showContactSystemNotification(m);
+            showContactToastNotification(m);
+            lastContactMsgIds.add(m.id);
+          });
+          renderContactMessages();
+        }
+      };
+
+      const contactPollInterval = setInterval(pollForNewMessages, 4000);
+      window.addEventListener('blur', () => clearInterval(contactPollInterval));
+    }
+
+    function loadAdminPanel() { loadUniversalDashboard('admin'); }
+    function loadStaffPanel() { loadUniversalDashboard('staff'); }
+
+    // --- 3D Parallax Tilt Effect ---
+    function apply3DTilt(selector, maxTilt = 15) {
+      document.querySelectorAll(selector).forEach(card => {
+        card.addEventListener('mousemove', (e) => { const rect = card.getBoundingClientRect(); const rotateY = ((e.clientX - rect.left) / rect.width - 0.5) * maxTilt; const rotateX = (0.5 - (e.clientY - rect.top) / rect.height) * maxTilt; card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`; });
+        card.addEventListener('mouseleave', () => { card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)'; });
+      });
+    }
+    apply3DTilt('.reel-card', 15);
+    apply3DTilt('.offer-card', 6);
+
+    // --- Global Scroll Fade for Background Videos & Hero Elements ---
+    window.addEventListener('scroll', () => {
+      const opacity = Math.max(0, 1 - (window.scrollY / 400));
+
+      // 1. Fade the hero text & animation if on homepage
+      const layer1Content = document.querySelector('.intro-layer .layer-content');
+      const layer1Boat = document.querySelector('.hero-animation-container');
+      if (layer1Content) layer1Content.style.opacity = opacity;
+      if (layer1Boat) layer1Boat.style.opacity = opacity;
+
+      // 2. Fade/Hide homepage video slider
+      const videoSlider = document.getElementById('hero-video-slider');
+      if (videoSlider) {
+        videoSlider.style.opacity = opacity;
+        videoSlider.style.display = opacity === 0 ? 'none' : 'block';
+      }
+
+      // 3. Fade/Hide static background videos on other pages
+      document.querySelectorAll('.global-hero-video').forEach(vid => {
+        vid.style.opacity = opacity * 0.5; // Maintain original max opacity of 0.5
+        vid.style.display = opacity === 0 ? 'none' : 'block';
+      });
+    });
+
+  } // end initApp
+
+});

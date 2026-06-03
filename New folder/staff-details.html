@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Crew | Travelscape Maldives</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Architects+Daughter&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .crew-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      max-width: 1100px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .crew-card {
+      background: #121824;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+    .crew-img {
+      height: 300px;
+      background-size: cover;
+      background-position: center;
+    }
+    .crew-body {
+      padding: 1.5rem;
+      color: #94a3b8;
+    }
+    .crew-name {
+      color: #fff;
+      font-size: 1.3rem;
+      margin-bottom: 0.25rem;
+    }
+    .crew-role {
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+    .crew-lic {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 5px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body class="parallax-body">
+
+  <!-- Global Full-Page Video Background -->
+  <video autoplay loop muted playsinline class="global-hero-video">
+    <source src="back.mp4" type="video/mp4">
+  </video>
+
+  <!-- Top Left Header Logo (Glass Island) -->
+  <header class="top-left-header glass-island">
+    <img src="1.png" alt="Logo" class="header-logo-img">
+    <div class="header-text-container">
+      <span class="logo-text">TRAVELSCAPE</span>
+      <span class="logo-subtext">MALDIVES</span>
+    </div>
+  </header>
+
+  <!-- Right Side Island Menu -->
+  <div class="right-side-island-menu">
+    <div class="island-nav-links">
+      <a href="index.html">Home</a>
+      <a href="excursions.html">Excursions</a>
+      <a href="private.html">Private Trips</a>
+      <a href="freediving.html">Freediving</a>
+      <a href="resorts.html">Resorts</a>
+      <div class="dropdown">
+        <button class="dropbtn" style="color: #38bdf8;">More <i class="arrow down"></i></button>
+        <div class="dropdown-content">
+          <a href="about.html">About Us</a>
+          <a href="staff-details.html" style="color: #38bdf8; font-weight: 700;">Crew</a>
+          <a href="contact.html">Contact</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="admin.html">Admin Dashboard</a>
+          <a href="staff.html">Staff Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parallax Scroll Container -->
+  <div class="parallax-scroll-container">
+
+    <!-- Layer 1: Hero -->
+    <section class="parallax-layer layer-1 intro-layer">
+      <div class="layer-content align-left" style="position: relative; z-index: 2;">
+        <p class="tag">01 // TEAM</p>
+        <h1 class="giant-title">Meet Our Crew</h1>
+        <p class="desc">
+          PADI certified divemasters, local guides, and licensed boat skippers.
+        </p>
+      </div>
+    </section>
+
+    <!-- Layer 2: Content (Slides over Hero) -->
+    <section class="parallax-layer layer-4">
+      <div class="layer-content full-width">
+
+        <div class="crew-grid">
+          <div class="crew-card">
+            <div class="crew-img" style="background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80');"></div>
+            <div class="crew-body">
+              <h3 class="crew-name">Captain Ibrahim Ali</h3>
+              <p class="crew-role">Senior Boat Captain / Skipper</p>
+              <p>Ibrahim has navigated Maldivian waters for over 15 years. He specializes in spotting migrating mantas and dolphin pods.</p>
+              <div style="margin-top: 1rem;">
+                <span class="crew-lic">Maldivian Coast Guard Master License</span>
+                <span class="crew-lic">First Aid CPR</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crew-card">
+            <div class="crew-img" style="background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80');"></div>
+            <div class="crew-body">
+              <h3 class="crew-name">Aishath Nazeer</h3>
+              <p class="crew-role">Marine Biologist & Divemaster Guide</p>
+              <p>Aisha holds a master's in marine ecology and leads snorkeling safaris, educating guests on reef preservation.</p>
+              <div style="margin-top: 1rem;">
+                <span class="crew-lic">PADI Divemaster</span>
+                <span class="crew-lic">Reef Conservation Specialist</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crew-card">
+            <div class="crew-img" style="background-image: url('https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80');"></div>
+            <div class="crew-body">
+              <h3 class="crew-name">Hassan Waheed</h3>
+              <p class="crew-role">Local Excursion Coordinator</p>
+              <p>A native of Maafushi, Hassan loves guiding sandbank picnics and showing guests Maldivian culture on local island walks.</p>
+              <div style="margin-top: 1rem;">
+                <span class="crew-lic">Local Guide License</span>
+                <span class="crew-lic">Water Rescue Certified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="parallax-footer">
+          <div class="footer-grid">
+            <div class="footer-col">
+              <h4>Travelscape Maldives</h4>
+              <p>Crafting unforgettable Maldivian adventures and premium private excursions.</p>
+            </div>
+            <div class="footer-col">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="excursions.html">Excursions</a></li>
+                <li><a href="private.html">Private Trips</a></li>
+                <li><a href="freediving.html">Freediving</a></li>
+                <li><a href="resorts.html">Resorts</a></li>
+              </ul>
+            </div>
+            <div class="footer-col">
+              <h4>Contact Us</h4>
+              <ul>
+                <li><a href="https://maps.google.com/?q=Maafushi+Maldives" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Maafushi, Kaafu Atoll, Maldives</a></li>
+                <li><a href="mailto:travelscape.mv@gmail.com"><i class="fa-solid fa-envelope"></i> travelscape.mv@gmail.com</a></li>
+                <li><a href="tel:+9609388008"><i class="fa-solid fa-phone"></i> +960 938 8008</a></li>
+                <li><a href="https://instagram.com/travelscapemaldives" target="_blank"><i class="fa-brands fa-instagram"></i> @travelscapemaldives</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 Travelscape Maldives. All Rights Reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
