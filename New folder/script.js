@@ -619,6 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
           videoEl.appendChild(sourceEl);
 
           sliderContainer.appendChild(videoEl);
+          videoEl.muted = true;
+          videoEl.play().catch(err => console.warn('Hero video play blocked:', err));
           slideElements.push(videoEl);
         });
 
@@ -634,13 +636,22 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         // Fallback for pages with static video backgrounds
         const activeVideo = videos[0] || getHeroVideo();
-        document.querySelectorAll('.global-hero-video').forEach(vid => {
-          const source = vid.querySelector('source');
-          if (source && source.getAttribute('src') !== activeVideo) {
-            source.setAttribute('src', activeVideo);
-            vid.load();
-          }
-        });
+        if (activeVideo) {
+          document.querySelectorAll('.global-hero-video').forEach(vid => {
+            let source = vid.querySelector('source');
+            if (!source) {
+              source = document.createElement('source');
+              source.type = 'video/mp4';
+              vid.appendChild(source);
+            }
+            if (source.getAttribute('src') !== activeVideo) {
+              source.setAttribute('src', activeVideo);
+              vid.load();
+              vid.muted = true;
+              vid.play().catch(e => console.warn('Static video autoplay blocked:', e));
+            }
+          });
+        }
       }
     };
     // Store reference for background refresh
@@ -1883,6 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
       const bookingsTable = document.getElementById(tableId);
 
+      const filterPackageType = document.getElementById('filter-package-type');
       const filterExcursion = document.getElementById('filter-excursion');
       const filterDate = document.getElementById('filter-date');
       const filterPayment = document.getElementById('filter-payment');
@@ -1890,9 +1902,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const populateExcursionFilter = () => {
         if (!filterExcursion) return;
-        const excursions = getExcursions();
-        filterExcursion.innerHTML = '<option value="">All Excursions</option>';
-        excursions.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.title; opt.textContent = ex.title; filterExcursion.appendChild(opt); });
+        const typeVal = filterPackageType ? filterPackageType.value : '';
+        filterExcursion.innerHTML = '<option value="">All Packages</option>';
+        
+        let list = [];
+        if (!typeVal || typeVal === 'Excursions') list = list.concat(getExcursions());
+        if (!typeVal || typeVal === 'Private Charters') list = list.concat(getPrivate());
+        if (!typeVal || typeVal === 'Free Diving') list = list.concat(getFreeDiving());
+        if (!typeVal || typeVal === 'Resorts') list = list.concat(getResorts());
+
+        list.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.title; opt.textContent = ex.title; filterExcursion.appendChild(opt); });
       };
       populateExcursionFilter();
 
@@ -1910,9 +1929,22 @@ document.addEventListener('DOMContentLoaded', () => {
           totalAmountEl.textContent = `$${totalSum.toFixed(2)}`;
         }
 
+        const typeVal = filterPackageType ? filterPackageType.value : '';
         const exVal = filterExcursion ? filterExcursion.value : '';
         const dateVal = filterDate ? filterDate.value : '';
         const payVal = filterPayment ? filterPayment.value : '';
+        
+        if (typeVal) {
+          bookings = bookings.filter(b => {
+            const id = b.excursionId || '';
+            let group = '';
+            if (id.startsWith('ex') || getExcursions().some(x => x.id === id)) group = 'Excursions';
+            else if (id.startsWith('p') || getPrivate().some(x => x.id === id)) group = 'Private Charters';
+            else if (id.startsWith('fd') || getFreeDiving().some(x => x.id === id)) group = 'Free Diving';
+            else if (id.startsWith('rs') || getResorts().some(x => x.id === id)) group = 'Resorts';
+            return group === typeVal;
+          });
+        }
         if (exVal) bookings = bookings.filter(b => b.excursionTitle === exVal);
         if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
         if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
@@ -1943,18 +1975,46 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const list = getBookings(); await setBookings(list.filter(item => item.id !== e.target.dataset.id)); renderBookings(); }); });
       };
 
+      if (filterPackageType) {
+        filterPackageType.addEventListener('change', () => {
+          populateExcursionFilter();
+          renderBookings();
+        });
+      }
       if (filterExcursion) filterExcursion.addEventListener('change', renderBookings);
       if (filterDate) filterDate.addEventListener('change', renderBookings);
       if (filterPayment) filterPayment.addEventListener('change', renderBookings);
-      if (clearFilters) { clearFilters.addEventListener('click', () => { if (filterExcursion) filterExcursion.value = ''; if (filterDate) filterDate.value = ''; if (filterPayment) filterPayment.value = ''; renderBookings(); }); }
-
+      if (clearFilters) {
+        clearFilters.addEventListener('click', () => {
+          if (filterPackageType) filterPackageType.value = '';
+          populateExcursionFilter();
+          if (filterExcursion) filterExcursion.value = '';
+          if (filterDate) filterDate.value = '';
+          if (filterPayment) filterPayment.value = '';
+          renderBookings();
+        });
+      }
+ 
       const printFilteredListBtn = document.getElementById('print-filtered-list');
       if (printFilteredListBtn) {
         printFilteredListBtn.addEventListener('click', () => {
           let bookings = getBookings();
+          const typeVal = filterPackageType ? filterPackageType.value : '';
           const exVal = filterExcursion ? filterExcursion.value : '';
           const dateVal = filterDate ? filterDate.value : '';
           const payVal = filterPayment ? filterPayment.value : '';
+          
+          if (typeVal) {
+            bookings = bookings.filter(b => {
+              const id = b.excursionId || '';
+              let group = '';
+              if (id.startsWith('ex') || getExcursions().some(x => x.id === id)) group = 'Excursions';
+              else if (id.startsWith('p') || getPrivate().some(x => x.id === id)) group = 'Private Charters';
+              else if (id.startsWith('fd') || getFreeDiving().some(x => x.id === id)) group = 'Free Diving';
+              else if (id.startsWith('rs') || getResorts().some(x => x.id === id)) group = 'Resorts';
+              return group === typeVal;
+            });
+          }
           if (exVal) bookings = bookings.filter(b => b.excursionTitle === exVal);
           if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
           if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
@@ -2102,7 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const fullDescEl = document.getElementById(`${prefix}-full-desc`); if (fullDescEl) fullDescEl.value = item.fullDescription || '';
               const subImagesEl = document.getElementById(`${prefix}-sub-images`);
               if (subImagesEl) { const urls = []; if (item.image && !item.image.startsWith('data:')) urls.push(item.image); if (item.subImg1 && !item.subImg1.startsWith('data:')) urls.push(item.subImg1); if (item.subImg2 && !item.subImg2.startsWith('data:')) urls.push(item.subImg2); subImagesEl.value = urls.join(', '); }
-              if (prefix === 'ex') { document.getElementById('ex-lat').value = item.lat || '4.1755'; document.getElementById('ex-lng').value = item.lng || '73.5093'; document.getElementById('ex-map-link').value = item.mapLink || ''; }
+              if (prefix === 'ex') { document.getElementById('ex-lat').value = item.lat || '4.1755'; document.getElementById('ex-lng').value = item.lng || '73.5093'; const mapLinkEl = document.getElementById('ex-map-link'); if (mapLinkEl) mapLinkEl.value = item.mapLink || ''; }
               if (prefix === 'resort') {
                 const hasDayVisitEl = document.getElementById('resort-has-day-visit'); if (hasDayVisitEl) { hasDayVisitEl.checked = !!item.hasDayVisit; hasDayVisitEl.dispatchEvent(new Event('change')); }
                 const dayVisitTypeEl = document.getElementById('resort-day-visit-type'); if (dayVisitTypeEl) { dayVisitTypeEl.value = item.dayVisitType || 'half_day'; dayVisitTypeEl.dispatchEvent(new Event('change')); }
@@ -2175,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.kidAgeHalf = kidAgeHalf;
             itemData.kidAgeFree = kidAgeFree;
             itemData.maxCapacity = maxCapacity;
-            if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; itemData.mapLink = document.getElementById('ex-map-link').value; }
+            if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
             if (prefix === 'resort') {
               itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
               itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
@@ -2210,7 +2270,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const offer = getOffer();
         if (offer && offer.title) {
           const appliesToDisplay = Array.isArray(offer.category) ? offer.category.join(', ') : (offer.category || 'All Categories');
-          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
+          const subcatDisplay = offer.subcategory ? ` (${offer.subcategory})` : '';
+          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
           document.getElementById('admin-edit-offer-btn').addEventListener('click', () => showOfferForm(offer));
           document.getElementById('admin-delete-offer-btn').addEventListener('click', async () => { if (confirm('Are you sure you want to delete this seasonal offer?')) { await api.del('offer'); dataCache.offer = {}; renderOfferSection(); } });
         } else { showOfferForm(); }
@@ -2218,10 +2279,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const showOfferForm = (existingOffer = null) => {
         if (!offerContainer) return;
-        offerContainer.innerHTML = `<form id="admin-offer-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;"><div class="form-group" style="grid-column: span 2; margin-bottom: 0;"><h4 style="color: #38bdf8; font-size: 1rem; font-weight: 600;">${existingOffer ? 'Edit Seasonal Offer Details' : 'Create New Seasonal Offer'}</h4></div><div class="form-group"><label for="offer-title">Offer Title</label><input type="text" id="offer-title" class="form-control" value="${existingOffer ? existingOffer.title : ''}" required></div><div class="form-group"><label for="offer-discount">Discount Tag / Badge</label><input type="text" id="offer-discount" class="form-control" value="${existingOffer ? existingOffer.discount : ''}" required></div><div class="form-group" style="grid-column: span 2;"><label for="offer-desc">Offer Description</label><textarea id="offer-desc" rows="3" class="form-control" required>${existingOffer ? existingOffer.description : ''}</textarea></div><div class="form-group"><label>Applies To Category</label><div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">${['All', 'Excursion', 'Private Booking', 'Free Diving', 'Resort'].map(cat => { const isChecked = existingOffer ? (Array.isArray(existingOffer.category) ? existingOffer.category.includes(cat) : existingOffer.category === cat) : (cat === 'All'); return `<label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="offer-category-checkbox" value="${cat}" ${isChecked ? 'checked' : ''}>${cat === 'All' ? 'All Categories' : cat}</label>`; }).join('')}</div></div><div class="form-group"><label for="offer-code">Promo Code</label><input type="text" id="offer-code" class="form-control" value="${existingOffer ? existingOffer.code : ''}"></div><div class="form-group" style="grid-column: span 2;"><label for="offer-validity">Validity Info</label><input type="text" id="offer-validity" class="form-control" value="${existingOffer ? existingOffer.validity : ''}" required></div><div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 0.5rem;"><button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Publish Seasonal Offer</button>${existingOffer ? `<button type="button" id="cancel-edit-offer-btn" class="btn" style="background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>` : ''}</div></form>`;
+        const offerCat = existingOffer ? (Array.isArray(existingOffer.category) ? existingOffer.category[0] : existingOffer.category) : 'All';
+        const offerSub = existingOffer ? existingOffer.subcategory : '';
+
+        offerContainer.innerHTML = `
+          <form id="admin-offer-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+              <h4 style="color: #38bdf8; font-size: 1rem; font-weight: 600;">${existingOffer ? 'Edit Seasonal Offer Details' : 'Create New Seasonal Offer'}</h4>
+            </div>
+            <div class="form-group">
+              <label for="offer-title">Offer Name / Title</label>
+              <input type="text" id="offer-title" class="form-control" value="${existingOffer ? existingOffer.title : ''}" required>
+            </div>
+            <div class="form-group">
+              <label for="offer-discount">Discount Tag / Badge</label>
+              <input type="text" id="offer-discount" class="form-control" value="${existingOffer ? existingOffer.discount : ''}" required>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="offer-desc">Offer Description</label>
+              <textarea id="offer-desc" rows="3" class="form-control" required>${existingOffer ? existingOffer.description : ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label for="offer-category">Applied Category</label>
+              <select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <option value="All" ${offerCat === 'All' ? 'selected' : ''}>All Categories</option>
+                <option value="Excursion" ${offerCat === 'Excursion' ? 'selected' : ''}>Excursion</option>
+                <option value="Private Booking" ${offerCat === 'Private Booking' ? 'selected' : ''}>Private Booking</option>
+                <option value="Free Diving" ${offerCat === 'Free Diving' ? 'selected' : ''}>Free Diving</option>
+                <option value="Resort" ${offerCat === 'Resort' ? 'selected' : ''}>Resort</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
+              <select id="offer-subcategory" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <option value="">All Items</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="offer-code">Promo Code</label>
+              <input type="text" id="offer-code" class="form-control" value="${existingOffer ? existingOffer.code : ''}">
+            </div>
+            <div class="form-group">
+              <label for="offer-validity">Validity Info</label>
+              <input type="text" id="offer-validity" class="form-control" value="${existingOffer ? existingOffer.validity : ''}" required>
+            </div>
+            <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 0.5rem;">
+              <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Publish Seasonal Offer</button>
+              ${existingOffer ? `<button type="button" id="cancel-edit-offer-btn" class="btn" style="background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>` : ''}
+            </div>
+          </form>
+        `;
+
+        const categorySelect = document.getElementById('offer-category');
+        const subcategorySelect = document.getElementById('offer-subcategory');
+
+        const populateSubcategories = () => {
+          if (!categorySelect || !subcategorySelect) return;
+          const cat = categorySelect.value;
+          subcategorySelect.innerHTML = `<option value="">All Specific ${cat === 'All' ? 'Items' : cat + 's'}</option>`;
+
+          let items = [];
+          if (cat === 'Excursion') items = getExcursions();
+          else if (cat === 'Private Booking') items = getPrivate();
+          else if (cat === 'Free Diving') items = getFreeDiving();
+          else if (cat === 'Resort') items = getResorts();
+
+          items.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.title;
+            opt.textContent = item.title;
+            if (item.title === offerSub) {
+              opt.selected = true;
+            }
+            subcategorySelect.appendChild(opt);
+          });
+        };
+
+        if (categorySelect) {
+          categorySelect.addEventListener('change', populateSubcategories);
+        }
+        populateSubcategories();
+
         const offerForm = document.getElementById('admin-offer-form');
-        if (offerForm) { offerForm.addEventListener('submit', async (e) => { e.preventDefault(); const selectedCategories = Array.from(document.querySelectorAll('.offer-category-checkbox:checked')).map(cb => cb.value); await setOffer({ title: document.getElementById('offer-title').value, discount: document.getElementById('offer-discount').value, description: document.getElementById('offer-desc').value, category: selectedCategories.length > 0 ? selectedCategories : ['All'], code: document.getElementById('offer-code').value.toUpperCase(), validity: document.getElementById('offer-validity').value }); renderOfferSection(); alert('Seasonal offer published!'); }); }
-        const cancel = document.getElementById('cancel-edit-offer-btn'); if (cancel) cancel.addEventListener('click', renderOfferSection);
+        if (offerForm) {
+          offerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await setOffer({
+              title: document.getElementById('offer-title').value,
+              discount: document.getElementById('offer-discount').value,
+              description: document.getElementById('offer-desc').value,
+              category: document.getElementById('offer-category').value,
+              subcategory: document.getElementById('offer-subcategory').value,
+              code: document.getElementById('offer-code').value.toUpperCase(),
+              validity: document.getElementById('offer-validity').value
+            });
+            renderOfferSection();
+            alert('Seasonal offer published!');
+          });
+        }
+        const cancel = document.getElementById('cancel-edit-offer-btn');
+        if (cancel) cancel.addEventListener('click', renderOfferSection);
       };
       renderOfferSection();
 
@@ -2372,7 +2529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         reelsList.innerHTML = list.map((reel, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${reel.image.startsWith('data:video') || reel.image.endsWith('.mp4') || reel.image.includes('video') ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`).join('');
         reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });
       };
-      if (addReelBtn) { addReelBtn.addEventListener('click', async () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); await setReels(reels); renderReelsManager(); }); }
+      if (addReelBtn) { addReelBtn.addEventListener('click', () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); renderReelsManager(); }); }
       const saveReelsBtn = document.getElementById('save-reels-btn');
       if (saveReelsBtn) {
         saveReelsBtn.addEventListener('click', async () => {
@@ -2410,7 +2567,7 @@ document.addEventListener('DOMContentLoaded', () => {
         galleryListEl.innerHTML = list.map((item, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom:1rem; position: relative;"><button class="delete-gallery-btn" data-id="${item.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete Card</button><h4 style="color:#fff; margin-bottom:1rem;">Gallery Card ${idx + 1}</h4><div style="display:grid; grid-template-columns: 1fr 1fr 1fr 150px; gap:1rem;"><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Title</label><input type="text" class="form-control gal-title" data-id="${item.id}" value="${item.title}"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Preview Image (Direct Upload)</label><input type="file" class="form-control gal-img-file" data-id="${item.id}" accept="image/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Video File (Direct Upload)</label><input type="file" class="form-control gal-vid-file" data-id="${item.id}" accept="video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Aspect Ratio</label><select class="form-control gal-ratio" data-id="${item.id}" style="background:#080d1a; color:#fff; height:42px;"><option value="16:9" ${item.aspectRatio === '9:16' ? '' : 'selected'}>16:9 (Standard)</option><option value="9:16" ${item.aspectRatio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option></select></div></div></div>`).join('');
         galleryListEl.querySelectorAll('.delete-gallery-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this gallery card?')) return; await setGallery(getGallery().filter(x => x.id !== e.target.dataset.id)); renderGalleryManager(); }); });
       };
-      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', async () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: '', aspectRatio: '16:9' }); await setGallery(gallery); renderGalleryManager(); }); }
+      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: '', aspectRatio: '16:9' }); renderGalleryManager(); }); }
       const saveGalleryBtn = document.getElementById('save-gallery-btn');
       if (saveGalleryBtn) {
         saveGalleryBtn.addEventListener('click', async () => {
