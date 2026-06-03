@@ -1968,6 +1968,19 @@ document.addEventListener('DOMContentLoaded', () => {
           totalAmountEl.textContent = `$${totalSum.toFixed(2)}`;
         }
 
+        const staffTotalTripsEl = document.getElementById('staff-stat-total-trips');
+        const staffTotalGuestsEl = document.getElementById('staff-stat-total-guests');
+        if (staffTotalTripsEl || staffTotalGuestsEl) {
+          const totalTrips = bookings.length;
+          const totalGuests = bookings.reduce((sum, b) => {
+            const adults = parseInt(b.adults) || 1;
+            const kids = parseInt(b.kids) || 0;
+            return sum + adults + kids;
+          }, 0);
+          if (staffTotalTripsEl) staffTotalTripsEl.textContent = totalTrips;
+          if (staffTotalGuestsEl) staffTotalGuestsEl.textContent = totalGuests;
+        }
+
         const typeVal = filterPackageType ? filterPackageType.value : '';
         const exVal = filterExcursion ? filterExcursion.value : '';
         const dateVal = filterDate ? filterDate.value : '';
