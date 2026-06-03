@@ -1303,6 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="Card">Paid - Card</option>
                     <option value="Bank Transfer">Paid - Bank Transfer</option>
                     <option value="Office Directly Payment">Paid - Office Directly</option>
+                    <option value="Office Direct (No Payment)">Office Direct (No Payment)</option>
                     <option value="Pending">Unpaid (Pending)</option>
                   </select>
                 </div>
@@ -1543,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const priceDisp = document.getElementById('booking-price-display');
           const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
 
+          const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
             id: Date.now().toString(),
             excursionId: id,
@@ -1551,18 +1553,20 @@ document.addEventListener('DOMContentLoaded', () => {
             customerEmail: emailId,
             customerContact: contactNumber,
             bookingDate,
-            paymentBasis: form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'N/A',
+            paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Cash') : 'Payment Gateway',
             bookingType,
             adults,
             kids,
             kidsAges,
             isPrivate: isPrivate,
             numPersons: isGroup ? (adults + kids) : 1,
-            status: 'Pending',
+            status: isOfficeUser ? 'Pending' : 'Confirmed',
             ratePaid: ratePaid,
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: localStorage.getItem('admin_logged') === 'true' ? 'Admin' : (localStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
 
@@ -1600,6 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="Card">Paid - Card</option>
                     <option value="Bank Transfer">Paid - Bank Transfer</option>
                     <option value="Office Directly Payment">Paid - Office Directly</option>
+                    <option value="Office Direct (No Payment)">Office Direct (No Payment)</option>
                     <option value="Pending">Unpaid (Pending)</option>
                   </select>
                 </div>
@@ -1715,13 +1720,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
+          const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
-            customerContact: contactNumber, bookingDate, paymentBasis: form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'N/A', bookingType, adults, kids, kidsAges,
-            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: 'Pending',
+            customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Cash') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
+            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
             totalPrice: 0,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: localStorage.getItem('admin_logged') === 'true' ? 'Admin' : (localStorage.getItem('staff_logged') === 'true' ? 'Staff' : 'Guest'),
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
 
@@ -2006,10 +2014,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
             <td style="padding: 1rem 0;"><strong style="color: #fff;">${b.customerName}</strong>${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}<div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div></td>
             <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div></td>
-            <td style="padding: 1rem 0;">${b.bookingDate}</td>
+            <td style="padding: 1rem 0;">
+              <div>${b.bookingDate}</div>
+              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Entry: ${b.entryTime || 'N/A'}</div>
+            </td>
             <td style="padding: 1rem 0;">
               <div>${b.paymentBasis || 'Cash'}</div>
-              ${b.bookedBy ? `<div style="font-size: 0.75rem; color: #38bdf8; margin-top: 4px; font-weight: 600;">Added By: ${b.bookedBy}</div>` : ''}
+              <div style="font-size: 0.75rem; color: #38bdf8; margin-top: 4px; font-weight: 600;">Entered By: ${b.enteredBy || b.bookedBy || 'Guest'}</div>
               ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;">Promo: ${b.offerCode}</div>` : ''}
               ${b.deviceType ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid ${b.deviceType === 'Mobile' ? 'fa-mobile-screen-button' : (b.deviceType === 'Tablet' ? 'fa-tablet-screen-button' : 'fa-laptop')}" style="margin-right: 4px;"></i>${b.deviceType}</div>` : ''}
             </td>
