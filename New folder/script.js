@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
-          timeout: path.includes('auth') ? 3500 : 35000
+          timeout: path.includes('auth') ? 55000 : 35000
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
@@ -1662,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const triggerAdminUnlock = async () => {
         if (adminSubmit.disabled) return;
-        adminSubmit.textContent = 'Unlocking...';
+        adminSubmit.textContent = 'Connecting & Waking Server...';
         adminSubmit.disabled = true;
         adminError.style.display = 'none';
         
@@ -1705,7 +1705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const triggerStaffUnlock = async () => {
         if (staffSubmit.disabled) return;
-        staffSubmit.textContent = 'Unlocking...';
+        staffSubmit.textContent = 'Connecting & Waking Server...';
         staffSubmit.disabled = true;
         staffError.style.display = 'none';
 
