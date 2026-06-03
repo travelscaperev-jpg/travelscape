@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
@@ -61,47 +61,39 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
   }
 }
 
-// ─── MongoDB ─────────────────────────────────────────────────────────────────
+// ─── PostgreSQL ─────────────────────────────────────────────────────────────
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
 let isDbConnected = false;
 
-mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000,
-}).then(() => {
-  isDbConnected = true;
-  console.log('✅ MongoDB Atlas Connected');
-  seedDatabaseIfEmpty();
-}).catch(err => {
-  console.error('❌ MongoDB Connection Error:', err.message);
-  // Retry after 5 seconds
-  setTimeout(() => {
-    mongoose.connect(process.env.MONGODB_URI).then(() => {
-      isDbConnected = true;
-      console.log('✅ MongoDB Atlas Connected (retry)');
-      seedDatabaseIfEmpty();
-    }).catch(e => console.error('❌ MongoDB retry failed:', e.message));
-  }, 5000);
-});
+async function initDb() {
+  try {
+    const client = await pool.connect();
+    isDbConnected = true;
+    console.log('✅ PostgreSQL Connected');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS data_cache (
+        key VARCHAR(255) PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    client.release();
+    seedDatabaseIfEmpty();
+  } catch (err) {
+    console.error('❌ PostgreSQL Connection Error:', err.message);
+    isDbConnected = false;
+    setTimeout(initDb, 5000);
+  }
+}
 
-mongoose.connection.on('disconnected', () => {
-  isDbConnected = false;
-  console.warn('⚠️ MongoDB disconnected — attempting reconnect');
-});
-mongoose.connection.on('reconnected', () => {
-  isDbConnected = true;
-  console.log('✅ MongoDB reconnected');
-});
+initDb();
 
-// MongoDB Schema
-const DataCacheSchema = new mongoose.Schema({
-  key:   { type: String, required: true, unique: true },
-  value: mongoose.Schema.Types.Mixed
-}, { timestamps: true });
-
-const DataCache = mongoose.model('DataCache', DataCacheSchema);
-
-// Wait for DB to be ready (used in endpoints that need DB)
 async function waitForDB(maxWait = 20000) {
   if (isDbConnected) return true;
   const start = Date.now();
@@ -112,23 +104,28 @@ async function waitForDB(maxWait = 20000) {
   return false;
 }
 
-// Get value from MongoDB
 async function getCacheValue(key, defaultValue = null) {
   try {
     await waitForDB();
-    const doc = await DataCache.findOne({ key });
-    return doc ? doc.value : defaultValue;
+    const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
+    if (res.rows.length > 0) {
+      return JSON.parse(res.rows[0].value);
+    }
+    return defaultValue;
   } catch (e) {
     console.error(`Error reading key ${key}:`, e.message);
     return defaultValue;
   }
 }
 
-// Set value in MongoDB
 async function setCacheValue(key, value) {
   try {
     await waitForDB();
-    await DataCache.findOneAndUpdate({ key }, { value }, { upsert: true, new: true });
+    const serializedValue = JSON.stringify(value);
+    await pool.query(
+      'INSERT INTO data_cache (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP',
+      [key, serializedValue]
+    );
     return true;
   } catch (e) {
     console.error(`Error writing key ${key}:`, e.message);
@@ -341,12 +338,13 @@ app.post('/api/google-review', async (req, res) => {
 // ─── Database Seeding ────────────────────────────────────────────────────────
 async function seedDatabaseIfEmpty() {
   try {
-    const count = await DataCache.countDocuments();
+    const res = await pool.query('SELECT COUNT(*) FROM data_cache');
+    const count = parseInt(res.rows[0].count);
     if (count > 0) {
-      console.log(`📦 MongoDB has ${count} records — skipping seed.`);
+      console.log(`📦 PostgreSQL has ${count} records — skipping seed.`);
       return;
     }
-    console.log('🌱 MongoDB empty — seeding initial records...');
+    console.log('🌱 PostgreSQL empty — seeding initial records...');
     const promises = [
       setCacheValue('excursions',       []),
       setCacheValue('private_bookings', []),
@@ -363,7 +361,7 @@ async function seedDatabaseIfEmpty() {
       setCacheValue('offer',            {}),
     ];
     await Promise.all(promises);
-    console.log('✅ MongoDB seed complete.');
+    console.log('✅ PostgreSQL seed complete.');
   } catch (err) {
     console.error('⚠️ Seeding error:', err.message);
   }
@@ -374,7 +372,7 @@ app.listen(PORT, () => {
   console.log(`\n  🌊 Travelscape Maldives Production Server`);
   console.log(`  ──────────────────────────────────────────`);
   console.log(`  🚀 Port: ${PORT}`);
-  console.log(`  🗄️  MongoDB: ${process.env.MONGODB_URI ? 'URI configured' : '❌ MISSING MONGODB_URI'}`);
+  console.log(`  🗄️  PostgreSQL: ${process.env.DATABASE_URL ? 'URL configured' : '❌ MISSING DATABASE_URL'}`);
   console.log(`  ☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'configured' : '❌ MISSING CLOUDINARY vars'}`);
   console.log(`  🔑 Admin Password: ${process.env.ADMIN_PASSWORD ? 'set from env' : 'using default admin123'}`);
 });

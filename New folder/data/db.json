@@ -1,8 +1,4 @@
 {
-  "auth": {
-    "admin_password": "admin123",
-    "staff_password": "staff123"
-  },
   "excursions": [],
   "private_bookings": [],
   "freediving": [],
@@ -11,8 +7,10 @@
   "testimonials": [],
   "reels": [],
   "gallery": [],
-  "hero_videos": [],
+  "contact_messages": [],
+  "instagram_config": {},
+  "offer": {},
   "hero_video": "",
-  "google_review": "",
-  "offer": {}
+  "hero_videos": [],
+  "google_review": ""
 }
