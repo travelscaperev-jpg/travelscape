@@ -600,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const videos = getHeroVideos();
 
       if (sliderContainer && videos.length > 0) {
+        sliderContainer.style.display = 'block';
         // Clear existing slides
         sliderContainer.innerHTML = '';
 
@@ -615,7 +616,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const sourceEl = document.createElement('source');
           sourceEl.src = videoPath;
-          sourceEl.type = 'video/mp4';
           videoEl.appendChild(sourceEl);
 
           sliderContainer.appendChild(videoEl);
@@ -634,14 +634,17 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 6000); // Transitions every 6 seconds
         }
       } else {
+        if (sliderContainer) {
+          sliderContainer.style.display = 'none';
+        }
         // Fallback for pages with static video backgrounds
         const activeVideo = videos[0] || getHeroVideo();
         if (activeVideo) {
           document.querySelectorAll('.global-hero-video').forEach(vid => {
+            vid.style.display = 'block';
             let source = vid.querySelector('source');
             if (!source) {
               source = document.createElement('source');
-              source.type = 'video/mp4';
               vid.appendChild(source);
             }
             if (source.getAttribute('src') !== activeVideo) {
@@ -650,6 +653,10 @@ document.addEventListener('DOMContentLoaded', () => {
               vid.muted = true;
               vid.play().catch(e => console.warn('Static video autoplay blocked:', e));
             }
+          });
+        } else {
+          document.querySelectorAll('.global-hero-video').forEach(vid => {
+            vid.style.display = 'none';
           });
         }
       }
@@ -826,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
               <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; background: #000;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
-                  <source src="${ex.video || getHeroVideo()}" type="video/mp4">
+                  <source src="${ex.video || getHeroVideo()}">
                 </video>
               </div>
             </div>
@@ -943,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
               <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                <source src="${reel.image}" type="video/mp4">
+                <source src="${reel.image}">
               </video>
               <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
             </div>
@@ -970,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <div class="video-card ${ratioClass}" style="cursor: default;">
               <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                <source src="${item.video}" type="video/mp4">
+                <source src="${item.video}">
               </video>
               <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
             </div>
@@ -2425,7 +2432,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="font-weight: 700; color: #38bdf8; font-size: 1.1rem;">#${idx + 1}</span>
               <div style="position: relative; width: 140px; height: 80px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
-                  <source src="${videoPath}" type="video/mp4">
+                  <source src="${videoPath}">
                 </video>
               </div>
               <div style="min-width: 0; flex: 1;">
