@@ -902,7 +902,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       grid.querySelectorAll('.book-btn').forEach(btn => {
         btn.addEventListener('click', (e) => { e.stopPropagation(); openBookingModal(e.target.dataset.id, e.target.dataset.title); });
