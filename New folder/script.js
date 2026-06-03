@@ -951,7 +951,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (reelsGrid) {
       const list = getReels().slice(-4);
       reelsGrid.innerHTML = list.map(reel => {
-        const isVideo = reel.image && (reel.image.startsWith('data:video') || reel.image.toLowerCase().endsWith('.mp4') || reel.image.toLowerCase().endsWith('.mov') || reel.image.toLowerCase().includes('video'));
+        const isVideo = reel.image && (
+          reel.image.startsWith('data:video') || 
+          /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
+          reel.image.toLowerCase().includes('video')
+        );
         if (isVideo) {
           return `
             <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
@@ -975,7 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (galleryGrid) {
       const list = getGallery();
       galleryGrid.innerHTML = list.map(item => {
-        const isVideoURL = item.image && (item.image.toLowerCase().includes('.mp4') || item.image.toLowerCase().includes('.mov') || item.image.toLowerCase().includes('video'));
+        const isVideoURL = item.image && (
+          /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(item.image) || 
+          item.image.toLowerCase().includes('video')
+        );
         const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
         const src = item.video || item.image;
         const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
@@ -2546,7 +2553,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!reelsList) return;
         const list = getReels();
         reelsList.innerHTML = list.map((reel, idx) => {
-          const isVid = reel.image && (reel.image.startsWith('data:video') || reel.image.toLowerCase().endsWith('.mp4') || reel.image.toLowerCase().endsWith('.mov') || reel.image.toLowerCase().includes('video'));
+          const isVid = reel.image && (
+            reel.image.startsWith('data:video') || 
+            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
+            reel.image.toLowerCase().includes('video')
+          );
           return `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${isVid ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`;
         }).join('');
         reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });

@@ -1657,7 +1657,8 @@ body.minimal-body {
   gap: 2rem;
 }
 
-.reel-item img {
+.reel-item img,
+.reel-item video {
   width: 100%;
   height: 400px;
   object-fit: cover;
@@ -1671,7 +1672,8 @@ body.minimal-body {
   overflow: hidden;
 }
 
-.reel-item:hover img {
+.reel-item:hover img,
+.reel-item:hover video {
   transform: scale(1.03);
 }
 
@@ -2881,7 +2883,8 @@ body.minimal-body {
   transition: transform 0.3s ease;
 }
 
-.reel-item img {
+.reel-item img,
+.reel-item video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2892,7 +2895,8 @@ body.minimal-body {
   transform: translateY(-10px);
 }
 
-.reel-item:hover img {
+.reel-item:hover img,
+.reel-item:hover video {
   transform: scale(1.05);
 }
 
