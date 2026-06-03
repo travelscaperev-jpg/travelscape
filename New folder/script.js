@@ -885,9 +885,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemsToRender = isFeaturedOnly ? list.slice(0, 3) : list;
 
       grid.innerHTML = itemsToRender.map(ex => {
-        const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
+        const isVideo = (ex.image && (ex.image.toLowerCase().includes('.mp4') || ex.image.toLowerCase().includes('.mov') || ex.image.toLowerCase().includes('video'))) || (ex.video && ex.video.trim() !== '');
         const mediaHtml = isVideo 
-          ? `<video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"><source src="${ex.video || ex.image}"></video>` 
+          ? `<video src="${ex.video || ex.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>` 
           : `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
         return `
         <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
@@ -951,13 +951,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (reelsGrid) {
       const list = getReels().slice(-4);
       reelsGrid.innerHTML = list.map(reel => {
-        const isVideo = reel.image.startsWith('data:video') || reel.image.endsWith('.mp4') || reel.image.includes('video');
+        const isVideo = reel.image && (reel.image.startsWith('data:video') || reel.image.toLowerCase().endsWith('.mp4') || reel.image.toLowerCase().endsWith('.mov') || reel.image.toLowerCase().includes('video'));
         if (isVideo) {
           return `
             <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
-              <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                <source src="${reel.image}">
-              </video>
+              <video src="${reel.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
               <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
             </div>
           `;
@@ -977,16 +975,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (galleryGrid) {
       const list = getGallery();
       galleryGrid.innerHTML = list.map(item => {
-        const isVideoURL = item.image && (item.image.includes('.mp4') || item.image.includes('video'));
+        const isVideoURL = item.image && (item.image.toLowerCase().includes('.mp4') || item.image.toLowerCase().includes('.mov') || item.image.toLowerCase().includes('video'));
         const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
         const src = item.video || item.image;
         const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
         if (hasVideo) {
           return `
             <div class="video-card ${ratioClass}" style="cursor: default;">
-              <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                <source src="${src}">
-              </video>
+              <video src="${src}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
               <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
             </div>
           `;
@@ -2549,7 +2545,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const renderReelsManager = () => {
         if (!reelsList) return;
         const list = getReels();
-        reelsList.innerHTML = list.map((reel, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${reel.image.startsWith('data:video') || reel.image.endsWith('.mp4') || reel.image.includes('video') ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`).join('');
+        reelsList.innerHTML = list.map((reel, idx) => {
+          const isVid = reel.image && (reel.image.startsWith('data:video') || reel.image.toLowerCase().endsWith('.mp4') || reel.image.toLowerCase().endsWith('.mov') || reel.image.toLowerCase().includes('video'));
+          return `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${isVid ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`;
+        }).join('');
         reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });
       };
       if (addReelBtn) { addReelBtn.addEventListener('click', () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); renderReelsManager(); }); }
