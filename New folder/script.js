@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- DEFAULT_DB fallback ---
   const DEFAULT_DB = {
     "auth": {
-      "admin_password": "admin123",
-      "staff_password": "staff123"
+      "admin_password": "",
+      "staff_password": ""
     },
     "excursions": [],
     "private_bookings": [],
