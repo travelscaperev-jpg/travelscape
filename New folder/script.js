@@ -487,12 +487,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
       }).join('');
     }
+    // Re-render reels and gallery
+    if (typeof renderReelsFn === 'function') renderReelsFn();
+    if (typeof renderGalleryFn === 'function') renderGalleryFn();
   };
 
   // Placeholder refs for re-render (set inside initApp)
   let initGlobalHeroVideoFn = null;
   let setupParallaxLayerFn  = null;
   let renderCardGridFn      = null;
+  let renderReelsFn         = null;
+  let renderGalleryFn       = null;
   let refreshAdminTablesFn  = null; // refreshes admin/staff dashboard after data loads
 
   // Fire a ping immediately to start waking the Render server (non-blocking)
@@ -947,62 +952,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Render Instagram Reels (Home Page) ---
-    const reelsGrid = document.getElementById('reels-grid');
-    if (reelsGrid) {
-      const list = getReels().slice(-4);
-      reelsGrid.innerHTML = list.map(reel => {
-        const isVideo = reel.image && (
-          reel.image.startsWith('data:video') || 
-          /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
-          reel.image.toLowerCase().includes('video')
-        );
-        if (isVideo) {
-          return `
-            <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
-              <video src="${reel.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-              <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
-              <img src="${reel.image}" alt="Reel">
-              <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
-            </div>
-          `;
-        }
-      }).join('');
-    }
+    const renderReels = () => {
+      const reelsGrid = document.getElementById('reels-grid');
+      if (reelsGrid) {
+        const list = getReels().slice(-4);
+        reelsGrid.innerHTML = list.map(reel => {
+          const isVideo = reel.image && (
+            reel.image.startsWith('data:video') || 
+            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
+            reel.image.toLowerCase().includes('video')
+          );
+          if (isVideo) {
+            return `
+              <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
+                <video src="${reel.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
+                <img src="${reel.image}" alt="Reel">
+                <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
+              </div>
+            `;
+          }
+        }).join('');
+      }
+    };
+    renderReelsFn = renderReels;
+    renderReels();
 
     // --- Render Gallery Videos (Gallery Page) ---
-    const galleryGrid = document.getElementById('gallery-grid');
-    if (galleryGrid) {
-      const list = getGallery();
-      galleryGrid.innerHTML = list.map(item => {
-        const isVideoURL = item.image && (
-          /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(item.image) || 
-          item.image.toLowerCase().includes('video')
-        );
-        const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
-        const src = item.video || item.image;
-        const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
-        if (hasVideo) {
-          return `
-            <div class="video-card ${ratioClass}" style="cursor: default;">
-              <video src="${src}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="video-card ${ratioClass}" style="cursor: default;">
-              <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
-              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
-            </div>
-          `;
-        }
-      }).join('');
-    }
+    const renderGallery = () => {
+      const galleryGrid = document.getElementById('gallery-grid');
+      if (galleryGrid) {
+        const list = getGallery();
+        galleryGrid.innerHTML = list.map(item => {
+          const isVideoURL = item.image && (
+            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(item.image) || 
+            item.image.toLowerCase().includes('video')
+          );
+          const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
+          const src = item.video || item.image;
+          const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
+          if (hasVideo) {
+            return `
+              <div class="video-card ${ratioClass}" style="cursor: default;">
+                <video src="${src}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="video-card ${ratioClass}" style="cursor: default;">
+                <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+              </div>
+            `;
+          }
+        }).join('');
+      }
+    };
+    renderGalleryFn = renderGallery;
+    renderGallery();
 
     // --- Render Parallax Layer Sliders ---
     const setupParallaxLayer = (layerNum, titlePrefix, listData, offerType) => {
