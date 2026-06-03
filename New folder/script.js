@@ -237,13 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return localDb.getCollection(path);
       }
       try {
-        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { timeout: 6000 });
+        const res = await fetchWithTimeout(`${API_BASE}/${path}`, { timeout: 12000 });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
-        console.warn('API GET error, switching to client-side fallback mode:', path, e);
-        useFallback = true;
-        return api.get(path);
+        console.error('API GET error:', path, e);
+        throw e;
       }
     },
     post: async (path, data) => {
@@ -268,9 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
-        console.warn('API POST error, switching to client-side fallback mode:', path, e);
-        useFallback = true;
-        return api.post(path, data);
+        console.error('API POST error:', path, e);
+        throw e;
       }
     },
     put: async (path, data) => {
@@ -295,9 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
-        console.warn('API PUT error, switching to client-side fallback mode:', path, e);
-        useFallback = true;
-        return api.put(path, data);
+        console.error('API PUT error:', path, e);
+        throw e;
       }
     },
     del: async (path) => {
@@ -317,9 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return await res.json();
       } catch (e) {
-        console.warn('API DELETE error, switching to client-side fallback mode:', path, e);
-        useFallback = true;
-        return api.del(path);
+        console.error('API DELETE error:', path, e);
+        throw e;
       }
     }
   };
