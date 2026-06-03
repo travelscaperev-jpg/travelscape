@@ -3130,3 +3130,81 @@ body.minimal-body {
   font-family: var(--font-family);
   letter-spacing: -0.5px;
 }
+
+/* Fix calendar icon visibility */
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* --- Mobile/Tablet Responsiveness Enhancements --- */
+@media (max-width: 992px) {
+  .dashboard-container {
+    flex-direction: column;
+    padding-top: 80px;
+  }
+  .sidebar {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 1rem !important;
+    justify-content: center !important;
+  }
+  .sidebar a {
+    margin-bottom: 0 !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+    display: inline-block !important;
+  }
+  .main-content {
+    padding: 1.5rem !important;
+  }
+  
+  /* Excursion admin form columns layout grid */
+  .admin-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .split-excursions-layout {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    min-height: auto !important;
+    padding: 4rem 1.5rem 2rem 1.5rem !important;
+  }
+  .excursion-details-overlay {
+    text-align: center !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .excursion-details-overlay .ex-title {
+    font-size: 2rem !important;
+  }
+  .excursion-details-overlay .ex-tag-title {
+    font-size: 1.6rem !important;
+    margin-top: 2rem !important;
+  }
+  .modal-content-minimal {
+    padding: 1.5rem !important;
+    width: 95% !important;
+  }
+  .password-gate-card {
+    padding: 2rem 1.5rem !important;
+  }
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-form {
+    padding: 1.5rem !important;
+  }
+  
+  /* Force tables to be scrollable horizontally on narrow displays */
+  .main-content table {
+    min-width: 600px;
+  }
+}

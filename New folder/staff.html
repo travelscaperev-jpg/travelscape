@@ -127,6 +127,7 @@
             <div style="display:flex; align-items:flex-end; gap: 0.5rem;">
               <button id="clear-filters" class="btn" style="padding:0.5rem 1rem; background:rgba(255,255,255,0.1); color:#fff; font-size:0.85rem;">Clear</button>
               <button id="print-filtered-list" class="btn btn-primary" style="padding:0.5rem 1rem; font-size:0.85rem;">Print List</button>
+              <button id="add-direct-booking-staff" class="btn" style="padding:0.5rem 1rem; font-size:0.85rem; background:#10b981; color:#fff;">Add Direct Booking</button>
             </div>
           </div>
 
@@ -216,6 +217,10 @@
                   <input type="number" id="ex-kid-free" class="form-control" value="0" min="0">
                 </div>
               </div>
+              <div class="form-group">
+                <label for="ex-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="ex-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="ex-submit-btn">Add Excursion Card</button>
               <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="ex-cancel-btn">Cancel Edit</button>
             </form>
@@ -281,6 +286,10 @@
                   <input type="number" id="private-kid-free" class="form-control" value="0" min="0">
                 </div>
               </div>
+              <div class="form-group">
+                <label for="private-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="private-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="private-submit-btn">Add Private Booking</button>
               <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="private-cancel-btn">Cancel Edit</button>
             </form>
@@ -345,6 +354,10 @@
                   <label for="fd-kid-free">Kid Age for Full Discount</label>
                   <input type="number" id="fd-kid-free" class="form-control" value="0" min="0">
                 </div>
+              </div>
+              <div class="form-group">
+                <label for="fd-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="fd-max-capacity" class="form-control" min="1" value="20" required>
               </div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="fd-submit-btn">Add Free Diving Card</button>
               <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="fd-cancel-btn">Cancel Edit</button>
@@ -469,6 +482,10 @@
                   <label for="resort-kid-free">Kid Age for Full Discount</label>
                   <input type="number" id="resort-kid-free" class="form-control" value="0" min="0">
                 </div>
+              </div>
+              <div class="form-group">
+                <label for="resort-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="resort-max-capacity" class="form-control" min="1" value="20" required>
               </div>
 
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="resort-submit-btn">Add Resort Card</button>
