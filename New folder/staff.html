@@ -23,6 +23,11 @@
       gap: 1rem;
     }
   </style>
+  <script>
+    if (localStorage.getItem('staff_logged') === 'true') {
+      document.write('<style>#staff-password-gate { display: none !important; }</style>');
+    }
+  </script>
 </head>
 <body style="background: #080d1a;">
 
@@ -132,6 +137,7 @@
                 <option value="Cash">Cash</option>
                 <option value="Card">Card</option>
                 <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Office Directly Payment">Office Directly Payment</option>
               </select>
             </div>
             <div style="display:flex; align-items:flex-end; gap: 0.5rem;">
@@ -203,16 +209,7 @@
                 <input type="text" id="ex-sub-images" class="form-control" placeholder="Comma-separated image URLs">
                 <input type="file" id="ex-sub-images-file" class="form-control" accept="image/*" multiple style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
-              <div class="admin-form-row">
-                <div class="form-group">
-                  <label for="ex-lat">Latitude</label>
-                  <input type="number" step="0.0001" id="ex-lat" class="form-control" value="4.1755">
-                </div>
-                <div class="form-group">
-                  <label for="ex-lng">Longitude</label>
-                  <input type="number" step="0.0001" id="ex-lng" class="form-control" value="73.5093">
-                </div>
-              </div>
+
 
               <div class="admin-form-row" style="margin-bottom: 1rem;">
                 <div class="form-group" style="margin-bottom: 0;">

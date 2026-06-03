@@ -884,9 +884,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const isFeaturedOnly = grid.dataset.featured === 'true';
       const itemsToRender = isFeaturedOnly ? list.slice(0, 3) : list;
 
-      grid.innerHTML = itemsToRender.map(ex => `
+      grid.innerHTML = itemsToRender.map(ex => {
+        const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
+        const mediaHtml = isVideo 
+          ? `<video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"><source src="${ex.video || ex.image}"></video>` 
+          : `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        return `
         <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
-          <div class="card-img" style="background: url('${ex.image}') center/cover;"></div>
+          <div class="card-img" style="position: relative; overflow: hidden; background: #000;">${mediaHtml}</div>
           <div class="card-body">
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
@@ -971,13 +976,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (galleryGrid) {
       const list = getGallery();
       galleryGrid.innerHTML = list.map(item => {
-        const hasVideo = item.video && item.video.trim() !== '';
+        const isVideoURL = item.image && (item.image.includes('.mp4') || item.image.includes('video'));
+        const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
+        const src = item.video || item.image;
         const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
         if (hasVideo) {
           return `
             <div class="video-card ${ratioClass}" style="cursor: default;">
               <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                <source src="${item.video}">
+                <source src="${src}">
               </video>
               <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
             </div>
@@ -1001,7 +1008,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (bgSlidesContainer && detailsOverlay) {
           const list = listData;
-          bgSlidesContainer.innerHTML = list.map((ex, idx) => `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="background-image: url('${ex.image}');"></div>`).join('');
+          bgSlidesContainer.innerHTML = list.map((ex, idx) => {
+            const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
+            const mediaHtml = isVideo 
+              ? `<video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; z-index:-1;"><source src="${ex.video || ex.image}"></video>` 
+              : '';
+            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${!isVideo ? `background-image: url('${ex.image}');` : 'background: #000; overflow: hidden; position: relative;'}">${mediaHtml}</div>`;
+          }).join('');
 
           const renderActiveDetails = (ex) => {
             detailsOverlay.innerHTML = `
@@ -1272,6 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="Cash">Paid - Cash</option>
                     <option value="Card">Paid - Card</option>
                     <option value="Bank Transfer">Paid - Bank Transfer</option>
+                    <option value="Office Directly Payment">Paid - Office Directly</option>
                     <option value="Pending">Unpaid (Pending)</option>
                   </select>
                 </div>
@@ -1568,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="Cash">Paid - Cash</option>
                     <option value="Card">Paid - Card</option>
                     <option value="Bank Transfer">Paid - Bank Transfer</option>
+                    <option value="Office Directly Payment">Paid - Office Directly</option>
                     <option value="Pending">Unpaid (Pending)</option>
                   </select>
                 </div>
@@ -2169,7 +2184,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const fullDescEl = document.getElementById(`${prefix}-full-desc`); if (fullDescEl) fullDescEl.value = item.fullDescription || '';
               const subImagesEl = document.getElementById(`${prefix}-sub-images`);
               if (subImagesEl) { const urls = []; if (item.image && !item.image.startsWith('data:')) urls.push(item.image); if (item.subImg1 && !item.subImg1.startsWith('data:')) urls.push(item.subImg1); if (item.subImg2 && !item.subImg2.startsWith('data:')) urls.push(item.subImg2); subImagesEl.value = urls.join(', '); }
-              if (prefix === 'ex') { document.getElementById('ex-lat').value = item.lat || '4.1755'; document.getElementById('ex-lng').value = item.lng || '73.5093'; const mapLinkEl = document.getElementById('ex-map-link'); if (mapLinkEl) mapLinkEl.value = item.mapLink || ''; }
+              if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); if (mapLinkEl) mapLinkEl.value = item.mapLink || ''; }
               if (prefix === 'resort') {
                 const hasDayVisitEl = document.getElementById('resort-has-day-visit'); if (hasDayVisitEl) { hasDayVisitEl.checked = !!item.hasDayVisit; hasDayVisitEl.dispatchEvent(new Event('change')); }
                 const dayVisitTypeEl = document.getElementById('resort-day-visit-type'); if (dayVisitTypeEl) { dayVisitTypeEl.value = item.dayVisitType || 'half_day'; dayVisitTypeEl.dispatchEvent(new Event('change')); }
@@ -2242,7 +2257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.kidAgeHalf = kidAgeHalf;
             itemData.kidAgeFree = kidAgeFree;
             itemData.maxCapacity = maxCapacity;
-            if (prefix === 'ex') { itemData.lat = parseFloat(document.getElementById('ex-lat').value) || 4.1755; itemData.lng = parseFloat(document.getElementById('ex-lng').value) || 73.5093; const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
+            if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
             if (prefix === 'resort') {
               itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
               itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
@@ -2647,11 +2662,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       let pollInterval = setInterval(pollForNewBookings, 4000);
-      window.addEventListener('blur', () => clearInterval(pollInterval));
-      window.addEventListener('focus', () => {
-        clearInterval(pollInterval);
-        pollInterval = setInterval(pollForNewBookings, 4000);
-      });
 
       // --- Contact Messages Tab Rendering ---
       const contactMsgTable = document.getElementById('admin-contact-messages-table');
@@ -2805,11 +2815,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       let contactPollInterval = setInterval(pollForNewMessages, 4000);
-      window.addEventListener('blur', () => clearInterval(contactPollInterval));
-      window.addEventListener('focus', () => {
-        clearInterval(contactPollInterval);
-        contactPollInterval = setInterval(pollForNewMessages, 4000);
-      });
     }
 
     function loadAdminPanel() { loadUniversalDashboard('admin'); }
