@@ -3,6 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Multer memory storage for file uploads
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } }); // 500MB
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +100,40 @@ async function setCacheValue(key, value) {
     return false;
   }
 }
+
+// --- Ping Endpoint (for server warm-up) ---
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok', ts: Date.now() });
+});
+
+// --- Direct File Upload Endpoint (multipart, for large videos) ---
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file provided' });
+    }
+    const isVideo = req.file.mimetype.startsWith('video/');
+    const folder = req.body.folder || 'travelscape';
+    const resourceType = isVideo ? 'video' : 'image';
+
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder, resource_type: resourceType, chunk_size: 6000000 },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const result = await uploadPromise;
+    res.json({ success: true, url: result.secure_url });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // --- Auth Endpoint ---
 app.post('/api/auth/login', async (req, res) => {
@@ -270,9 +310,13 @@ async function seedDatabaseIfEmpty() {
     const count = await DataCache.countDocuments();
     if (count === 0) {
       console.log('Seeding MongoDB database with fallback configuration...');
-      const fallbackDbRaw = fs.readFileSync(path.join(__dirname, 'data', 'db.json'), 'utf-8');
-      const fallbackDb = JSON.parse(fallbackDbRaw);
-      
+      let fallbackDb = {};
+      try {
+        const fallbackDbRaw = fs.readFileSync(path.join(__dirname, 'data', 'db.json'), 'utf-8');
+        fallbackDb = JSON.parse(fallbackDbRaw);
+      } catch (readErr) {
+        console.warn('Could not read db.json for seeding, using empty defaults.');
+      }
       const promises = [
         setCacheValue('excursions', fallbackDb.excursions || []),
         setCacheValue('private_bookings', fallbackDb.private_bookings || []),
