@@ -6,9 +6,10 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
-// Multer memory storage for file uploads (500MB limit for large videos)
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+// Multer disk storage for file uploads (500MB limit for large videos) to avoid server OOM crash
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,10 +29,22 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Upload base64 OR buffer to Cloudinary
-async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false, mimeType = '') {
+// Upload base64, buffer, OR file path to Cloudinary
+async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false, mimeType = '', isFilePath = false) {
   try {
     if (!data) return '';
+    
+    if (isFilePath) {
+      const isVideo = mimeType.startsWith('video/') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
+      const resourceType = isVideo ? 'video' : 'image';
+      const result = await cloudinary.uploader.upload(data, {
+        folder,
+        resource_type: resourceType,
+        chunk_size: 6000000
+      });
+      return result.secure_url;
+    }
+
     const isVideo = isBuffer ? mimeType.startsWith('video/') : (typeof data === 'string' && data.includes('video'));
     const resourceType = isVideo ? 'video' : 'image';
 
@@ -154,14 +167,28 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, error: 'No file provided' });
 
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      // Clean up the temp file on config error
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
       return res.status(500).json({ success: false, error: 'Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in Render environment variables.' });
     }
 
     const folder = req.body.folder || 'travelscape';
-    const url = await uploadToCloudinary(req.file.buffer, folder, true, req.file.mimetype);
+    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype, true);
+    
+    // Clean up local temp file
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (e) {
+      console.warn('Failed to delete temp file:', e.message);
+    }
+    
     res.json({ success: true, url });
   } catch (error) {
     console.error('Upload error:', error.message);
+    // Cleanup temp file in case of crash
+    if (req.file && req.file.path) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
     res.status(500).json({ success: false, error: error.message });
   }
 });
