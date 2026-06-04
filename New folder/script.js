@@ -836,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div>
               <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
-              <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; background: #000;">
+              <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
                   <source src="${ex.video || getHeroVideo()}">
                 </video>
@@ -894,9 +894,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const mediaHtml = isVideo 
           ? `<video src="${ex.video || ex.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>` 
           : `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        const ratioStyle = ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '';
         return `
         <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
-          <div class="card-img" style="position: relative; overflow: hidden; background: #000;">${mediaHtml}</div>
+          <div class="card-img" style="position: relative; overflow: hidden; background: #000; ${ratioStyle}">${mediaHtml}</div>
           <div class="card-body">
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
@@ -1027,10 +1028,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const list = listData;
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
             const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
+            const isPortrait = ex.videoRatio === '9:16';
+            const videoStyle = isPortrait
+              ? 'width: auto; height: 100%; max-width: 100%; object-fit: contain; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;'
+              : 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: -1;';
             const mediaHtml = isVideo 
-              ? `<video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; z-index:-1;"><source src="${ex.video || ex.image}"></video>` 
+              ? `<video autoplay loop muted playsinline style="${videoStyle}"><source src="${ex.video || ex.image}"></video>` 
               : '';
-            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${!isVideo ? `background-image: url('${ex.image}');` : 'background: #000; overflow: hidden; position: relative;'}">${mediaHtml}</div>`;
+            const slideStyle = !isVideo
+              ? `background-image: url('${ex.image}');`
+              : (isPortrait
+                  ? `background: linear-gradient(rgba(5, 11, 20, 0.85), rgba(5, 11, 20, 0.85)), url('${ex.image}') center/cover; overflow: hidden; position: relative;`
+                  : 'background: #000; overflow: hidden; position: relative;');
+            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${slideStyle}">${mediaHtml}</div>`;
           }).join('');
 
           const renderActiveDetails = (ex) => {
@@ -2228,6 +2238,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const highlightsEl = document.getElementById(`${prefix}-highlights`); if (highlightsEl) highlightsEl.value = item.highlights || '';
               const imageEl = document.getElementById(`${prefix}-image`); if (imageEl) imageEl.value = (item.image && !item.image.startsWith('data:')) ? item.image : '';
               const videoEl = document.getElementById(`${prefix}-video`); if (videoEl) videoEl.value = (item.video && !item.video.startsWith('data:')) ? item.video : '';
+              const videoRatioEl = document.getElementById(`${prefix}-video-ratio`); if (videoRatioEl) videoRatioEl.value = item.videoRatio || '16:9';
               const descEl = document.getElementById(`${prefix}-desc`); if (descEl) descEl.value = item.description || '';
               const fullDescEl = document.getElementById(`${prefix}-full-desc`); if (fullDescEl) fullDescEl.value = item.fullDescription || '';
               const subImagesEl = document.getElementById(`${prefix}-sub-images`);
@@ -2251,7 +2262,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } };
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -2299,6 +2310,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
             itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
+            const videoRatioEl = document.getElementById(`${prefix}-video-ratio`);
+            itemData.videoRatio = videoRatioEl ? videoRatioEl.value : '16:9';
             const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
             const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
             const maxCapacity = parseInt(document.getElementById(`${prefix}-max-capacity`).value) || 20;
