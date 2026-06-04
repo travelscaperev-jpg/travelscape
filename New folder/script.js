@@ -890,6 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemsToRender = isFeaturedOnly ? list.slice(0, 3) : list;
 
       grid.innerHTML = itemsToRender.map(ex => {
+        if (!ex) return '';
         const isVideo = (ex.image && (ex.image.toLowerCase().includes('.mp4') || ex.image.toLowerCase().includes('.mov') || ex.image.toLowerCase().includes('video'))) || (ex.video && ex.video.trim() !== '');
         const mediaHtml = isVideo 
           ? `<video src="${ex.video || ex.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>` 
@@ -1027,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bgSlidesContainer && detailsOverlay) {
           const list = listData;
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
+            if (!ex) return '';
             const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
             const isPortrait = ex.videoRatio === '9:16';
             const videoStyle = isPortrait
@@ -1948,6 +1950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Universal Admin & Staff Panel CRUD & tab handlers ---
     function loadUniversalDashboard(role) {
+      window.dashboardRenderLists = [];
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
       const bookingsTable = document.getElementById(tableId);
 
@@ -2210,7 +2213,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderList = () => {
           const list = getData();
-          listContainer.innerHTML = list.map(item => `
+          listContainer.innerHTML = list.map(item => {
+            if (!item) return '';
+            return `
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
               <div><h4 style="color:#fff;">${item.title}</h4><p style="color:#38bdf8; font-size:0.9rem;">${prefix === 'resort' ? 'Resort Pass' : 'Duration: ' + item.duration}</p></div>
               <div>
@@ -2219,7 +2224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="btn delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
               </div>
             </div>
-          `).join('');
+          `; }).join('');
 
           listContainer.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm(`Are you sure you want to delete this ${type}?`)) return; const items = getData().filter(x => x.id !== e.target.dataset.id); await setData(items); renderList(); populateExcursionFilter(); }); });
           listContainer.querySelectorAll('.preview-btn').forEach(btn => {
@@ -2339,6 +2344,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
         renderList();
+        if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
+        window.dashboardRenderLists.push(renderList);
       };
 
       registerCRUD('Excursion', getExcursions, setExcursions, 'admin-excursions-list', 'admin-add-excursion-form', 'ex');
@@ -2982,6 +2989,20 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       let contactPollInterval = setInterval(pollForNewMessages, 4000);
+
+      // Assign dashboard refresh hooks in this active scope
+      refreshAdminTablesFn = () => {
+        if (typeof renderBookings === 'function') renderBookings();
+        if (window.dashboardRenderLists) {
+          window.dashboardRenderLists.forEach(fn => fn());
+        }
+        if (typeof renderOfferSection === 'function') renderOfferSection();
+        if (typeof renderTestimonialsTab === 'function') renderTestimonialsTab();
+        if (typeof renderHeroVideosManager === 'function') renderHeroVideosManager();
+        if (typeof renderReelsManager === 'function') renderReelsManager();
+        if (typeof renderGalleryManager === 'function') renderGalleryManager();
+        if (typeof renderContactMessages === 'function') renderContactMessages();
+      };
     }
 
     function loadAdminPanel() { loadUniversalDashboard('admin'); }
@@ -3021,17 +3042,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // --- Assign background refresh hooks for Admin / Staff dashboards ---
-    refreshAdminTablesFn = () => {
-      if (typeof renderBookings === 'function') renderBookings();
-      if (typeof renderList === 'function') renderList();
-      if (typeof renderOfferSection === 'function') renderOfferSection();
-      if (typeof renderTestimonialsTab === 'function') renderTestimonialsTab();
-      if (typeof renderHeroVideosManager === 'function') renderHeroVideosManager();
-      if (typeof renderReelsManager === 'function') renderReelsManager();
-      if (typeof renderGalleryManager === 'function') renderGalleryManager();
-      if (typeof renderContactMessages === 'function') renderContactMessages();
-    };
+
 
   } // end initApp
 
