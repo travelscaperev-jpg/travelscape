@@ -2204,6 +2204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
               <div><h4 style="color:#fff;">${item.title}</h4><p style="color:#38bdf8; font-size:0.9rem;">${prefix === 'resort' ? 'Resort Pass' : 'Duration: ' + item.duration}</p></div>
               <div>
+                <button class="btn preview-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#10b981; color:#fff; font-size:0.85rem; margin-right:5px;">Preview</button>
                 <button class="btn edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
                 <button class="btn delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
               </div>
@@ -2211,6 +2212,12 @@ document.addEventListener('DOMContentLoaded', () => {
           `).join('');
 
           listContainer.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm(`Are you sure you want to delete this ${type}?`)) return; const items = getData().filter(x => x.id !== e.target.dataset.id); await setData(items); renderList(); populateExcursionFilter(); }); });
+          listContainer.querySelectorAll('.preview-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const item = getData().find(x => x.id === e.target.dataset.id);
+              if (item) openExcursionDetailsModal(item);
+            });
+          });
           listContainer.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
               const item = getData().find(x => x.id === e.target.dataset.id);
@@ -2334,7 +2341,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (offer && offer.title) {
           const appliesToDisplay = Array.isArray(offer.category) ? offer.category.join(', ') : (offer.category || 'All Categories');
           const subcatDisplay = offer.subcategory ? ` (${offer.subcategory})` : '';
-          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
+          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-preview-offer-btn" class="btn" style="background: #10b981; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Preview</button><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
+          document.getElementById('admin-preview-offer-btn').addEventListener('click', () => {
+            const existing = document.getElementById('offer-preview-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'offer-preview-modal';
+            modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
+
+            modal.innerHTML = `
+              <div class="modal-content-minimal" style="max-width: 400px; width: 90%; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; text-align: center; font-family: 'Inter', sans-serif;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                  <h3 style="color: #fff; margin: 0; font-size: 1.2rem;">Promo Offer Live Preview</h3>
+                  <button id="close-offer-preview" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #858e8e;">&times;</button>
+                </div>
+                <div class="offer-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); color:#fff; text-align: left; position: relative; width: 100%;">
+                  <span style="background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 0.75rem;">${offer.discount}</span>
+                  <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; color: #fff; line-height: 1.3;">${offer.title}</h4>
+                  <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">${offer.description}</p>
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Promo Code</div>
+                      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fde047; font-size: 1.1rem; margin-top: 2px;">${offer.code || 'None'}</div>
+                    </div>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #94a3b8; text-align: left; display: flex; align-items: center; gap: 5px;"><i class="fa-regular fa-clock"></i> <span>${offer.validity}</span></div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('#close-offer-preview').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
+          });
           document.getElementById('admin-edit-offer-btn').addEventListener('click', () => showOfferForm(offer));
           document.getElementById('admin-delete-offer-btn').addEventListener('click', async () => { if (confirm('Are you sure you want to delete this seasonal offer?')) { await api.del('offer'); dataCache.offer = {}; renderOfferSection(); } });
         } else { showOfferForm(); }
@@ -2450,8 +2489,44 @@ document.addEventListener('DOMContentLoaded', () => {
       const renderTestimonialsTab = () => {
         if (!testimoniesList) return;
         const list = getTestimonials();
-        testimoniesList.innerHTML = list.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border: 1px solid rgba(255,255,255,0.05);"><div style="flex: 1; margin-right: 1rem;"><h4 style="color:#fff;">${t.name} <span style="color:#fde047; font-size:0.85rem; margin-left:10px;">★ ${t.rating}</span></h4><p style="color:#94a3b8; font-size:0.9rem; margin-top:0.25rem;">"${t.text}"</p></div><div><button class="btn edit-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button><button class="btn delete-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button></div></div>`).join('');
+        testimoniesList.innerHTML = list.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border: 1px solid rgba(255,255,255,0.05);"><div style="flex: 1; margin-right: 1rem;"><h4 style="color:#fff;">${t.name} <span style="color:#fde047; font-size:0.85rem; margin-left:10px;">★ ${t.rating}</span></h4><p style="color:#94a3b8; font-size:0.9rem; margin-top:0.25rem;">"${t.text}"</p></div><div><button class="btn preview-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#10b981; color:#fff; font-size:0.85rem; margin-right:5px;">Preview</button><button class="btn edit-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button><button class="btn delete-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button></div></div>`).join('');
         testimoniesList.querySelectorAll('.delete-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this testimony?')) return; await setTestimonials(getTestimonials().filter(t => t.id !== e.target.dataset.id)); renderTestimonialsTab(); }); });
+        testimoniesList.querySelectorAll('.preview-test-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const t = getTestimonials().find(x => x.id === e.currentTarget.dataset.id);
+            if (!t) return;
+            const existing = document.getElementById('testimony-preview-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'testimony-preview-modal';
+            modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
+
+            let stars = '';
+            for (let i = 0; i < 5; i++) {
+              stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>';
+            }
+
+            modal.innerHTML = `
+              <div class="modal-content-minimal" style="max-width: 450px; width: 90%; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; text-align: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                  <h3 style="color: #fff; margin: 0; font-size: 1.2rem;">Testimonial Live Preview</h3>
+                  <button id="close-test-preview" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #858e8e;">&times;</button>
+                </div>
+                <div class="card" style="background: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius); text-align: left; margin-top: 1rem; width: 100%;">
+                  <div class="card-body" style="padding: 2rem;">
+                    <div style="margin-bottom: 1rem;">${stars}</div>
+                    <p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; font-family: 'Inter', sans-serif;">"${t.text}"</p>
+                    <h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700; font-family: 'Inter', sans-serif;">- ${t.name}</h4>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('#close-test-preview').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
+          });
+        });
         testimoniesList.querySelectorAll('.edit-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const t = getTestimonials().find(x => x.id === e.target.dataset.id); if (!t) return; const newName = prompt('Edit Name:', t.name); const newRating = prompt('Edit Rating (1-5):', t.rating); const newText = prompt('Edit Testimony:', t.text); if (newName && newRating && newText) { t.name = newName; t.rating = parseInt(newRating) || 5; t.text = newText; await setTestimonials(getTestimonials().map(x => x.id === t.id ? t : x)); renderTestimonialsTab(); } }); });
       };
 
