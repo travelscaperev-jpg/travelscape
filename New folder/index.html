@@ -136,95 +136,83 @@
       </div>
     </section>
 
-    <!-- Wrapper for Layer 2 -->
-    <div style="position: relative; height: 200vh; z-index: 10; width: 100%;">
-      <!-- Layer 2: Overlapping from Right (Full Page Slider + SEO Text Overlay) -->
-      <section class="parallax-layer layer-2" id="layer2-full-slider" style="margin-top: 0;">
-        <!-- Pixel Particles Removed -->
-        <!-- Full Page Background Slides -->
-        <div class="layer2-bg-slides" id="layer2-bg-slides">
-          <!-- Dynamically generated background images -->
+    <!-- Layer 2: Overlapping from Right (Full Page Slider + SEO Text Overlay) -->
+    <section class="parallax-layer layer-2" id="layer2-full-slider">
+      <!-- Pixel Particles Removed -->
+      <!-- Full Page Background Slides -->
+      <div class="layer2-bg-slides" id="layer2-bg-slides">
+        <!-- Dynamically generated background images -->
+      </div>
+
+      <div class="layer-content split-excursions-layout">
+        <!-- Left Column: Active Excursion Details Overlay -->
+        <div class="excursion-details-overlay" id="layer2-details-overlay">
+          <!-- Dynamically populated by script.js -->
         </div>
 
-        <div class="layer-content split-excursions-layout">
-          <!-- Left Column: Active Excursion Details Overlay -->
-          <div class="excursion-details-overlay" id="layer2-details-overlay">
-            <!-- Dynamically populated by script.js -->
-          </div>
-
-          <!-- Right Column: View All Excursions -->
-          <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-            <a href="excursions.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Excursions</a>
-          </div>
+        <!-- Right Column: View All Excursions -->
+        <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+          <a href="excursions.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Excursions</a>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
-    <!-- Wrapper for Layer 3 -->
-    <div style="position: relative; height: 200vh; z-index: 20; margin-top: -100vh; width: 100%;">
-      <!-- Layer 3: Overlapping from Left -->
-      <section class="parallax-layer layer-3" id="layer3-full-slider" style="margin-top: 0;">
-        <!-- Full Page Background Slides for Layer 3 -->
-        <div class="layer3-bg-slides" id="layer3-bg-slides">
-          <!-- Dynamically generated background images -->
+    <!-- Layer 3: Overlapping from Left -->
+    <section class="parallax-layer layer-3" id="layer3-full-slider">
+      <!-- Full Page Background Slides for Layer 3 -->
+      <div class="layer3-bg-slides" id="layer3-bg-slides">
+        <!-- Dynamically generated background images -->
+      </div>
+
+      <div class="layer-content split-excursions-layout">
+        <!-- Left Column: View All Private Charters -->
+        <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+          <a href="private.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Private Charters</a>
         </div>
 
-        <div class="layer-content split-excursions-layout">
-          <!-- Left Column: View All Private Charters -->
-          <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-            <a href="private.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Private Charters</a>
-          </div>
+        <!-- Right Column: Active Excursion Details Overlay -->
+        <div class="excursion-details-overlay" id="layer3-details-overlay" style="margin-left: 0; padding-left: 2vw;">
+          <!-- Dynamically populated by script.js -->
+        </div>
+      </div>
+    </section>
 
-          <!-- Right Column: Active Excursion Details Overlay -->
-          <div class="excursion-details-overlay" id="layer3-details-overlay" style="margin-left: 0; padding-left: 2vw;">
-            <!-- Dynamically populated by script.js -->
-          </div>
+    <!-- Layer 4: Overlapping from Right (Free Diving Slider) -->
+    <section class="parallax-layer layer-4-slider" id="layer4-full-slider">
+      <div class="layer4-bg-slides" id="layer4-bg-slides">
+        <!-- Dynamically generated background images -->
+      </div>
+      <div class="layer-content split-excursions-layout">
+        <!-- Left Column: Active Free Diving Details -->
+        <div class="excursion-details-overlay" id="layer4-details-overlay">
+          <!-- Dynamically populated by script.js -->
         </div>
-      </section>
-    </div>
+        <!-- Right Column: View All Freediving -->
+        <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+          <a href="freediving.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Freediving</a>
+        </div>
+      </div>
+    </section>
 
-    <!-- Wrapper for Layer 4 -->
-    <div style="position: relative; height: 200vh; z-index: 30; margin-top: -100vh; width: 100%;">
-      <!-- Layer 4: Overlapping from Right (Free Diving Slider) -->
-      <section class="parallax-layer layer-4-slider" id="layer4-full-slider" style="margin-top: 0;">
-        <div class="layer4-bg-slides" id="layer4-bg-slides">
-          <!-- Dynamically generated background images -->
+    <!-- Layer 5: Overlapping from Left (Resort Booking Slider) -->
+    <section class="parallax-layer layer-5-slider" id="layer5-full-slider">
+      <div class="layer5-bg-slides" id="layer5-bg-slides">
+        <!-- Dynamically generated background images -->
+      </div>
+      <div class="layer-content split-excursions-layout">
+        <!-- Left Column: View All Resorts -->
+        <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+          <a href="resorts.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Resorts</a>
         </div>
-        <div class="layer-content split-excursions-layout">
-          <!-- Left Column: Active Free Diving Details -->
-          <div class="excursion-details-overlay" id="layer4-details-overlay">
-            <!-- Dynamically populated by script.js -->
-          </div>
-          <!-- Right Column: View All Freediving -->
-          <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-            <a href="freediving.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Freediving</a>
-          </div>
+        <!-- Right Column: Active Resort Details -->
+        <div class="excursion-details-overlay" id="layer5-details-overlay" style="margin-left: 0; padding-left: 2vw;">
+          <!-- Dynamically populated by script.js -->
         </div>
-      </section>
-    </div>
-
-    <!-- Wrapper for Layer 5 to constrain its sticky behavior -->
-    <div style="position: relative; height: 200vh; z-index: 40; margin-top: -100vh; width: 100%;">
-      <!-- Layer 5: Overlapping from Left (Resort Booking Slider) -->
-      <section class="parallax-layer layer-5-slider" id="layer5-full-slider" style="margin-top: 0;">
-        <div class="layer5-bg-slides" id="layer5-bg-slides">
-          <!-- Dynamically generated background images -->
-        </div>
-        <div class="layer-content split-excursions-layout">
-          <!-- Left Column: View All Resorts -->
-          <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-            <a href="resorts.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Resorts</a>
-          </div>
-          <!-- Right Column: Active Resort Details -->
-          <div class="excursion-details-overlay" id="layer5-details-overlay" style="margin-left: 0; padding-left: 2vw;">
-            <!-- Dynamically populated by script.js -->
-          </div>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
     <!-- Layer 6: Final Footer Layer Overlapping completely -->
-    <section class="parallax-layer layer-6" style="margin-top: -100vh; position: relative; z-index: 50;">
+    <section class="parallax-layer layer-6">
       <div class="layer-content full-width">
         <!-- Seasonal Offer Section -->
         <div id="seasonal-offer-section" class="offer-section" style="display: none;"></div>

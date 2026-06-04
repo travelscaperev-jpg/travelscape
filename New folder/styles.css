@@ -2499,7 +2499,7 @@ body.minimal-body {
 .layer-6 {
   z-index: 50;
   background: #080d1a;
-  margin-top: -100vh;
+  margin-top: 0;
   /* creates the slide-over effect */
   min-height: 100vh;
   height: auto;
@@ -3308,7 +3308,7 @@ body.minimal-body {
   }
 
   .layer-6 {
-    margin-top: -100vh !important;
+    margin-top: 0 !important;
     min-height: auto !important;
   }
 }
