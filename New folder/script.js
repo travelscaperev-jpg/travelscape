@@ -1029,20 +1029,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const list = listData;
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
             if (!ex) return '';
-            const isVideo = (ex.image && (ex.image.includes('.mp4') || ex.image.includes('video'))) || (ex.video && ex.video.trim() !== '');
-            const isPortrait = ex.videoRatio === '9:16';
-            const videoStyle = isPortrait
-              ? 'width: auto; height: 100%; max-width: 100%; object-fit: contain; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;'
-              : 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: -1;';
-            const mediaHtml = isVideo 
-              ? `<video autoplay loop muted playsinline style="${videoStyle}"><source src="${ex.video || ex.image}"></video>` 
-              : '';
-            const slideStyle = !isVideo
-              ? `background-image: url('${ex.image}');`
-              : (isPortrait
-                  ? `background: linear-gradient(rgba(5, 11, 20, 0.85), rgba(5, 11, 20, 0.85)), url('${ex.image}') center/cover; overflow: hidden; position: relative;`
-                  : 'background: #000; overflow: hidden; position: relative;');
-            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${slideStyle}">${mediaHtml}</div>`;
+            const slideStyle = `background-image: url('${ex.image}');`;
+            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${slideStyle}"></div>`;
           }).join('');
 
           const renderActiveDetails = (ex) => {
