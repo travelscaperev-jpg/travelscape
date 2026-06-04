@@ -1295,19 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               
-              ${(localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true') ? `
-                <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; margin-top: 0.5rem;">
-                  <label style="display: block; color: #10b981; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Direct Payment Basis (Office Use)</label>
-                  <select id="booking-payment-basis" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    <option value="Cash">Paid - Cash</option>
-                    <option value="Card">Paid - Card</option>
-                    <option value="Bank Transfer">Paid - Bank Transfer</option>
-                    <option value="Office Directly Payment">Paid - Office Directly</option>
-                    <option value="Office Direct (No Payment)">Office Direct (No Payment)</option>
-                    <option value="Pending">Unpaid (Pending)</option>
-                  </select>
-                </div>
-              ` : ''}
+
 
               <!-- Resort dynamic configuration options -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
@@ -1553,7 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customerEmail: emailId,
             customerContact: contactNumber,
             bookingDate,
-            paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Cash') : 'Payment Gateway',
+            paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway',
             bookingType,
             adults,
             kids,
@@ -1596,19 +1584,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               
-              ${(localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true') ? `
-                <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; margin-top: 0.5rem;">
-                  <label style="display: block; color: #10b981; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Direct Payment Basis (Office Use)</label>
-                  <select id="booking-payment-basis" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    <option value="Cash">Paid - Cash</option>
-                    <option value="Card">Paid - Card</option>
-                    <option value="Bank Transfer">Paid - Bank Transfer</option>
-                    <option value="Office Directly Payment">Paid - Office Directly</option>
-                    <option value="Office Direct (No Payment)">Office Direct (No Payment)</option>
-                    <option value="Pending">Unpaid (Pending)</option>
-                  </select>
-                </div>
-              ` : ''}
+
 
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
                 <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;" ${isPrivateCharter ? 'checked disabled' : ''}>
@@ -1723,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
-            customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Cash') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
+            customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
             isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
             totalPrice: 0,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',

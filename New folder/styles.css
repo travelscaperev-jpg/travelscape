@@ -2210,6 +2210,80 @@ body.minimal-body {
     right: 50%;
     transform: translateX(50%);
   }
+
+  /* Intro / Hero mobile view adjustments */
+  .intro-layer {
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    padding-top: 120px !important;
+  }
+
+  .intro-layer .layer-content.align-left {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    text-align: center !important;
+    padding: 0 1.5rem !important;
+    margin-top: 20px !important;
+  }
+
+  .intro-layer .giant-title {
+    font-size: 2.8rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -1px !important;
+  }
+
+  .intro-layer .desc {
+    font-size: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .intro-layer .hero-animation-container {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 2rem !important;
+    height: 180px !important;
+    width: 100% !important;
+  }
+
+  .intro-layer .pulled-logo-container {
+    min-width: 290px !important;
+    width: 290px !important;
+    /* Center the animation stop on mobile */
+    --logo-left-stop: 50%;
+    --logo-scale-stop: 0.65;
+    --logo-translate-stop-x: -50%;
+  }
+
+  .intro-layer .logo-icons-group {
+    gap: 10px !important;
+  }
+
+  .intro-layer .pulled-logo-container .logo-icon-wrap {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .intro-layer .brand-title {
+    font-size: 1.5rem !important;
+  }
+
+  .intro-layer .brand-subtitle {
+    font-size: 0.75rem !important;
+    letter-spacing: 3px !important;
+  }
+
+  /* Make sure boat snaps correctly and fits on screen */
+  .intro-layer .animated-boat {
+    width: 100px !important;
+    top: 60px !important;
+  }
+
+  .intro-layer .tow-rope {
+    top: 80px !important;
+  }
 }
 
 /* Animation Container (Boat & Logo) */
@@ -2323,19 +2397,19 @@ body.minimal-body {
 @keyframes pull-logo-stop {
   0% {
     left: -600px;
-    transform: scale(0.8);
+    transform: scale(var(--logo-scale-start, 0.8)) translate(var(--logo-translate-start-x, 0), var(--logo-translate-start-y, 0));
     opacity: 0.5;
   }
 
   60% {
-    left: 80%;
-    transform: scale(1) translateX(-100%);
+    left: var(--logo-left-stop, 80%);
+    transform: scale(var(--logo-scale-stop, 1)) translate(var(--logo-translate-stop-x, -100%), var(--logo-translate-stop-y, 0));
     opacity: 1;
   }
 
   100% {
-    left: 80%;
-    transform: scale(1) translateX(-100%);
+    left: var(--logo-left-stop, 80%);
+    transform: scale(var(--logo-scale-stop, 1)) translate(var(--logo-translate-stop-x, -100%), var(--logo-translate-stop-y, 0));
     opacity: 1;
   }
 }
