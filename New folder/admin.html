@@ -83,6 +83,7 @@
       <a onclick="switchDashboardTab('offers')" id="tab-btn-offers">Special Offers</a>
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
+      <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
       <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span id="contact-msg-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
       <a href="#" onclick="localStorage.removeItem('admin_logged'); window.location.reload();"
         style="margin-top: 2rem; color: #ef4444;">Log Out</a>
@@ -119,6 +120,11 @@
           <!-- Filters -->
           <div
             style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="flex: 1.5; min-width: 200px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Search Booking</label>
+              <input type="text" id="filter-search" placeholder="Search ID, Name, Contact, Email..."
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit; outline:none;">
+            </div>
             <div style="flex: 1; min-width: 150px;">
               <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Package Type</label>
               <select id="filter-package-type"
@@ -170,6 +176,7 @@
               <thead>
                 <tr
                   style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 1rem 0;">Booking ID</th>
                   <th style="padding: 1rem 0;">Guest Name</th>
                   <th style="padding: 1rem 0;">Excursion Title</th>
                   <th style="padding: 1rem 0;">Preferred Date</th>
@@ -779,6 +786,48 @@
           <div id="admin-no-messages" style="display:none; text-align:center; padding:3rem 1rem; color:#64748b;">
             <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:1rem; display:block; color:#38bdf8; opacity:0.4;"></i>
             No contact messages yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 10: MANAGE CREW -->
+      <div id="tab-crew" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="crew-form-title">Add New Crew Member</h3>
+            <form id="admin-add-crew-form" style="margin-top: 1rem;">
+              <input type="hidden" id="crew-id">
+              <div class="form-group">
+                <label for="crew-name">Full Name</label>
+                <input type="text" id="crew-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="crew-role">Role / Designation</label>
+                <input type="text" id="crew-role" class="form-control" placeholder="e.g. Boat Captain" required>
+              </div>
+              <div class="form-group">
+                <label for="crew-bio">Biography / Description</label>
+                <textarea id="crew-bio" class="form-control" rows="3" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="crew-licenses">Licenses & Certifications (Comma separated)</label>
+                <input type="text" id="crew-licenses" class="form-control" placeholder="e.g. Master License, CPR Certified">
+              </div>
+              <div class="form-group">
+                <label for="crew-image">Profile Image (URL or Upload below)</label>
+                <input type="url" id="crew-image" class="form-control" placeholder="URL">
+                <input type="file" id="crew-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <button type="submit" id="crew-submit-btn" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Add Crew Member</button>
+              <button type="button" id="crew-cancel-btn" class="btn" style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel Edit</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members</h3>
+            <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
           </div>
         </div>
       </div>

@@ -304,6 +304,7 @@ registerCollectionRoutes('reels',            'reels');
 registerCollectionRoutes('gallery',          'gallery');
 registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
+registerCollectionRoutes('crew',             'crew');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -386,6 +387,7 @@ async function seedDatabaseIfEmpty() {
       setCacheValue('hero_video',       ''),
       setCacheValue('google_review',    ''),
       setCacheValue('offer',            {}),
+      setCacheValue('crew',             []),
     ];
     await Promise.all(promises);
     console.log('✅ PostgreSQL seed complete.');

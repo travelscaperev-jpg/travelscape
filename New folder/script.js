@@ -56,6 +56,33 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchend', dragEnd);
   });
 
+  const DEFAULT_CREW = [
+    {
+      id: "crew-1",
+      name: "Captain Ibrahim Ali",
+      role: "Senior Boat Captain / Skipper",
+      bio: "Ibrahim has navigated Maldivian waters for over 15 years. He specializes in spotting migrating mantas and dolphin pods.",
+      licenses: "Maldivian Coast Guard Master License, First Aid CPR",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"
+    },
+    {
+      id: "crew-2",
+      name: "Aishath Nazeer",
+      role: "Marine Biologist & Divemaster Guide",
+      bio: "Aisha holds a master's in marine ecology and leads snorkeling safaris, educating guests on reef preservation.",
+      licenses: "PADI Divemaster, Reef Conservation Specialist",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
+    },
+    {
+      id: "crew-3",
+      name: "Hassan Waheed",
+      role: "Local Excursion Coordinator",
+      bio: "A native of Maafushi, Hassan loves guiding sandbank picnics and showing guests Maldivian culture on local island walks.",
+      licenses: "Local Guide License, Water Rescue Certified",
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80"
+    }
+  ];
+
   // --- DEFAULT_DB fallback ---
   const DEFAULT_DB = {
     "auth": {
@@ -82,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       "cachedPosts": [],
       "lastFetched": null
     },
-    "offer": {}
+    "offer": {},
+    "crew": []
   };
 
   // Helper function to detect client device type
@@ -101,7 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const localDb = {
     init: () => {
       if (!localStorage.getItem('travelscape_db')) {
-        localStorage.setItem('travelscape_db', JSON.stringify(DEFAULT_DB));
+        const initialDb = { ...DEFAULT_DB, crew: DEFAULT_CREW };
+        localStorage.setItem('travelscape_db', JSON.stringify(initialDb));
+      } else {
+        try {
+          const db = JSON.parse(localStorage.getItem('travelscape_db'));
+          if (!db.crew || db.crew.length === 0) {
+            db.crew = DEFAULT_CREW;
+            localStorage.setItem('travelscape_db', JSON.stringify(db));
+          }
+        } catch(e) {}
       }
     },
     read: () => {
@@ -205,11 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let useFallback = false;
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
   const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
-  const API_BASE = window.location.origin.includes('github.io')
-    ? RENDER_SERVER_URL + '/api'
-    : (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-        ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
-        : (useFallback ? 'http://localhost:3000/api' : window.location.origin.replace(/\/$/, '') + '/api'));
+  const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+    ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
+    : (window.location.origin === RENDER_SERVER_URL ? '/api' : RENDER_SERVER_URL + '/api');
 
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
@@ -325,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let dataCache = {};
 
   async function loadAllData() {
-    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig] = await Promise.all([
+    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
       api.get('excursions'),
       api.get('private'),
       api.get('freediving'),
@@ -339,7 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('hero-videos'),
       api.get('google-review'),
       api.get('contact_messages'),
-      api.get('instagram_config')
+      api.get('instagram_config'),
+      api.get('crew')
     ]);
 
     dataCache = {
@@ -356,7 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroVideos: heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
       googleReview: (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
-      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
+      crew: crew || []
     };
     return dataCache;
   }
@@ -390,6 +427,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const setContactMessages = async (data) => { dataCache.contactMessages = data; await api.post('contact_messages', data); };
   const getInstagramConfig = () => dataCache.instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null };
   const setInstagramConfig = async (data) => { dataCache.instagramConfig = data; await api.post('instagram_config', data); };
+  const getCrew = () => (dataCache.crew && dataCache.crew.length > 0) ? dataCache.crew : DEFAULT_CREW;
+  const setCrew = async (data) => { dataCache.crew = data; await api.post('crew', data); };
 
   const getOfferBadgeHTML = (category, isCard = false) => {
     const offer = getOffer();
@@ -406,17 +445,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Smart startup: launch app immediately with defaults, then refresh from API ---
   // This ensures home page layers are visible immediately, even if server is waking up.
   const initDataCache = () => {
+    const cachedDb = localDb.read();
     dataCache = {
-      excursions: [], private: [], freediving: [], resorts: [], bookings: [],
-      testimonials: [], reels: [], gallery: [], offer: {},
-      heroVideo: '', heroVideos: [],
-      googleReview: '', contactMessages: [],
-      instagramConfig: { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+      excursions: cachedDb.excursions || [],
+      private: cachedDb.private_bookings || [],
+      freediving: cachedDb.freediving || [],
+      resorts: cachedDb.resorts || [],
+      bookings: cachedDb.bookings || [],
+      testimonials: cachedDb.testimonials || [],
+      reels: cachedDb.reels || [],
+      gallery: cachedDb.gallery || [],
+      offer: cachedDb.offer || {},
+      heroVideo: cachedDb.hero_video || 'back.mp4',
+      heroVideos: cachedDb.hero_videos && cachedDb.hero_videos.length > 0 ? cachedDb.hero_videos : ['back.mp4'],
+      googleReview: cachedDb.google_review || '',
+      contactMessages: cachedDb.contact_messages || [],
+      instagramConfig: cachedDb.instagram_config || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
+      crew: cachedDb.crew || []
     };
   };
 
   // Build dataCache from API results
-  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig]) => {
+  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
     dataCache = {
       excursions:    excursions    || [],
       private:       privateBookings || [],
@@ -431,7 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroVideos:    heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
       googleReview:  (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
-      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null }
+      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
+      crew:          crew          || []
     };
   };
 
@@ -451,7 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('hero-videos'),
       api.get('google-review'),
       api.get('contact_messages'),
-      api.get('instagram_config')
+      api.get('instagram_config'),
+      api.get('crew')
     ]);
     // Extract values (null for failed calls)
     const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
@@ -490,6 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Re-render reels and gallery
     if (typeof renderReelsFn === 'function') renderReelsFn();
     if (typeof renderGalleryFn === 'function') renderGalleryFn();
+    if (typeof renderCrewGridFn === 'function') renderCrewGridFn();
   };
 
   // Placeholder refs for re-render (set inside initApp)
@@ -498,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let renderCardGridFn      = null;
   let renderReelsFn         = null;
   let renderGalleryFn       = null;
+  let renderCrewGridFn      = null;
   let refreshAdminTablesFn  = null; // refreshes admin/staff dashboard after data loads
 
   // Fire a ping immediately to start waking the Render server (non-blocking)
@@ -772,8 +826,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </style></head><body>
           <h2>Travelscape Maldives - Booking Manifest</h2>
           <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()} | <strong>Filter Mode:</strong> Active</p>
-          <table><thead><tr><th>Guest Name</th><th>Excursion</th><th>Date</th><th>Trip Type</th><th>Payment Basis</th><th>Device</th><th>Status</th></tr></thead>
-          <tbody>${bookings.map(b => `<tr><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'}">${b.status}</span></td></tr>`).join('')}</tbody></table>
+          <table><thead><tr><th>Booking ID</th><th>Guest Name</th><th>Excursion</th><th>Date</th><th>Trip Type</th><th>Payment Basis</th><th>Device</th><th>Status</th></tr></thead>
+          <tbody>${bookings.map(b => `<tr><td>#${b.id}</td><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'}">${b.status}</span></td></tr>`).join('')}</tbody></table>
           <div class="footer">End of Report</div>
           <script>window.onload = function() { window.print(); window.close(); }<\/script>
         </body></html>
@@ -943,6 +997,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
       }).join('');
     }
+
+    // --- Render Crew Grid (Crew Page) ---
+    const renderCrewGrid = () => {
+      const crewGrid = document.getElementById('crew-grid');
+      if (!crewGrid) return;
+      const list = getCrew();
+      crewGrid.innerHTML = list.map(c => {
+        const lics = c.licenses ? c.licenses.split(',').map(l => `<span class="crew-lic">${l.trim()}</span>`).join('') : '';
+        return `
+          <div class="crew-card">
+            <div class="crew-img" style="background-image: url('${c.image || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80'}');"></div>
+            <div class="crew-body">
+              <h3 class="crew-name">${c.name}</h3>
+              <p class="crew-role">${c.role}</p>
+              <p>${c.bio || ''}</p>
+              ${lics ? `<div style="margin-top: 1rem;">${lics}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+    renderCrewGridFn = renderCrewGrid;
+    renderCrewGrid();
 
     // --- Google Review Button ---
     const googleReviewBtnContainer = document.getElementById('google-review-btn-container');
@@ -1741,6 +1818,10 @@ document.addEventListener('DOMContentLoaded', () => {
           
           <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <span style="color: #64748b; font-size: 0.85rem;">Booking Number</span>
+              <span style="color: #fde047; font-weight: 700; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace; text-align: right;">#${booking.id}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
               <span style="color: #64748b; font-size: 0.85rem;">Package Booked</span>
               <span style="color: #fff; font-weight: 600; font-size: 0.9rem; text-align: right;">${booking.excursionTitle}</span>
             </div>
@@ -1918,6 +1999,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
       const bookingsTable = document.getElementById(tableId);
 
+      const filterSearch = document.getElementById('filter-search');
       const filterPackageType = document.getElementById('filter-package-type');
       const filterExcursion = document.getElementById('filter-excursion');
       const filterDate = document.getElementById('filter-date');
@@ -1966,11 +2048,21 @@ document.addEventListener('DOMContentLoaded', () => {
           if (staffTotalGuestsEl) staffTotalGuestsEl.textContent = totalGuests;
         }
 
+        const searchVal = filterSearch ? filterSearch.value.trim().toLowerCase() : '';
         const typeVal = filterPackageType ? filterPackageType.value : '';
         const exVal = filterExcursion ? filterExcursion.value : '';
         const dateVal = filterDate ? filterDate.value : '';
         const payVal = filterPayment ? filterPayment.value : '';
         
+        if (searchVal) {
+          bookings = bookings.filter(b => 
+            (b.id && b.id.toLowerCase().includes(searchVal)) ||
+            (b.customerName && b.customerName.toLowerCase().includes(searchVal)) ||
+            (b.customerContact && b.customerContact.toLowerCase().includes(searchVal)) ||
+            (b.customerEmail && b.customerEmail.toLowerCase().includes(searchVal)) ||
+            (b.excursionTitle && b.excursionTitle.toLowerCase().includes(searchVal))
+          );
+        }
         if (typeVal) {
           bookings = bookings.filter(b => {
             const id = b.excursionId || '';
@@ -1986,10 +2078,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
         if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
 
-        if (bookings.length === 0) { bookingsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#94a3b8;">No bookings found.</td></tr>`; return; }
+        if (bookings.length === 0) { bookingsTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#94a3b8;">No bookings found.</td></tr>`; return; }
         bookingsTable.innerHTML = bookings.map(b => `
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-            <td style="padding: 1rem 0;"><strong style="color: #fff;">${b.customerName}</strong>${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}<div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div></td>
+            <td style="padding: 1rem 0; font-family:'JetBrains Mono', monospace; color:#fde047; font-weight:700; font-size:0.9rem;">
+              #${b.id}
+            </td>
+            <td style="padding: 1rem 0;">
+              <strong style="color: #fff;">${b.customerName}</strong>
+              ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}
+              <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div>
+            </td>
             <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div></td>
             <td style="padding: 1rem 0;">
               <div>${b.bookingDate}</div>
@@ -2015,6 +2114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const list = getBookings(); await setBookings(list.filter(item => item.id !== e.target.dataset.id)); renderBookings(); }); });
       };
 
+      if (filterSearch) filterSearch.addEventListener('input', renderBookings);
       if (filterPackageType) {
         filterPackageType.addEventListener('change', () => {
           populateExcursionFilter();
@@ -2026,6 +2126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (filterPayment) filterPayment.addEventListener('change', renderBookings);
       if (clearFilters) {
         clearFilters.addEventListener('click', () => {
+          if (filterSearch) filterSearch.value = '';
           if (filterPackageType) filterPackageType.value = '';
           populateExcursionFilter();
           if (filterExcursion) filterExcursion.value = '';
@@ -2316,6 +2417,124 @@ document.addEventListener('DOMContentLoaded', () => {
       registerCRUD('Private Excursion', getPrivate, setPrivate, 'admin-private-list', 'admin-add-private-form', 'private');
       registerCRUD('Free Diving Option', getFreeDiving, setFreeDiving, 'admin-fd-list', 'admin-add-fd-form', 'fd');
       registerCRUD('Resort Deal', getResorts, setResorts, 'admin-resorts-list', 'admin-add-resort-form', 'resort');
+
+      // --- Crew Management Tab ---
+      const crewListContainer = document.getElementById('admin-crew-list');
+      const crewForm = document.getElementById('admin-add-crew-form');
+
+      const renderCrewList = () => {
+        if (!crewListContainer) return;
+        const list = getCrew();
+        crewListContainer.innerHTML = list.map(item => {
+          if (!item) return '';
+          return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
+              <div>
+                <h4 style="color:#fff;">${item.name}</h4>
+                <p style="color:#38bdf8; font-size:0.9rem;">${item.role}</p>
+              </div>
+              <div>
+                <button class="btn crew-edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
+                <button class="btn crew-delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        crewListContainer.querySelectorAll('.crew-delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (!confirm('Are you sure you want to delete this crew member?')) return;
+            const items = getCrew().filter(x => x.id !== e.target.dataset.id);
+            await setCrew(items);
+            renderCrewList();
+            if (typeof renderCrewGridFn === 'function') renderCrewGridFn();
+          });
+        });
+
+        crewListContainer.querySelectorAll('.crew-edit-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const item = getCrew().find(x => x.id === e.target.dataset.id);
+            if (!item) return;
+            document.getElementById('crew-id').value = item.id;
+            document.getElementById('crew-name').value = item.name || '';
+            document.getElementById('crew-role').value = item.role || '';
+            document.getElementById('crew-bio').value = item.bio || '';
+            document.getElementById('crew-licenses').value = item.licenses || '';
+            document.getElementById('crew-image').value = (item.image && !item.image.startsWith('data:')) ? item.image : '';
+            document.getElementById('crew-form-title').textContent = 'Edit Crew Member';
+            document.getElementById('crew-submit-btn').textContent = 'Save Changes';
+            document.getElementById('crew-cancel-btn').style.display = 'block';
+          });
+        });
+      };
+
+      const resetCrewForm = () => {
+        if (crewForm) crewForm.reset();
+        document.getElementById('crew-id').value = '';
+        document.getElementById('crew-form-title').textContent = 'Add New Crew Member';
+        document.getElementById('crew-submit-btn').textContent = 'Add Crew Member';
+        document.getElementById('crew-cancel-btn').style.display = 'none';
+      };
+
+      const crewCancelBtn = document.getElementById('crew-cancel-btn');
+      if (crewCancelBtn) crewCancelBtn.addEventListener('click', resetCrewForm);
+
+      if (crewForm) {
+        crewForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const submitBtn = document.getElementById('crew-submit-btn');
+          const origBtnText = submitBtn ? submitBtn.textContent : '';
+          if (submitBtn) {
+            submitBtn.textContent = 'Uploading & Saving...';
+            submitBtn.disabled = true;
+          }
+
+          try {
+            const idVal = document.getElementById('crew-id').value;
+            const list = [...getCrew()];
+            const name = document.getElementById('crew-name').value.trim();
+            const roleVal = document.getElementById('crew-role').value.trim();
+            const bio = document.getElementById('crew-bio').value.trim();
+            const licenses = document.getElementById('crew-licenses').value.trim();
+            const imageFileEl = document.getElementById('crew-image-file');
+            
+            let image = '';
+            if (imageFileEl && imageFileEl.files && imageFileEl.files.length > 0) {
+              image = await uploadFileToCloudinary(imageFileEl, 'crew');
+            } else {
+              image = document.getElementById('crew-image').value.trim();
+            }
+
+            const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
+            itemData.name = name;
+            itemData.role = roleVal;
+            itemData.bio = bio;
+            itemData.licenses = licenses;
+            itemData.image = image;
+
+            if (!idVal) {
+              list.push(itemData);
+            }
+            await setCrew(list);
+            resetCrewForm();
+            renderCrewList();
+            if (typeof renderCrewGridFn === 'function') renderCrewGridFn();
+            alert('Crew member saved successfully!');
+          } catch (error) {
+            console.error(error);
+            alert('Failed to save crew member: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.textContent = origBtnText;
+              submitBtn.disabled = false;
+            }
+          }
+        };
+      }
+
+      renderCrewList();
+      if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
+      window.dashboardRenderLists.push(renderCrewList);
 
       // --- Seasonal Offers Tab ---
       const offerContainer = document.getElementById('admin-offer-status-container');
