@@ -2499,12 +2499,12 @@ body.minimal-body {
 .layer-6 {
   z-index: 50;
   background: #080d1a;
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: -15vh;
   /* creates the slide-over effect */
   min-height: 100vh;
   height: auto;
   position: relative;
+  overflow: visible !important;
   /* the last section doesn't need to be sticky */
 }
 
