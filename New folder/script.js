@@ -719,11 +719,18 @@ document.addEventListener('DOMContentLoaded', () => {
     displayGlobalPromoBar();
 
     // Dynamic Background Video / Slider Injection
+    let lastInjectedVideos = [];
     const initGlobalHeroVideo = () => {
       const sliderContainer = document.getElementById('hero-video-slider');
       const videos = getHeroVideos();
 
       if (sliderContainer && videos.length > 0) {
+        // Compare arrays to avoid reload delay/flash
+        const isSame = lastInjectedVideos.length === videos.length && 
+                       lastInjectedVideos.every((v, i) => v === videos[i]);
+        if (isSame) return;
+
+        lastInjectedVideos = [...videos];
         sliderContainer.style.display = 'block';
         // Clear existing slides
         sliderContainer.innerHTML = '';

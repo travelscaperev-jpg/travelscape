@@ -194,22 +194,25 @@
       </div>
     </section>
 
-    <!-- Layer 5: Overlapping from Left (Resort Booking Slider) -->
-    <section class="parallax-layer layer-5-slider" id="layer5-full-slider">
-      <div class="layer5-bg-slides" id="layer5-bg-slides">
-        <!-- Dynamically generated background images -->
-      </div>
-      <div class="layer-content split-excursions-layout">
-        <!-- Left Column: View All Resorts -->
-        <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-          <a href="resorts.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Resorts</a>
+    <!-- Wrapper for Layer 5 to constrain its sticky behavior -->
+    <div style="position: relative; height: 100vh; z-index: 40; margin-top: -15vh; width: 100%;">
+      <!-- Layer 5: Overlapping from Left (Resort Booking Slider) -->
+      <section class="parallax-layer layer-5-slider" id="layer5-full-slider" style="margin-top: 0;">
+        <div class="layer5-bg-slides" id="layer5-bg-slides">
+          <!-- Dynamically generated background images -->
         </div>
-        <!-- Right Column: Active Resort Details -->
-        <div class="excursion-details-overlay" id="layer5-details-overlay" style="margin-left: 0; padding-left: 2vw;">
-          <!-- Dynamically populated by script.js -->
+        <div class="layer-content split-excursions-layout">
+          <!-- Left Column: View All Resorts -->
+          <div style="padding: 2rem; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+            <a href="resorts.html" class="glass-btn" style="padding: 1rem 2.5rem; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">View All Resorts</a>
+          </div>
+          <!-- Right Column: Active Resort Details -->
+          <div class="excursion-details-overlay" id="layer5-details-overlay" style="margin-left: 0; padding-left: 2vw;">
+            <!-- Dynamically populated by script.js -->
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <!-- Layer 6: Final Footer Layer Overlapping completely -->
     <section class="parallax-layer layer-6">
