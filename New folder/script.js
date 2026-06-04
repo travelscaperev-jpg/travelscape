@@ -55,33 +55,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchmove', dragMove, { passive: false });
     window.addEventListener('touchend', dragEnd);
   });
+  // Helper to check if a URL represents a video (especially for Cloudinary uploads)
+  const isMediaVideo = (url) => {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return lower.startsWith('data:video') || 
+           lower.includes('/video/upload/') || 
+           lower.includes('video') || 
+           /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(lower);
+  };
 
-  const DEFAULT_CREW = [
-    {
-      id: "crew-1",
-      name: "Captain Ibrahim Ali",
-      role: "Senior Boat Captain / Skipper",
-      bio: "Ibrahim has navigated Maldivian waters for over 15 years. He specializes in spotting migrating mantas and dolphin pods.",
-      licenses: "Maldivian Coast Guard Master License, First Aid CPR",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: "crew-2",
-      name: "Aishath Nazeer",
-      role: "Marine Biologist & Divemaster Guide",
-      bio: "Aisha holds a master's in marine ecology and leads snorkeling safaris, educating guests on reef preservation.",
-      licenses: "PADI Divemaster, Reef Conservation Specialist",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: "crew-3",
-      name: "Hassan Waheed",
-      role: "Local Excursion Coordinator",
-      bio: "A native of Maafushi, Hassan loves guiding sandbank picnics and showing guests Maldivian culture on local island walks.",
-      licenses: "Local Guide License, Water Rescue Certified",
-      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80"
-    }
-  ];
+  const DEFAULT_CREW = [];
 
   // --- DEFAULT_DB fallback ---
   const DEFAULT_DB = {
@@ -183,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localDb.write(db);
     },
     getHeroVideo: () => {
-      return { video: localDb.read().hero_video || 'back.mp4' };
+      return { video: localDb.read().hero_video || '' };
     },
     setHeroVideo: (video) => {
       const db = localDb.read();
@@ -192,12 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     getHeroVideos: () => {
       const db = localDb.read();
-      return { videos: db.hero_videos || [db.hero_video || 'back.mp4'] };
+      return { videos: db.hero_videos || (db.hero_video ? [db.hero_video] : []) };
     },
     setHeroVideos: (videos) => {
       const db = localDb.read();
       db.hero_videos = videos;
-      db.hero_video = videos[0] || 'back.mp4';
+      db.hero_video = videos[0] || '';
       localDb.write(db);
     },
     getGoogleReview: () => {
@@ -244,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
   const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
     ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
-    : (window.location.origin === RENDER_SERVER_URL ? '/api' : RENDER_SERVER_URL + '/api');
+    : (window.location.origin.includes('github.io') ? RENDER_SERVER_URL + '/api' : '/api');
 
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
@@ -516,8 +500,8 @@ document.addEventListener('DOMContentLoaded', () => {
       reels: cachedDb.reels || [],
       gallery: cachedDb.gallery || [],
       offer: cachedDb.offer || {},
-      heroVideo: cachedDb.hero_video || 'back.mp4',
-      heroVideos: cachedDb.hero_videos && cachedDb.hero_videos.length > 0 ? cachedDb.hero_videos : ['back.mp4'],
+      heroVideo: cachedDb.hero_video || '',
+      heroVideos: cachedDb.hero_videos && cachedDb.hero_videos.length > 0 ? cachedDb.hero_videos : [],
       googleReview: cachedDb.google_review || '',
       contactMessages: cachedDb.contact_messages || [],
       instagramConfig: cachedDb.instagram_config || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
@@ -1026,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       grid.innerHTML = itemsToRender.map(ex => {
         if (!ex) return '';
-        const isVideo = (ex.image && (ex.image.toLowerCase().includes('.mp4') || ex.image.toLowerCase().includes('.mov') || ex.image.toLowerCase().includes('video'))) || (ex.video && ex.video.trim() !== '');
+        const isVideo = isMediaVideo(ex.video) || isMediaVideo(ex.image);
         const mediaHtml = isVideo 
           ? `<video src="${ex.video || ex.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>` 
           : `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
@@ -1117,11 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (reelsGrid) {
         const list = getReels().slice(-4);
         reelsGrid.innerHTML = list.map(reel => {
-          const isVideo = reel.image && (
-            reel.image.startsWith('data:video') || 
-            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
-            reel.image.toLowerCase().includes('video')
-          );
+          const isVideo = isMediaVideo(reel.image);
           if (isVideo) {
             return `
               <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
@@ -1149,11 +1129,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (galleryGrid) {
         const list = getGallery();
         galleryGrid.innerHTML = list.map(item => {
-          const isVideoURL = item.image && (
-            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(item.image) || 
-            item.image.toLowerCase().includes('video')
-          );
-          const hasVideo = (item.video && item.video.trim() !== '') || isVideoURL;
+          const isVideoURL = isMediaVideo(item.image);
+          const hasVideo = isMediaVideo(item.video) || isVideoURL;
           const src = item.video || item.image;
           const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
           if (hasVideo) {
@@ -2990,11 +2967,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!reelsList) return;
         const list = getReels();
         reelsList.innerHTML = list.map((reel, idx) => {
-          const isVid = reel.image && (
-            reel.image.startsWith('data:video') || 
-            /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)(?:[\?#]|$)/i.test(reel.image) || 
-            reel.image.toLowerCase().includes('video')
-          );
+          const isVid = isMediaVideo(reel.image);
           return `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${isVid ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`;
         }).join('');
         reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });
