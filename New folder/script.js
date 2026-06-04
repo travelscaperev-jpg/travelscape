@@ -1969,6 +1969,55 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Helper to wake server if needed before performing login POST
+    const wakeServerForLogin = async (role, password, submitBtn, errorEl) => {
+      if (useFallback) {
+        try {
+          const res = await api.post('auth/login', { role, password });
+          return res;
+        } catch (e) {
+          return { success: false, message: e.message };
+        }
+      }
+
+      let attempts = 0;
+      const maxAttempts = 20; // 20 * 3s = 60s
+      
+      submitBtn.disabled = true;
+      errorEl.style.display = 'none';
+
+      // Keep checking ping status
+      while (attempts < maxAttempts) {
+        submitBtn.textContent = `Waking Server (Attempt ${attempts + 1}/${maxAttempts})...`;
+        try {
+          // Send a quick ping with short timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          const res = await fetch(`${API_BASE}/ping`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'ok') {
+              break; // Server is awake!
+            }
+          }
+        } catch (e) {
+          console.log('Server is sleeping, retrying ping...', e.message);
+        }
+        attempts++;
+        await new Promise(r => setTimeout(r, 2500));
+      }
+
+      submitBtn.textContent = 'Verifying Password...';
+      try {
+        const result = await api.post('auth/login', { role, password });
+        return result;
+      } catch (err) {
+        console.error('Login request failed:', err);
+        throw new Error('Connection failed. Server might still be waking up. Please try again.');
+      }
+    };
+
     // --- Password Gate Modals (Admin & Staff) ---
     const adminGate = document.getElementById('admin-password-gate');
     if (adminGate) {
@@ -1978,34 +2027,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const triggerAdminUnlock = async () => {
         if (adminSubmit.disabled) return;
-        adminSubmit.textContent = 'Connecting & Waking Server...';
-        adminSubmit.disabled = true;
-        adminError.style.display = 'none';
-        
-        // Send a ping to wake the Render server immediately (non-blocking)
-        if (!useFallback) {
-          fetch(`${API_BASE}/ping`).catch(() => {});
-        }
-        
         try {
-          let result;
-          try {
-            result = await api.post('auth/login', { role: 'admin', password: adminPassInput.value.trim() });
-          } catch(err) {
-            console.warn('Admin remote login failed, checking local credentials fallback...', err.message);
-            const typedPassword = adminPassInput.value.trim();
-            const storedDb = localDb.read();
-            const storedPass = storedDb.auth.admin_password || 'admin123';
-            if (typedPassword === storedPass || typedPassword === 'admin123') {
-              result = { success: true, role: 'admin' };
-            } else {
-              throw err; // rethrow network error if password didn't match fallback
-            }
+          const passwordVal = adminPassInput.value.trim();
+          if (!passwordVal) {
+            adminError.textContent = 'Please enter a password.';
+            adminError.style.display = 'block';
+            return;
           }
+          const result = await wakeServerForLogin('admin', passwordVal, adminSubmit, adminError);
           if (result && result.success) {
             adminGate.style.display = 'none';
             localStorage.setItem('admin_logged', 'true');
-            // Refresh data from API now that server is awake
             if (!useFallback) {
               fetchAllFromAPI().catch(() => {});
             }
@@ -2014,11 +2046,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             loadAdminPanel();
           } else {
-            adminError.textContent = 'Incorrect password. Please try again.';
+            adminError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             adminError.style.display = 'block';
           }
         } catch (e) {
-          adminError.textContent = 'Server is still waking up. Please wait 10 seconds and try again.';
+          adminError.textContent = e.message || 'Server is still waking up. Please wait 10 seconds and try again.';
           adminError.style.display = 'block';
         } finally {
           adminSubmit.textContent = 'Unlock Dashboard';
@@ -2043,34 +2075,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const triggerStaffUnlock = async () => {
         if (staffSubmit.disabled) return;
-        staffSubmit.textContent = 'Connecting & Waking Server...';
-        staffSubmit.disabled = true;
-        staffError.style.display = 'none';
-
-        // Send a ping to wake the Render server immediately (non-blocking)
-        if (!useFallback) {
-          fetch(`${API_BASE}/ping`).catch(() => {});
-        }
-
         try {
-          let result;
-          try {
-            result = await api.post('auth/login', { role: 'staff', password: staffPassInput.value.trim() });
-          } catch(err) {
-            console.warn('Staff remote login failed, checking local credentials fallback...', err.message);
-            const typedPassword = staffPassInput.value.trim();
-            const storedDb = localDb.read();
-            const storedPass = storedDb.auth.staff_password || 'staff123';
-            if (typedPassword === storedPass || typedPassword === 'staff123') {
-              result = { success: true, role: 'staff' };
-            } else {
-              throw err; // rethrow network error if password didn't match fallback
-            }
+          const passwordVal = staffPassInput.value.trim();
+          if (!passwordVal) {
+            staffError.textContent = 'Please enter a password.';
+            staffError.style.display = 'block';
+            return;
           }
+          const result = await wakeServerForLogin('staff', passwordVal, staffSubmit, staffError);
           if (result && result.success) {
             staffGate.style.display = 'none';
             localStorage.setItem('staff_logged', 'true');
-            // Refresh data from API now that server is awake
             if (!useFallback) {
               fetchAllFromAPI().catch(() => {});
             }
@@ -2079,11 +2094,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             loadStaffPanel();
           } else {
-            staffError.textContent = 'Incorrect password. Please try again.';
+            staffError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             staffError.style.display = 'block';
           }
         } catch (e) {
-          staffError.textContent = 'Server is still waking up. Please wait 10 seconds and try again.';
+          staffError.textContent = e.message || 'Server is still waking up. Please wait 10 seconds and try again.';
           staffError.style.display = 'block';
         } finally {
           staffSubmit.textContent = 'Unlock Dashboard';
