@@ -78,7 +78,6 @@
       <a onclick="switchDashboardTab('private')" id="tab-btn-private">Private Booking (03)</a>
       <a onclick="switchDashboardTab('freediving')" id="tab-btn-freediving">Free Diving (04)</a>
       <a onclick="switchDashboardTab('resorts')" id="tab-btn-resorts">Resorts (05)</a>
-      <a onclick="switchDashboardTab('photography')" id="tab-btn-photography">Photography (06)</a>
       <a onclick="switchDashboardTab('offers')" id="tab-btn-offers">Special Offers</a>
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
@@ -133,7 +132,6 @@
                 <option value="Private Charters">Private Charters</option>
                 <option value="Free Diving">Free Diving</option>
                 <option value="Resorts">Resorts</option>
-                <option value="Photography">Photography</option>
               </select>
             </div>
             <div style="flex: 1; min-width: 200px;">
@@ -607,75 +605,6 @@
               style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
               Manage Resorts</h3>
             <div id="admin-resorts-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
-              <!-- Injected by script.js -->
-            </div>
-        </div>
-      </div>
-
-      <!-- TAB 5B: PHOTOGRAPHY -->
-      <div id="tab-photography" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
-          <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="photo-form-title">Add New Photography Package</h3>
-            <form id="admin-add-photo-form" style="margin-top: 1rem;">
-              <input type="hidden" id="photo-id">
-              <div class="form-group">
-                <label for="photo-title">Package Title</label>
-                <input type="text" id="photo-title" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label for="photo-highlights">Highlights (Comma separated)</label>
-                <input type="text" id="photo-highlights" class="form-control" placeholder="e.g. 25 digital photos, 1 drone video">
-              </div>
-              <div class="form-group">
-                <label for="photo-duration">Duration</label>
-                <input type="text" id="photo-duration" class="form-control" placeholder="e.g. 1 Hour, 2 Hours" required>
-              </div>
-              <div class="form-group">
-                <label for="photo-price">Price ($)</label>
-                <input type="number" id="photo-price" class="form-control" min="0" placeholder="e.g. 50" required>
-              </div>
-              <div class="form-group">
-                <label for="photo-image">Cover Image (URL or Upload file below)</label>
-                <input type="url" id="photo-image" class="form-control" placeholder="URL">
-                <input type="file" id="photo-image-file" class="form-control" accept="image/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
-              </div>
-              <div class="form-group">
-                <label for="photo-video">Video (URL/Local Path or Upload file below)</label>
-                <input type="text" id="photo-video" class="form-control" placeholder="URL or path">
-                <input type="file" id="photo-video-file" class="form-control" accept="video/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
-              </div>
-              <div class="form-group">
-                <label for="photo-video-ratio">Video Aspect Ratio</label>
-                <select id="photo-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                  <option value="16:9">Widescreen (16:9)</option>
-                  <option value="9:16">Portrait (9:16)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="photo-desc">Short Description</label>
-                <textarea id="photo-desc" rows="2" class="form-control" required></textarea>
-              </div>
-              <div class="form-group">
-                <label for="photo-full-desc">Full Description</label>
-                <textarea id="photo-full-desc" rows="4" class="form-control" placeholder="Detailed description..."></textarea>
-              </div>
-              <div class="form-group">
-                <label for="photo-sub-images">Other Images / Photos (Upload multiple files or comma-separated URLs)</label>
-                <input type="text" id="photo-sub-images" class="form-control" placeholder="Comma-separated URLs">
-                <input type="file" id="photo-sub-images-file" class="form-control" accept="image/*" multiple style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
-              </div>
-              <div class="form-group">
-                <label for="photo-max-capacity">Max Capacity (Daily Limit)</label>
-                <input type="number" id="photo-max-capacity" class="form-control" min="1" value="10" required>
-              </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="photo-submit-btn">Add Photography Package</button>
-              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="photo-cancel-btn">Cancel Edit</button>
-            </form>
-          </div>
-          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Photography Packages</h3>
-            <div id="admin-photography-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
           </div>

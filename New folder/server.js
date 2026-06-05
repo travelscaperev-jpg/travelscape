@@ -305,7 +305,6 @@ registerCollectionRoutes('gallery',          'gallery');
 registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 registerCollectionRoutes('crew',             'crew');
-registerCollectionRoutes('photography',      'photography');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -602,33 +601,6 @@ async function seedDatabaseIfEmpty() {
       validity: "Valid until June 30, 2026"
     };
 
-    const defaultPhotography = [
-      {
-        id: "photo-1",
-        title: "Standard Underwater Shoot",
-        duration: "1 Hour",
-        price: 50,
-        description: "Capture your snorkeling or diving adventure with a professional underwater GoPro and dome camera session.",
-        highlights: "25 edited high-res digital photos, 1 edited short reel video, raw files provided",
-        image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
-        video: "",
-        videoRatio: "16:9",
-        maxCapacity: 10
-      },
-      {
-        id: "photo-2",
-        title: "Premium Drone & Island Shoot",
-        duration: "2 Hours",
-        price: 120,
-        description: "Stunning cinematic drone shots of your sandbank excursion combined with professional portrait photography on the beach.",
-        highlights: "cinematic drone footage, 50 edited high-res photos, 4K video reel, matching color grading",
-        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-        video: "",
-        videoRatio: "16:9",
-        maxCapacity: 5
-      }
-    ];
-
     const promises = [
       seedKeyIfEmpty('excursions',       defaultExcursions),
       seedKeyIfEmpty('private_bookings', defaultPrivate),
@@ -644,7 +616,6 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('google_review',    'https://google.com'),
       seedKeyIfEmpty('offer',            defaultOffer),
       seedKeyIfEmpty('crew',             defaultCrew),
-      seedKeyIfEmpty('photography',      defaultPhotography),
     ];
     await Promise.all(promises);
     console.log('✅ Database checks and rich content seeding finished.');
