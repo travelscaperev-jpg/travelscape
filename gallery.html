@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excursions | Travelscape Maldives</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Architects+Daughter&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="parallax-body">
+
+  <!-- Global Full-Page Video Background -->
+  <video autoplay loop muted playsinline class="global-hero-video">
+    <source src="back.mp4" type="video/mp4">
+  </video>
+
+  <!-- Top Left Header Logo (Glass Island) -->
+  <header class="top-left-header glass-island">
+    <img src="1.png" alt="Logo" class="header-logo-img">
+    <div class="header-text-container">
+      <span class="logo-text">TRAVELSCAPE</span>
+      <span class="logo-subtext">MALDIVES</span>
+    </div>
+  </header>
+
+  <!-- Right Side Island Menu -->
+  <div class="right-side-island-menu">
+    <div class="island-nav-links">
+      <a href="index.html">Home</a>
+      <a href="excursions.html" style="color: #38bdf8; font-weight: 700;">Excursions</a>
+      <a href="private.html">Private Trips</a>
+      <a href="freediving.html">Freediving</a>
+      <a href="resorts.html">Resorts</a>
+      <div class="dropdown">
+        <button class="dropbtn">More <i class="arrow down"></i></button>
+        <div class="dropdown-content">
+          <a href="about.html">About Us</a>
+          <a href="staff-details.html">Crew</a>
+          <a href="contact.html">Contact</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="admin.html">Admin Dashboard</a>
+          <a href="staff.html">Staff Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parallax Scroll Container -->
+  <div class="parallax-scroll-container">
+
+    <!-- Layer 1: Hero -->
+    <section class="parallax-layer layer-1 intro-layer subpage-hero">
+      <div class="layer-content align-left" style="position: relative; z-index: 2;">
+        <p class="tag">01 // SERVICES</p>
+        <h1 class="giant-title">Our Excursions</h1>
+        <p class="desc">
+          Travelscape Maldives creates enduring memories through premium snorkeling trips and daily ocean excursions. All shared tours depart from our main location in Maafushi. If you are staying on another island, contact us via WhatsApp to arrange easy transportation. Experience our warm hospitality with maximum fun and a strict no-hidden-charges policy.
+        </p>
+      </div>
+    </section>
+
+    <!-- Layer 2: Content (Slides over Hero) -->
+    <section class="parallax-layer layer-4">
+      <div class="layer-content full-width">
+        <!-- Dynamic Excursion Grid -->
+        <div class="grid-display" id="excursions-grid" data-featured="false">
+          <!-- Injected by script.js -->
+        </div>
+
+        <!-- SEO Optimized Content -->
+        <div class="seo-text-section">
+          <h2>Discover the Ultimate Maldivian Water Activities</h2>
+          <p>
+            Dive into the best water adventures in the Indian Ocean. At <span class="seo-highlight">Travelscape Maldives</span>, our custom tour packages are designed to give you the ultimate tropical experience. From <span class="seo-highlight">Manta Ray snorkeling</span> and coral reef diving to private island sandbank picnics, each trip is curated to show you the best the Maldives has to offer.
+          </p>
+          <p>
+            Whether you are booking a private group trip or joining a scheduled daily sunset cruise, our professional team ensures the highest safety standards and premium amenities on board. Discover all Maldives atolls and islets with our local tour guides and skippers.
+          </p>
+        </div>
+
+        <footer class="parallax-footer">
+          <div class="footer-grid">
+            <div class="footer-col">
+              <h4>Travelscape Maldives</h4>
+              <p>Crafting unforgettable Maldivian adventures and premium private excursions.</p>
+            </div>
+            <div class="footer-col">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="excursions.html">Excursions</a></li>
+                <li><a href="private.html">Private Trips</a></li>
+                <li><a href="freediving.html">Freediving</a></li>
+                <li><a href="resorts.html">Resorts</a></li>
+              </ul>
+            </div>
+            <div class="footer-col">
+              <h4>Contact Us</h4>
+              <ul>
+                <li><a href="https://maps.google.com/?q=Maafushi+Maldives" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Maafushi, Kaafu Atoll, Maldives</a></li>
+                <li><a href="mailto:travelscape.mv@gmail.com"><i class="fa-solid fa-envelope"></i> travelscape.mv@gmail.com</a></li>
+                <li><a href="tel:+9609388008"><i class="fa-solid fa-phone"></i> +960 938 8008</a></li>
+                <li><a href="https://instagram.com/travelscapemaldives" target="_blank"><i class="fa-brands fa-instagram"></i> @travelscapemaldives</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 Travelscape Maldives. All Rights Reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Booking Modal -->
+  <div id="booking-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#121824; border: 1px solid rgba(255,255,255,0.08); padding:2rem; border-radius:var(--radius); width:90%; max-width:450px; box-shadow: 0 10px 35px rgba(0,0,0,0.5);">
+      <h3 style="color:#fff; margin-bottom:1.5rem; font-size:1.4rem;">Book Excursion</h3>
+      <h4 style="color:#94a3b8; margin-bottom:1rem; font-weight:500;">Excursion: <span id="booking-excursion-title" style="color:#38bdf8; font-weight:700;"></span></h4>
+      <form id="booking-form">
+        <input type="hidden" id="booking-excursion-id">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Your Name</label>
+          <input type="text" id="booking-name" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Email Address</label>
+          <input type="email" id="booking-email" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Preferred Date</label>
+          <input type="date" id="booking-date" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Payment Basis</label>
+          <select id="booking-payment" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+          </select>
+        </div>
+        <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+          <input type="checkbox" id="booking-private" style="width:18px; height:18px; cursor:pointer;">
+          <label for="booking-private" style="color:#94a3b8; font-size:0.95rem; cursor:pointer; user-select:none;">Private Trip (Group Booking)</label>
+        </div>
+        <div id="booking-persons-group" style="margin-bottom:1.5rem; display:none;">
+          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Number of Persons</label>
+          <input type="number" id="booking-persons" min="1" value="1" style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem;">Confirm Booking</button>
+        <button type="button" id="close-modal" style="width:100%; margin-top:0.5rem; background:transparent; border:none; color:#94a3b8; cursor:pointer; padding:0.5rem 0;">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

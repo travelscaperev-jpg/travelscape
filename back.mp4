@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Travelscape Maldives</title>
+  <link rel="stylesheet" href="styles.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Architects+Daughter&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .tab-content-section {
+      display: none;
+    }
+
+    .tab-content-section.active {
+      display: block;
+    }
+
+    .sidebar a {
+      cursor: pointer;
+    }
+
+    .admin-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  </style>
+  <script>
+    if (localStorage.getItem('admin_logged') === 'true') {
+      document.write('<style>#admin-password-gate { display: none !important; }</style>');
+    }
+  </script>
+</head>
+
+<body style="background: #080d1a;">
+
+  <!-- Password Gate Overlay -->
+  <div id="admin-password-gate" class="password-gate-overlay">
+    <div class="password-gate-card">
+      <h3 style="margin-top: 0;">Admin Portal</h3>
+      <p>Enter the administrator password to manage excursions and bookings.</p>
+      <div class="form-group" style="text-align: left;">
+        <label for="admin-password">Password</label>
+        <input type="password" id="admin-password" class="form-control" placeholder="••••••••" required>
+      </div>
+      <button id="admin-gate-submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">Unlock
+        Dashboard</button>
+      <div id="admin-gate-error" class="gate-error">Incorrect password. Please try again.</div>
+    </div>
+  </div>
+
+  <!-- Top Left Header Logo (Glass Island) -->
+  <header class="top-left-header glass-island">
+    <img src="1.png" alt="Logo" class="header-logo-img">
+    <div class="header-text-container">
+      <span class="logo-text">TRAVELSCAPE</span>
+      <span class="logo-subtext">MALDIVES</span>
+    </div>
+    <span
+      style="font-size: 0.85rem; font-weight: 800; color: #38bdf8; margin-left: 15px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px; letter-spacing: 0.5px; height: 16px; line-height: 16px; font-family: 'Inter', sans-serif;">ADMIN</span>
+  </header>
+
+  <!-- Right Side Island Menu -->
+  <div class="right-side-island-menu">
+    <div class="island-nav-links">
+      <a href="index.html">View Site</a>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <a onclick="switchDashboardTab('bookings')" id="tab-btn-bookings" class="active">Overview & Bookings</a>
+      <a onclick="switchDashboardTab('excursions')" id="tab-btn-excursions">Excursions (02)</a>
+      <a onclick="switchDashboardTab('private')" id="tab-btn-private">Private Booking (03)</a>
+      <a onclick="switchDashboardTab('freediving')" id="tab-btn-freediving">Free Diving (04)</a>
+      <a onclick="switchDashboardTab('resorts')" id="tab-btn-resorts">Resorts (05)</a>
+      <a onclick="switchDashboardTab('photography')" id="tab-btn-photography">Photography (06)</a>
+      <a onclick="switchDashboardTab('offers')" id="tab-btn-offers">Special Offers</a>
+      <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
+      <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
+      <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
+      <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span id="contact-msg-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
+      <a href="#" onclick="localStorage.removeItem('admin_logged'); window.location.reload();"
+        style="margin-top: 2rem; color: #ef4444;">Log Out</a>
+    </aside>
+
+    <main class="main-content" style="padding-top: 2rem;">
+      <h2 style="margin-bottom: 2rem; color: #fff;">Administrator Control Panel</h2>
+
+      <!-- TAB 1: OVERVIEW & BOOKINGS -->
+      <div id="tab-bookings" class="tab-content-section active">
+        <!-- Stats Summary -->
+        <div class="stat-grid">
+          <div class="stat-card" style="border-left-color: #38bdf8;">
+            <p>Total Bookings</p>
+            <div class="stat-value" id="admin-stat-total-bookings" style="color: #38bdf8; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">0</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #10b981;">
+            <p>Total Revenue</p>
+            <div class="stat-value" id="admin-stat-total-amount" style="color: #10b981; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">$0</div>
+          </div>
+        </div>
+
+        <!-- Bookings Table -->
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="margin-bottom: 1.5rem; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+            <span>Guest Bookings List</span>
+            <span
+              style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized
+              with PostgreSQL Cloud</span>
+          </h3>
+
+          <!-- Filters -->
+          <div
+            style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="flex: 1.5; min-width: 200px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Search Booking</label>
+              <input type="text" id="filter-search" placeholder="Search ID, Name, Contact, Email..."
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit; outline:none;">
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Package Type</label>
+              <select id="filter-package-type"
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+                <option value="">All Package Types</option>
+                <option value="Excursions">Excursions</option>
+                <option value="Private Charters">Private Charters</option>
+                <option value="Free Diving">Free Diving</option>
+                <option value="Resorts">Resorts</option>
+                <option value="Photography">Photography</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter
+                Excursion</label>
+              <select id="filter-excursion"
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+                <option value="">All Excursions</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Date</label>
+              <input type="date" id="filter-date"
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Payment
+                Basis</label>
+              <select id="filter-payment"
+                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+                <option value="">All Payments</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Office Directly Payment">Office Directly Payment</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:flex-end; gap: 0.5rem;">
+              <button id="clear-filters" class="btn"
+                style="padding:0.5rem 1rem; background:rgba(255,255,255,0.1); color:#fff; font-size:0.85rem;">Clear</button>
+              <button id="print-filtered-list" class="btn btn-primary"
+                style="padding:0.5rem 1rem; font-size:0.85rem;">Print List</button>
+              <button id="add-direct-booking-admin" class="btn"
+                style="padding:0.5rem 1rem; font-size:0.85rem; background:#10b981; color:#fff; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-plus"></i> Add Booking</button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+              <thead>
+                <tr
+                  style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 1rem 0;">Booking ID</th>
+                  <th style="padding: 1rem 0;">Guest Name</th>
+                  <th style="padding: 1rem 0;">Excursion Title</th>
+                  <th style="padding: 1rem 0;">Preferred Date</th>
+                  <th style="padding: 1rem 0;">Payment Basis</th>
+                  <th style="padding: 1rem 0;">Status</th>
+                  <th style="padding: 1rem 0;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-bookings-table">
+                <!-- Injected by script.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: EXCURSIONS -->
+      <div id="tab-excursions" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="ex-form-title">Add
+              New Excursion</h3>
+            <form id="admin-add-excursion-form" style="margin-top: 1rem;">
+              <input type="hidden" id="ex-id">
+              <div class="form-group">
+                <label for="ex-title">Excursion Title</label>
+                <input type="text" id="ex-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="ex-highlights">Highlights (Comma separated)</label>
+                <input type="text" id="ex-highlights" class="form-control"
+                  placeholder="e.g. Snorkeling, Lunch, Dolphin Watch">
+              </div>
+              <div class="form-group">
+                <label for="ex-duration">Duration</label>
+                <input type="text" id="ex-duration" class="form-control" placeholder="e.g. 3 Hours, Half Day" required>
+              </div>
+              <div class="form-group">
+                <label for="ex-image">Cover Image (URL or Upload file below)</label>
+                <input type="url" id="ex-image" class="form-control" placeholder="URL">
+                <input type="file" id="ex-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="ex-video">Video (URL/Local Path or Upload file below)</label>
+                <input type="text" id="ex-video" class="form-control" placeholder="URL or path e.g. back.mp4">
+                <input type="file" id="ex-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="ex-video-ratio">Video Aspect Ratio</label>
+                <select id="ex-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="16:9">Widescreen (16:9)</option>
+                  <option value="9:16">Portrait (9:16)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ex-desc">Short Description</label>
+                <textarea id="ex-desc" rows="2" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="ex-full-desc">Full Description</label>
+                <textarea id="ex-full-desc" rows="4" class="form-control"
+                  placeholder="Detailed description..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="ex-sub-images">Other Images / Photos (Upload multiple files below or comma-separated
+                  URLs)</label>
+                <input type="text" id="ex-sub-images" class="form-control" placeholder="Comma-separated image URLs">
+                <input type="file" id="ex-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+
+              <div class="admin-form-row" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="ex-kid-half">Kid Age for Half Price</label>
+                  <input type="number" id="ex-kid-half" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="ex-kid-free">Kid Age for Full Discount</label>
+                  <input type="number" id="ex-kid-free" class="form-control" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="ex-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="ex-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="ex-submit-btn">Add Excursion Card</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="ex-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Current Excursions</h3>
+            <div id="admin-excursions-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PRIVATE BOOKINGS -->
+      <div id="tab-private" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
+              id="private-form-title">Add New Private Excursion</h3>
+            <form id="admin-add-private-form" style="margin-top: 1rem;">
+              <input type="hidden" id="private-id">
+              <div class="form-group">
+                <label for="private-title">Title</label>
+                <input type="text" id="private-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="private-highlights">Highlights (Comma separated)</label>
+                <input type="text" id="private-highlights" class="form-control"
+                  placeholder="e.g. Speedboat charter, Private guide">
+              </div>
+              <div class="form-group">
+                <label for="private-duration">Duration</label>
+                <input type="text" id="private-duration" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="private-image">Cover Image (URL or Upload file below)</label>
+                <input type="url" id="private-image" class="form-control" placeholder="URL">
+                <input type="file" id="private-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="private-video">Video (URL/Local Path or Upload file below)</label>
+                <input type="text" id="private-video" class="form-control" placeholder="URL or path">
+                <input type="file" id="private-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="private-video-ratio">Video Aspect Ratio</label>
+                <select id="private-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="16:9">Widescreen (16:9)</option>
+                  <option value="9:16">Portrait (9:16)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="private-desc">Short Description</label>
+                <textarea id="private-desc" rows="2" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="private-full-desc">Full Description</label>
+                <textarea id="private-full-desc" rows="4" class="form-control"
+                  placeholder="Detailed description..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="private-sub-images">Other Images / Photos (Upload multiple files below or comma-separated
+                  URLs)</label>
+                <input type="text" id="private-sub-images" class="form-control"
+                  placeholder="Comma-separated image URLs">
+                <input type="file" id="private-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="admin-form-row" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="private-kid-half">Kid Age for Half Price</label>
+                  <input type="number" id="private-kid-half" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="private-kid-free">Kid Age for Full Discount</label>
+                  <input type="number" id="private-kid-free" class="form-control" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="private-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="private-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="private-submit-btn">Add Private Booking</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="private-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Private Bookings</h3>
+            <div id="admin-private-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: FREE DIVING -->
+      <div id="tab-freediving" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="fd-form-title">Add
+              New Free Diving Option</h3>
+            <form id="admin-add-fd-form" style="margin-top: 1rem;">
+              <input type="hidden" id="fd-id">
+              <div class="form-group">
+                <label for="fd-title">Title</label>
+                <input type="text" id="fd-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="fd-highlights">Highlights (Comma separated)</label>
+                <input type="text" id="fd-highlights" class="form-control"
+                  placeholder="e.g. Certified instructor, Depth training">
+              </div>
+              <div class="form-group">
+                <label for="fd-duration">Duration</label>
+                <input type="text" id="fd-duration" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="fd-image">Cover Image (URL or Upload file below)</label>
+                <input type="url" id="fd-image" class="form-control" placeholder="URL">
+                <input type="file" id="fd-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="fd-video">Video (URL/Local Path or Upload file below)</label>
+                <input type="text" id="fd-video" class="form-control" placeholder="URL or path">
+                <input type="file" id="fd-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="fd-video-ratio">Video Aspect Ratio</label>
+                <select id="fd-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="16:9">Widescreen (16:9)</option>
+                  <option value="9:16">Portrait (9:16)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fd-desc">Short Description</label>
+                <textarea id="fd-desc" rows="2" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="fd-full-desc">Full Description</label>
+                <textarea id="fd-full-desc" rows="4" class="form-control"
+                  placeholder="Detailed description..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="fd-sub-images">Other Images / Photos (Upload multiple files below or comma-separated
+                  URLs)</label>
+                <input type="text" id="fd-sub-images" class="form-control" placeholder="Comma-separated image URLs">
+                <input type="file" id="fd-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="admin-form-row" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="fd-kid-half">Kid Age for Half Price</label>
+                  <input type="number" id="fd-kid-half" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="fd-kid-free">Kid Age for Full Discount</label>
+                  <input type="number" id="fd-kid-free" class="form-control" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="fd-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="fd-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="fd-submit-btn">Add Free Diving Card</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="fd-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Free Diving</h3>
+            <div id="admin-fd-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: RESORTS -->
+      <div id="tab-resorts" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
+              id="resort-form-title">Add New Resort Deal</h3>
+            <form id="admin-add-resort-form" style="margin-top: 1rem;">
+              <input type="hidden" id="resort-id">
+              <div class="form-group">
+                <label for="resort-title">Resort Name</label>
+                <input type="text" id="resort-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="resort-image">Cover Image (URL or Upload file below)</label>
+                <input type="url" id="resort-image" class="form-control" placeholder="URL">
+                <input type="file" id="resort-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="resort-video">Video (URL/Local Path or Upload file below)</label>
+                <input type="text" id="resort-video" class="form-control" placeholder="URL or path">
+                <input type="file" id="resort-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="resort-video-ratio">Video Aspect Ratio</label>
+                <select id="resort-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="16:9">Widescreen (16:9)</option>
+                  <option value="9:16">Portrait (9:16)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="resort-desc">Description</label>
+                <textarea id="resort-desc" rows="3" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="resort-sub-images">Other Images / Photos (Upload multiple files below or comma-separated
+                  URLs)</label>
+                <input type="text" id="resort-sub-images" class="form-control" placeholder="Comma-separated image URLs">
+                <input type="file" id="resort-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+
+              <!-- RESORT VISITS PRICING MATRIX -->
+              <h4
+                style="color:#38bdf8; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.25rem;">
+                Pricing & Visit Packages</h4>
+
+              <!-- Checkbox for Day Visit -->
+              <div
+                style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #fff;">
+                  <input type="checkbox" id="resort-has-day-visit" value="true"> Day Visit Option
+                </label>
+                <div id="resort-day-visit-details"
+                  style="display: none; margin-top: 1rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; display: flex; flex-direction: column; gap: 1rem;">
+                  <div>
+                    <label for="resort-day-visit-type">Day Visit Type</label>
+                    <select id="resort-day-visit-type" class="form-control" style="background:#080d1a; color:#fff;">
+                      <option value="half_day">Half Day Only</option>
+                      <option value="full_day">Full Day Only</option>
+                      <option value="both">Both Half Day & Full Day</option>
+                    </select>
+                  </div>
+
+                  <!-- Half Day Rates -->
+                  <div id="resort-half-day-rates" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Half Day Rates ($):</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                      <div>
+                        <label style="font-size:0.75rem;">Standard</label>
+                        <input type="number" id="resort-day-half-std" class="form-control" placeholder="Rate">
+                      </div>
+                      <div>
+                        <label style="font-size:0.75rem;">Premium</label>
+                        <input type="number" id="resort-day-half-prem" class="form-control" placeholder="Rate">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Full Day Rates -->
+                  <div id="resort-full-day-rates" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Full Day Rates ($):</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                      <div>
+                        <label style="font-size:0.75rem;">Standard</label>
+                        <input type="number" id="resort-day-full-std" class="form-control" placeholder="Rate">
+                      </div>
+                      <div>
+                        <label style="font-size:0.75rem;">Premium</label>
+                        <input type="number" id="resort-day-full-prem" class="form-control" placeholder="Rate">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Checkbox for Stay Night Visit -->
+              <div
+                style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #fff;">
+                  <input type="checkbox" id="resort-has-stay-night" value="true"> Stay Night Visit Option
+                </label>
+                <div id="resort-stay-night-details"
+                  style="display: none; margin-top: 1rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; display: flex; flex-direction: column; gap: 0.75rem;">
+                  <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Stay Night Rates ($):</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div>
+                      <label style="font-size:0.75rem;">Standard</label>
+                      <input type="number" id="resort-stay-std" class="form-control" placeholder="Rate">
+                    </div>
+                    <div>
+                      <label style="font-size:0.75rem;">Premium</label>
+                      <input type="number" id="resort-stay-prem" class="form-control" placeholder="Rate">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-form-row" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="resort-kid-half">Kid Age for Half Price</label>
+                  <input type="number" id="resort-kid-half" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="resort-kid-free">Kid Age for Full Discount</label>
+                  <input type="number" id="resort-kid-free" class="form-control" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="resort-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="resort-max-capacity" class="form-control" min="1" value="20" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="resort-submit-btn">Add Resort Card</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="resort-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Resorts</h3>
+            <div id="admin-resorts-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+        </div>
+      </div>
+
+      <!-- TAB 5B: PHOTOGRAPHY -->
+      <div id="tab-photography" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="photo-form-title">Add New Photography Package</h3>
+            <form id="admin-add-photo-form" style="margin-top: 1rem;">
+              <input type="hidden" id="photo-id">
+              <div class="form-group">
+                <label for="photo-title">Package Title</label>
+                <input type="text" id="photo-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="photo-highlights">Highlights (Comma separated)</label>
+                <input type="text" id="photo-highlights" class="form-control" placeholder="e.g. 25 digital photos, 1 drone video">
+              </div>
+              <div class="form-group">
+                <label for="photo-duration">Duration</label>
+                <input type="text" id="photo-duration" class="form-control" placeholder="e.g. 1 Hour, 2 Hours" required>
+              </div>
+              <div class="form-group">
+                <label for="photo-price">Price ($)</label>
+                <input type="number" id="photo-price" class="form-control" min="0" placeholder="e.g. 50" required>
+              </div>
+              <div class="form-group">
+                <label for="photo-image">Cover Image (URL or Upload file below)</label>
+                <input type="url" id="photo-image" class="form-control" placeholder="URL">
+                <input type="file" id="photo-image-file" class="form-control" accept="image/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="photo-video">Video (URL/Local Path or Upload file below)</label>
+                <input type="text" id="photo-video" class="form-control" placeholder="URL or path">
+                <input type="file" id="photo-video-file" class="form-control" accept="video/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="photo-video-ratio">Video Aspect Ratio</label>
+                <select id="photo-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="16:9">Widescreen (16:9)</option>
+                  <option value="9:16">Portrait (9:16)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="photo-desc">Short Description</label>
+                <textarea id="photo-desc" rows="2" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="photo-full-desc">Full Description</label>
+                <textarea id="photo-full-desc" rows="4" class="form-control" placeholder="Detailed description..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="photo-sub-images">Other Images / Photos (Upload multiple files or comma-separated URLs)</label>
+                <input type="text" id="photo-sub-images" class="form-control" placeholder="Comma-separated URLs">
+                <input type="file" id="photo-sub-images-file" class="form-control" accept="image/*" multiple style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <div class="form-group">
+                <label for="photo-max-capacity">Max Capacity (Daily Limit)</label>
+                <input type="number" id="photo-max-capacity" class="form-control" min="1" value="10" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="photo-submit-btn">Add Photography Package</button>
+              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="photo-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Photography Packages</h3>
+            <div id="admin-photography-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: SPECIAL OFFERS -->
+      <div id="tab-offers" class="tab-content-section">
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+            Manage Seasonal / Special Offer</h3>
+          <div id="admin-offer-status-container">
+            <!-- Injected by script.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 7: TESTIMONIALS -->
+      <div id="tab-testimonials" class="tab-content-section">
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+            Google Review Link</h3>
+          <div style="display: flex; gap: 1rem; align-items: flex-end; max-width: 600px;">
+            <div style="flex: 1;">
+              <label for="google-review-url"
+                style="display: block; color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Google Review
+                URL</label>
+              <input type="url" id="google-review-url" class="form-control"
+                placeholder="https://g.page/r/... (Leave empty to hide button)">
+            </div>
+            <button id="save-google-review-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Save
+              Link</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add New Testimony</h3>
+            <form id="admin-add-testimony-form" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label for="testimony-name">Guest Name</label>
+                <input type="text" id="testimony-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="testimony-rating">Rating</label>
+                <select id="testimony-rating" class="form-control" required>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="testimony-text">Testimony Content</label>
+                <textarea id="testimony-text" rows="4" class="form-control" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary"
+                style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">Add Testimony</button>
+            </form>
+          </div>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Testimonies</h3>
+            <div id="admin-testimonies-list" style="max-height: 480px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 8: MEDIA ASSETS -->
+      <div id="tab-media" class="tab-content-section">
+        <!-- Global Hero Videos Slider Management -->
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff; display: flex; justify-content: space-between; align-items: center;">
+            <span>Manage Hero Video Background Slider</span>
+            <span
+              style="font-size: 0.8rem; font-weight: normal; background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 0.25rem 0.75rem; border-radius: 20px;">Multiple
+              Background Videos</span>
+          </h3>
+
+          <!-- Current List of Videos -->
+          <div id="admin-hero-videos-list"
+            style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Dynamic list of video paths with preview & Delete button will be injected here -->
+          </div>
+          <!-- Form to add new video -->
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
+            <h4 style="color:#fff; margin-bottom: 1rem; font-size: 1rem;">+ Add New Video to Slider (Direct Upload)</h4>
+            <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 2; min-width: 250px;">
+                <label for="new-hero-video-file" style="display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Select Video File</label>
+                <input type="file" id="new-hero-video-file" class="form-control" accept="video/*" style="background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <button id="add-hero-video-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 42px;">Add Video to List</button>
+            </div>
+          </div>
+
+          <button id="save-hero-videos-btn" class="btn btn-primary"
+            style="margin-top: 2rem; padding: 0.75rem 2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Save
+            Slider Changes</button>
+        </div>
+
+        <!-- Homepage Reels -->
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff; display: flex; justify-content: space-between; align-items: center;">
+            <span>Manage Homepage Reels (Instagram Images/Videos)</span>
+            <button id="add-reel-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">+ Add
+              Reel</button>
+          </h3>
+          <div id="admin-reels-list"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+            <!-- Dynamic Reels fields will be injected here -->
+          </div>
+          <button id="save-reels-btn" class="btn btn-primary" style="margin-top: 1.5rem; padding: 0.75rem 1.5rem;">Save
+            Reels Changes</button>
+        </div>
+
+        <!-- Gallery Video Cards -->
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); color: #cbd5e1;">
+          <h3
+            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff; display: flex; justify-content: space-between; align-items: center;">
+            <span>Manage Gallery Video Cards</span>
+            <button id="add-gallery-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">+ Add
+              Gallery Card</button>
+          </h3>
+          <div id="admin-gallery-list">
+            <!-- Dynamic Gallery fields will be injected here -->
+          </div>
+          <button id="save-gallery-btn" class="btn btn-primary"
+            style="margin-top: 1.5rem; padding: 0.75rem 1.5rem;">Save Gallery Changes</button>
+        </div>
+      </div>
+
+      <!-- TAB 9: CONTACT MESSAGES -->
+      <div id="tab-contact-messages" class="tab-content-section">
+        <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3 style="margin-bottom: 1.5rem; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fa-solid fa-envelope" style="color:#38bdf8; margin-right:8px;"></i>Contact Form Messages</span>
+            <span style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized with DB</span>
+          </h3>
+
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <button id="mark-all-read-btn" class="btn" style="padding:0.5rem 1rem; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.85rem; border:1px solid rgba(16,185,129,0.3);"><i class="fa-solid fa-check-double" style="margin-right:5px;"></i>Mark All Read</button>
+            <button id="clear-all-messages-btn" class="btn" style="padding:0.5rem 1rem; background:rgba(239,68,68,0.15); color:#ef4444; font-size:0.85rem; border:1px solid rgba(239,68,68,0.3);"><i class="fa-solid fa-trash" style="margin-right:5px;"></i>Clear All</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 1rem 0;">Sender</th>
+                  <th style="padding: 1rem 0;">Subject</th>
+                  <th style="padding: 1rem 0;">Message</th>
+                  <th style="padding: 1rem 0;">Received</th>
+                  <th style="padding: 1rem 0;">Status</th>
+                  <th style="padding: 1rem 0;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-contact-messages-table">
+                <!-- Injected by script.js -->
+              </tbody>
+            </table>
+          </div>
+          <div id="admin-no-messages" style="display:none; text-align:center; padding:3rem 1rem; color:#64748b;">
+            <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:1rem; display:block; color:#38bdf8; opacity:0.4;"></i>
+            No contact messages yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 10: MANAGE CREW -->
+      <div id="tab-crew" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="crew-form-title">Add New Crew Member</h3>
+            <form id="admin-add-crew-form" style="margin-top: 1rem;">
+              <input type="hidden" id="crew-id">
+              <div class="form-group">
+                <label for="crew-name">Full Name</label>
+                <input type="text" id="crew-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="crew-role">Role / Designation</label>
+                <input type="text" id="crew-role" class="form-control" placeholder="e.g. Boat Captain" required>
+              </div>
+              <div class="form-group">
+                <label for="crew-bio">Biography / Description</label>
+                <textarea id="crew-bio" class="form-control" rows="3" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="crew-licenses">Licenses & Certifications (Comma separated)</label>
+                <input type="text" id="crew-licenses" class="form-control" placeholder="e.g. Master License, CPR Certified">
+              </div>
+              <div class="form-group">
+                <label for="crew-image">Profile Image (URL or Upload below)</label>
+                <input type="url" id="crew-image" class="form-control" placeholder="URL">
+                <input type="file" id="crew-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+              </div>
+              <button type="submit" id="crew-submit-btn" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Add Crew Member</button>
+              <button type="button" id="crew-cancel-btn" class="btn" style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel Edit</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members</h3>
+            <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Tab switcher function
+    function switchDashboardTab(tabId) {
+      document.querySelectorAll('.tab-content-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      const targetBtn = document.getElementById('tab-btn-' + tabId);
+      if (targetTab) targetTab.classList.add('active');
+      if (targetBtn) targetBtn.classList.add('active');
+    }
+  </script>
+  <div id="booking-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;"></div>
+  <script src="script.js"></script>
+</body>
+
+</html>
