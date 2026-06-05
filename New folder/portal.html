@@ -78,8 +78,28 @@
       
       <!-- Excursions Tab -->
       <div id="tab-excursions" class="hidden">
-        <h3>Manage Content</h3>
-        <p><i>API connected to Cloudinary. Feature under development.</i></p>
+        <h3>Manage Excursions</h3>
+        <form id="excursion-form" style="margin-bottom: 30px;">
+          <input type="text" id="excursion-title" placeholder="Title" required>
+          <input type="text" id="excursion-description" placeholder="Description" required>
+          <input type="number" id="excursion-price" placeholder="Price ($)" required>
+          <label>Main Image:</label>
+          <input type="file" id="excursion-media" accept="image/*" required>
+          <label>Cover Image (Layer 2 Background):</label>
+          <input type="file" id="excursion-cover" accept="image/*">
+          <label>Video (Layer 2 Background):</label>
+          <input type="file" id="excursion-video" accept="video/*">
+          <button type="submit">Add Excursion</button>
+        </form>
+        
+        <table id="excursions-table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Price</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="excursions-table-body"></tbody>
+        </table>
       </div>
 
     </div>

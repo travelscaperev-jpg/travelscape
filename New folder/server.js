@@ -95,26 +95,51 @@ models.forEach(modelName => {
     }
   });
 
+  // GET item by ID
+  app.get(`/api/${routeName}/:id`, async (req, res) => {
+    try {
+      const item = await prisma[modelName].findUnique({ where: { id: parseInt(req.params.id) } });
+      if (!item) return res.status(404).json({ error: 'Item not found' });
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
   // POST new item (Admin/Staff only)
-  app.post(`/api/${routeName}`, authenticate, upload.single('media'), async (req, res) => {
+  app.post(`/api/${routeName}`, authenticate, upload.fields([
+    { name: 'media', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]), async (req, res) => {
     try {
       const { title, description, price } = req.body;
-      const mediaUrl = req.file ? req.file.path : null;
-      
       const data = { title };
+      
       if (description !== undefined) data.description = description;
       if (price !== undefined) data.price = parseFloat(price) || 0;
       
-      // Determine if it's videoUrl or imageUrl
+      // Handle file uploads
+      const mediaFile = req.files && req.files['media'] ? req.files['media'][0].path : null;
+      const coverImageFile = req.files && req.files['coverImage'] ? req.files['coverImage'][0].path : null;
+      const videoFile = req.files && req.files['video'] ? req.files['video'][0].path : null;
+
+      // Assign to appropriate fields based on model
       if (['reel', 'heroSlider'].includes(modelName)) {
-        if (mediaUrl) data.videoUrl = mediaUrl;
+        if (mediaFile) data.videoUrl = mediaFile; // fallback if they uploaded to 'media' field
+        if (videoFile) data.videoUrl = videoFile;
       } else {
-        if (mediaUrl) data.imageUrl = mediaUrl;
+        if (mediaFile) data.imageUrl = mediaFile;
       }
+      
+      // Excursions and specific models might have coverImage and videoUrl explicitly
+      if (coverImageFile) data.coverImage = coverImageFile;
+      if (videoFile && !['reel', 'heroSlider'].includes(modelName)) data.videoUrl = videoFile;
 
       const item = await prisma[modelName].create({ data });
       res.json(item);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: 'Failed to create item' });
     }
   });
@@ -134,6 +159,16 @@ models.forEach(modelName => {
 app.get('/api/bookings', authenticate, async (req, res) => {
   const items = await prisma.booking.findMany({ orderBy: { createdAt: 'desc' } });
   res.json(items);
+});
+
+app.get('/api/bookings/:id', authenticate, async (req, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: parseInt(req.params.id) } });
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json(booking);
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 app.post('/api/bookings', async (req, res) => {

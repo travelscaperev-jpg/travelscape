@@ -48,6 +48,7 @@ function showDashboard() {
   document.getElementById('user-role-display').innerText = userRole;
   loadBookings();
   loadContacts();
+  loadExcursions();
 }
 
 function switchTab(tabName) {
@@ -116,3 +117,59 @@ async function deleteContact(id) {
     loadContacts();
   }
 }
+
+async function loadExcursions() {
+  const res = await fetch('/api/excursions');
+  if (res.ok) {
+    const excursions = await res.json();
+    const tbody = document.getElementById('excursions-table-body');
+    tbody.innerHTML = excursions.map(e => `
+      <tr>
+        <td>${e.title}</td>
+        <td>$${e.price}</td>
+        <td>
+          <button onclick="deleteExcursion(${e.id})" style="padding:5px; background:red; font-size:12px;">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+}
+
+async function deleteExcursion(id) {
+  if(confirm('Delete this excursion?')) {
+    await fetch(`/api/excursions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }});
+    loadExcursions();
+  }
+}
+
+document.getElementById('excursion-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData();
+  formData.append('title', document.getElementById('excursion-title').value);
+  formData.append('description', document.getElementById('excursion-description').value);
+  formData.append('price', document.getElementById('excursion-price').value);
+  
+  const mediaFile = document.getElementById('excursion-media').files[0];
+  if(mediaFile) formData.append('media', mediaFile);
+  
+  const coverFile = document.getElementById('excursion-cover').files[0];
+  if(coverFile) formData.append('coverImage', coverFile);
+  
+  const videoFile = document.getElementById('excursion-video').files[0];
+  if(videoFile) formData.append('video', videoFile);
+
+  const res = await fetch('/api/excursions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  });
+
+  if (res.ok) {
+    alert('Excursion added successfully!');
+    document.getElementById('excursion-form').reset();
+    loadExcursions();
+  } else {
+    alert('Failed to add excursion');
+  }
+});

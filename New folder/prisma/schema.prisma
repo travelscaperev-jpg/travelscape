@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "rhel-openssl-3.0.x", "windows"]
 }
 
 datasource db {
@@ -28,6 +29,8 @@ model Excursion {
   title       String
   description String
   imageUrl    String?
+  coverImage  String?
+  videoUrl    String?
   price       Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

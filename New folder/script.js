@@ -94,9 +94,28 @@ function fetchAndRender(apiUrl, layerId) {
       const detailsContainer = document.getElementById(`${layerId}-details-overlay`);
       
       if (bgContainer) {
-        bgContainer.innerHTML = data.map((item, i) => `
-          <div class="layer-bg-slide ${i === 0 ? 'active' : ''}" style="background-image: url('${item.imageUrl || '#'}'); position: absolute; top:0; left:0; width:100%; height:100%; background-size: cover; background-position: center; opacity: ${i === 0 ? 1 : 0}; transition: opacity 1.2s ease;"></div>
-        `).join('');
+        bgContainer.innerHTML = data.map((item, i) => {
+          let bgContent = '';
+          const bgSrc = item.coverImage || item.imageUrl || '#';
+          
+          if (item.videoUrl) {
+            bgContent = `
+              <video autoplay muted loop playsinline style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover;">
+                <source src="${item.videoUrl}" type="video/mp4">
+              </video>
+            `;
+          } else {
+            bgContent = `
+              <div style="background-image: url('${bgSrc}'); position: absolute; top:0; left:0; width:100%; height:100%; background-size: cover; background-position: center;"></div>
+            `;
+          }
+
+          return `
+            <div class="layer-bg-slide ${i === 0 ? 'active' : ''}" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: ${i === 0 ? 1 : 0}; transition: opacity 1.2s ease;">
+              ${bgContent}
+            </div>
+          `;
+        }).join('');
       }
 
       if (detailsContainer) {
