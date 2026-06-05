@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
   const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
     ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
-    : (window.location.origin.includes('github.io') ? RENDER_SERVER_URL + '/api' : '/api');
+    : (window.location.origin.includes('github.io') || window.location.origin.includes('onrender.com') ? RENDER_SERVER_URL + '/api' : '/api');
 
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
