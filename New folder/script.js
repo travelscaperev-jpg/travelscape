@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "private_bookings": [],
     "freediving": [],
     "resorts": [],
+    "photography": [],
     "bookings": [],
     "contact_messages": [],
     "testimonials": [],
@@ -344,11 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let dataCache = {};
 
   async function loadAllData() {
-    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
+    const [excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
       api.get('excursions'),
       api.get('private'),
       api.get('freediving'),
       api.get('resorts'),
+      api.get('photography'),
       api.get('bookings'),
       api.get('testimonials'),
       api.get('reels'),
@@ -367,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
       private: privateBookings || [],
       freediving: freediving || [],
       resorts: resorts || [],
+      photography: photography || [],
       bookings: bookings || [],
       testimonials: testimonials || [],
       reels: reels || [],
@@ -406,6 +409,12 @@ document.addEventListener('DOMContentLoaded', () => {
     dataCache.resorts = data;
     try { const db = localDb.read(); db.resorts = data; localDb.write(db); } catch(e) {}
     await api.post('resorts', data);
+  };
+  const getPhotography = () => dataCache.photography || [];
+  const setPhotography = async (data) => {
+    dataCache.photography = data;
+    try { const db = localDb.read(); db.photography = data; localDb.write(db); } catch(e) {}
+    await api.post('photography', data);
   };
   const getReels = () => dataCache.reels || [];
   const setReels = async (data) => {
@@ -495,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
       private: cachedDb.private_bookings || [],
       freediving: cachedDb.freediving || [],
       resorts: cachedDb.resorts || [],
+      photography: cachedDb.photography || [],
       bookings: cachedDb.bookings || [],
       testimonials: cachedDb.testimonials || [],
       reels: cachedDb.reels || [],
@@ -510,12 +520,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Build dataCache from API results
-  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
+  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
     dataCache = {
       excursions:    excursions    || [],
       private:       privateBookings || [],
       freediving:    freediving    || [],
       resorts:       resorts       || [],
+      photography:   photography   || [],
       bookings:      bookings      || [],
       testimonials:  testimonials  || [],
       reels:         reels         || [],
@@ -534,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db.private_bookings = dataCache.private;
       db.freediving = dataCache.freediving;
       db.resorts = dataCache.resorts;
+      db.photography = dataCache.photography;
       db.bookings = dataCache.bookings;
       db.testimonials = dataCache.testimonials;
       db.reels = dataCache.reels;
@@ -558,6 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('private'),
       api.get('freediving'),
       api.get('resorts'),
+      api.get('photography'),
       api.get('bookings'),
       api.get('testimonials'),
       api.get('reels'),
@@ -586,6 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setupParallaxLayerFn(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
       setupParallaxLayerFn(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
       setupParallaxLayerFn(5, 'RESORTS', getResorts(), 'Resort');
+      setupParallaxLayerFn(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
     }
     // Re-render cards
     if (typeof renderCardGridFn === 'function') {
@@ -991,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>` : ''}
             <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
               ${ex.mapLink ? `<a href="${ex.mapLink}" target="_blank" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 700; text-transform: uppercase; font-size: 0.9rem;"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px;"></i> Location</a>` : ''}
-              <button id="details-modal-book" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: rgba(56, 189, 248, 0.25) !important;">Book Now</button>
+              ${ex.id && ex.id.startsWith('ph') ? '' : `<button id="details-modal-book" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: rgba(56, 189, 248, 0.25) !important;">Book Now</button>`}
             </div>
           </div>
         </div>
@@ -1000,7 +1014,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(modal);
       modal.querySelector('#close-details-modal').addEventListener('click', () => modal.remove());
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-      modal.querySelector('#details-modal-book').addEventListener('click', () => { modal.remove(); openBookingModal(ex.id, ex.title); });
+      const bookBtn = modal.querySelector('#details-modal-book');
+      if (bookBtn) bookBtn.addEventListener('click', () => { modal.remove(); openBookingModal(ex.id, ex.title); });
     };
 
     // --- Render grids helper ---
@@ -1178,10 +1193,11 @@ document.addEventListener('DOMContentLoaded', () => {
               <p class="ex-desc">${ex.description}</p>
               <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center;">
                 <button class="glass-btn layer${layerNum}-floating-details" data-id="${ex.id}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Details</button>
-                <button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>
+                ${layerNum !== 6 ? `<button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>` : ''}
               </div>
             `;
-            detailsOverlay.querySelector(`.layer${layerNum}-floating-book`).addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
+            const bookBtn = detailsOverlay.querySelector(`.layer${layerNum}-floating-book`);
+            if (bookBtn) bookBtn.addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
             detailsOverlay.querySelector(`.layer${layerNum}-floating-details`).addEventListener('click', (e) => {
               const id = e.target.dataset.id;
               const found = listData.find(item => item.id === id);
@@ -1221,6 +1237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
     setupParallaxLayer(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
     setupParallaxLayer(5, 'RESORTS', getResorts(), 'Resort');
+    setupParallaxLayer(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
 
     // Request native OS notification permission on load
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -1451,13 +1468,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <!-- Private Trip and Group settings -->
+              <!-- Additional Services and Group settings -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;">
-                  <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
-                </div>
-
                 <div id="booking-type-container">
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
                   <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
@@ -1489,8 +1501,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const packageTypeSelect = bookingModal.querySelector('#resort-package-type');
         const tierSelect = bookingModal.querySelector('#resort-package-tier');
+        const photoSelect = bookingModal.querySelector('#booking-photography');
 
-        const privateCheck = bookingModal.querySelector('#booking-private');
         const typeContainer = bookingModal.querySelector('#booking-type-container');
         const typeSelect = bookingModal.querySelector('#booking-type');
         const groupDetails = bookingModal.querySelector('#booking-group-details');
@@ -1525,9 +1537,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!tierSelect || !priceDisplay) return;
           const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
           const basePrice = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
+          const photoOpt = photoSelect ? photoSelect.options[photoSelect.selectedIndex] : null;
+          const photoPrice = photoOpt ? (parseFloat(photoOpt.dataset.price) || 0) : 0;
 
-          const isPrivate = privateCheck.checked;
-          const isGroup = isPrivate || typeSelect.value === 'Group';
+          const isGroup = typeSelect.value === 'Group';
           const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
           const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
 
@@ -1550,6 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           }
+          total += photoPrice;
           const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
           const offerMessage = bookingModal.querySelector('#booking-offer-message');
           const code = offerCodeInput ? offerCodeInput.value.trim() : '';
@@ -1578,18 +1592,7 @@ document.addEventListener('DOMContentLoaded', () => {
           packageTypeSelect.addEventListener('change', updateTierOptions);
         }
         tierSelect.addEventListener('change', updateTotalPrice);
-
-        privateCheck.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            typeSelect.value = 'Group';
-            typeContainer.style.display = 'none';
-            groupDetails.style.display = 'flex';
-          } else {
-            typeContainer.style.display = 'block';
-            groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
-          }
-          updateTotalPrice();
-        });
+        if (photoSelect) photoSelect.addEventListener('change', updateTotalPrice);
 
         typeSelect.addEventListener('change', (e) => {
           groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none';
@@ -1622,12 +1625,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const emailId = form.querySelector('#booking-email').value;
           const bookingDate = form.querySelector('#booking-date').value;
 
-          const isPrivate = privateCheck.checked;
-          const bookingType = isPrivate ? 'Group' : typeSelect.value;
+          const bookingType = typeSelect.value;
           const isGroup = bookingType === 'Group';
           const adults = isGroup ? (parseInt(form.querySelector('#booking-adults').value) || 1) : 1;
           const kids = isGroup ? (parseInt(form.querySelector('#booking-kids').value) || 0) : 0;
           const kidsAges = isGroup ? form.querySelector('#booking-kids-ages').value : '';
+          const photographyId = photoSelect ? photoSelect.value : '';
 
           // Slots availability double check
           const allPackages = [
@@ -1680,7 +1683,8 @@ document.addEventListener('DOMContentLoaded', () => {
             adults,
             kids,
             kidsAges,
-            isPrivate: isPrivate,
+            isPrivate: false,
+            photographyId: photographyId,
             numPersons: isGroup ? (adults + kids) : 1,
             status: isOfficeUser ? 'Pending' : 'Confirmed',
             ratePaid: ratePaid,
@@ -1738,6 +1742,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
                 <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               </div>
+
+              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Add Professional Photography</label>
+                <select id="booking-photography" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                  <option value="" data-price="0">None</option>
+                  ${getPhotography().map(p => `<option value="${p.id}" data-price="${p.price}">${p.title} (+$${p.price || 0})</option>`).join('')}
+                </select>
+              </div>
+
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
             </form>
@@ -1831,10 +1844,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+          const photoSelect = form.querySelector('#booking-photography');
+          const photographyId = photoSelect ? photoSelect.value : '';
+          
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
             customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
-            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
+            isPrivate: isPrivate, photographyId: photographyId, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
             totalPrice: 0,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
             bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
@@ -2420,6 +2436,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasStayNightEl = document.getElementById('resort-has-stay-night'); if (hasStayNightEl) { hasStayNightEl.checked = !!item.hasStayNight; hasStayNightEl.dispatchEvent(new Event('change')); }
                 document.getElementById('resort-stay-std').value = item.stayStd || ''; document.getElementById('resort-stay-prem').value = item.stayPrem || '';
               }
+              if (prefix === 'photography') {
+                const priceEl = document.getElementById('photography-price'); if (priceEl) priceEl.value = item.price || 0;
+              }
               const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
               const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
               const maxCapEl = document.getElementById(`${prefix}-max-capacity`); if (maxCapEl) maxCapEl.value = item.maxCapacity || 20;
@@ -2494,6 +2513,10 @@ document.addEventListener('DOMContentLoaded', () => {
               itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value;
               const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
             }
+            if (prefix === 'photography') {
+              const priceEl = document.getElementById('photography-price');
+              itemData.price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
+            }
             if (!idVal) list.push(itemData);
             await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
           } catch (error) {
@@ -2515,6 +2538,7 @@ document.addEventListener('DOMContentLoaded', () => {
       registerCRUD('Private Excursion', getPrivate, setPrivate, 'admin-private-list', 'admin-add-private-form', 'private');
       registerCRUD('Free Diving Option', getFreeDiving, setFreeDiving, 'admin-fd-list', 'admin-add-fd-form', 'fd');
       registerCRUD('Resort Deal', getResorts, setResorts, 'admin-resorts-list', 'admin-add-resort-form', 'resort');
+      registerCRUD('Photography Package', getPhotography, setPhotography, 'admin-photography-list', 'admin-add-photography-form', 'photography');
 
       // --- Crew Management Tab ---
       const crewListContainer = document.getElementById('admin-crew-list');

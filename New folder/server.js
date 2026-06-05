@@ -298,6 +298,7 @@ registerCollectionRoutes('excursions',       'excursions');
 registerCollectionRoutes('private',          'private_bookings');
 registerCollectionRoutes('freediving',       'freediving');
 registerCollectionRoutes('resorts',          'resorts');
+registerCollectionRoutes('photography',      'photography');
 registerCollectionRoutes('bookings',         'bookings');
 registerCollectionRoutes('testimonials',     'testimonials');
 registerCollectionRoutes('reels',            'reels');
@@ -557,6 +558,31 @@ async function seedDatabaseIfEmpty() {
       }
     ];
 
+    const defaultPhotography = [
+      {
+        id: "ph-1",
+        title: "Standard Drone & DSLR Package",
+        duration: "1 Hour",
+        description: "Professional aerial and underwater photography capturing your best moments.",
+        highlights: "15 edited photos, 1 minute cinematic drone video",
+        image: "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?auto=format&fit=crop&w=800&q=80",
+        video: "",
+        videoRatio: "16:9",
+        price: 150
+      },
+      {
+        id: "ph-2",
+        title: "Premium Cinematography",
+        duration: "2-3 Hours",
+        description: "A complete cinematic storytelling experience of your Maldivian adventure.",
+        highlights: "30 edited photos, 3 minute 4K cinematic video, drone and underwater shots",
+        image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80",
+        video: "",
+        videoRatio: "16:9",
+        price: 300
+      }
+    ];
+
     const defaultTestimonials = [
       {
         id: "t-1",
@@ -606,6 +632,7 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('private_bookings', defaultPrivate),
       seedKeyIfEmpty('freediving',       defaultFreediving),
       seedKeyIfEmpty('resorts',          defaultResorts),
+      seedKeyIfEmpty('photography',      defaultPhotography),
       seedKeyIfEmpty('bookings',         []),
       seedKeyIfEmpty('contact_messages', []),
       seedKeyIfEmpty('testimonials',     defaultTestimonials),
