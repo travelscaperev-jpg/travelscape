@@ -2098,25 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
               localStorage.setItem('admin_logged', 'false');
             }
             
-            if (typeof Notification !== 'undefined') {
-              Notification.requestPermission();
-            }
-            
-            // Adjust UI before loading the universal dashboard
-            if (role === 'staff') {
-               // Staff: view only
-               document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'none');
-            } else {
-               document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'block');
-            }
-            
-            loadUniversalDashboard(role);
-            if (!useFallback) {
-              fetchAllFromAPI().then(() => {
-                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
-              }).catch(() => {});
-            }
-          } else {
+            window.location.reload();
             universalError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             universalError.style.display = 'block';
           }
