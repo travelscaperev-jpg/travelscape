@@ -2081,16 +2081,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (universalSubmit.disabled) return;
         try {
           const passwordVal = universalPassInput.value.trim();
-          const role = loginRoleInput.value;
           if (!passwordVal) {
             universalError.textContent = 'Please enter a password.';
             universalError.style.display = 'block';
             return;
           }
-          const result = await wakeServerForLogin(role, passwordVal, universalSubmit, universalError);
+          const result = await wakeServerForLogin(passwordVal, universalSubmit, universalError);
           if (result && result.success) {
             universalGate.style.display = 'none';
-            if (role === 'admin') {
+            if (result.role === 'admin') {
               localStorage.setItem('admin_logged', 'true');
               localStorage.setItem('staff_logged', 'false');
             } else {
@@ -2099,6 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             window.location.reload();
+          } else {
             universalError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             universalError.style.display = 'block';
           }
@@ -2121,9 +2121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         universalGate.style.display = 'none';
         const role = isAdminLogged ? 'admin' : 'staff';
         
-        if (role === 'staff') {
-           document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'none');
-        }
+
         
         loadUniversalDashboard(role);
         if (!useFallback) {
@@ -2144,7 +2142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Universal Admin & Staff Panel CRUD & tab handlers ---
     function loadUniversalDashboard(role) {
       window.dashboardRenderLists = [];
-      const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
+      const tableId = 'admin-bookings-table';
       const bookingsTable = document.getElementById(tableId);
 
       const filterSearch = document.getElementById('filter-search');

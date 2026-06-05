@@ -205,13 +205,14 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(500).json({ success: false, message: 'Authentication passwords are not configured on the server. Please set ADMIN_PASSWORD and STAFF_PASSWORD in Render environment variables.' });
     }
 
-    if (role === 'admin' && password === adminPass) {
+    if (password === adminPass) {
       return res.json({ success: true, role: 'admin' });
     }
-    if (role === 'staff' && password === staffPass) {
+    if (password === staffPass) {
       return res.json({ success: true, role: 'staff' });
     }
-    return res.status(401).json({ success: false, message: 'Incorrect password' });
+
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
   } catch (e) {
     console.error('Auth error:', e.message);
     res.status(500).json({ success: false, message: 'Server error during authentication' });
