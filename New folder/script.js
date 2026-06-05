@@ -2069,116 +2069,81 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // --- Password Gate Modals (Admin & Staff) ---
-    const adminGate = document.getElementById('admin-password-gate');
-    if (adminGate) {
-      const adminPassInput = document.getElementById('admin-password');
-      const adminSubmit = document.getElementById('admin-gate-submit');
-      const adminError = document.getElementById('admin-gate-error');
+    // --- Universal Password Gate ---
+    const universalGate = document.getElementById('universal-password-gate');
+    if (universalGate) {
+      const loginRoleInput = document.getElementById('login-role');
+      const universalPassInput = document.getElementById('universal-password');
+      const universalSubmit = document.getElementById('universal-gate-submit');
+      const universalError = document.getElementById('universal-gate-error');
 
-      const triggerAdminUnlock = async () => {
-        if (adminSubmit.disabled) return;
+      const triggerUnlock = async () => {
+        if (universalSubmit.disabled) return;
         try {
-          const passwordVal = adminPassInput.value.trim();
+          const passwordVal = universalPassInput.value.trim();
+          const role = loginRoleInput.value;
           if (!passwordVal) {
-            adminError.textContent = 'Please enter a password.';
-            adminError.style.display = 'block';
+            universalError.textContent = 'Please enter a password.';
+            universalError.style.display = 'block';
             return;
           }
-          const result = await wakeServerForLogin('admin', passwordVal, adminSubmit, adminError);
+          const result = await wakeServerForLogin(role, passwordVal, universalSubmit, universalError);
           if (result && result.success) {
-            adminGate.style.display = 'none';
-            localStorage.setItem('admin_logged', 'true');
+            universalGate.style.display = 'none';
+            if (role === 'admin') {
+              localStorage.setItem('admin_logged', 'true');
+              localStorage.setItem('staff_logged', 'false');
+            } else {
+              localStorage.setItem('staff_logged', 'true');
+              localStorage.setItem('admin_logged', 'false');
+            }
+            
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
-            loadAdminPanel();
+            
+            // Adjust UI before loading the universal dashboard
+            if (role === 'staff') {
+               // Staff: view only
+               document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'none');
+            } else {
+               document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'block');
+            }
+            
+            loadUniversalDashboard(role);
             if (!useFallback) {
               fetchAllFromAPI().then(() => {
                 if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
               }).catch(() => {});
             }
           } else {
-            adminError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
-            adminError.style.display = 'block';
+            universalError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
+            universalError.style.display = 'block';
           }
         } catch (e) {
-          adminError.textContent = e.message || 'Server is still waking up. Please wait 10 seconds and try again.';
-          adminError.style.display = 'block';
+          universalError.textContent = e.message || 'Server is still waking up. Please wait 10 seconds and try again.';
+          universalError.style.display = 'block';
         } finally {
-          adminSubmit.textContent = 'Unlock Dashboard';
-          adminSubmit.disabled = false;
+          universalSubmit.textContent = 'Unlock Dashboard';
+          universalSubmit.disabled = false;
         }
       };
 
-      adminSubmit.addEventListener('click', triggerAdminUnlock);
-      adminPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerAdminUnlock(); } });
+      universalSubmit.addEventListener('click', triggerUnlock);
+      universalPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerUnlock(); } });
 
-      if (localStorage.getItem('admin_logged') === 'true') {
-        adminGate.style.display = 'none';
-        loadAdminPanel();
-        if (!useFallback) {
-          fetchAllFromAPI().then(() => {
-            if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
-          }).catch(() => {
-            // Retry after cold-start delay
-            setTimeout(() => {
-              fetchAllFromAPI().then(() => {
-                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
-              }).catch(() => {});
-            }, 35000);
-          });
+      const isAdminLogged = localStorage.getItem('admin_logged') === 'true';
+      const isStaffLogged = localStorage.getItem('staff_logged') === 'true';
+
+      if (isAdminLogged || isStaffLogged) {
+        universalGate.style.display = 'none';
+        const role = isAdminLogged ? 'admin' : 'staff';
+        
+        if (role === 'staff') {
+           document.querySelectorAll('.admin-form').forEach(el => el.style.display = 'none');
         }
-      }
-    }
-
-    const staffGate = document.getElementById('staff-password-gate');
-    if (staffGate) {
-      const staffPassInput = document.getElementById('staff-password');
-      const staffSubmit = document.getElementById('staff-gate-submit');
-      const staffError = document.getElementById('staff-gate-error');
-
-      const triggerStaffUnlock = async () => {
-        if (staffSubmit.disabled) return;
-        try {
-          const passwordVal = staffPassInput.value.trim();
-          if (!passwordVal) {
-            staffError.textContent = 'Please enter a password.';
-            staffError.style.display = 'block';
-            return;
-          }
-          const result = await wakeServerForLogin('staff', passwordVal, staffSubmit, staffError);
-          if (result && result.success) {
-            staffGate.style.display = 'none';
-            localStorage.setItem('staff_logged', 'true');
-            if (typeof Notification !== 'undefined') {
-              Notification.requestPermission();
-            }
-            loadStaffPanel();
-            if (!useFallback) {
-              fetchAllFromAPI().then(() => {
-                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
-              }).catch(() => {});
-            }
-          } else {
-            staffError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
-            staffError.style.display = 'block';
-          }
-        } catch (e) {
-          staffError.textContent = e.message || 'Server is still waking up. Please wait 10 seconds and try again.';
-          staffError.style.display = 'block';
-        } finally {
-          staffSubmit.textContent = 'Unlock Dashboard';
-          staffSubmit.disabled = false;
-        }
-      };
-
-      staffSubmit.addEventListener('click', triggerStaffUnlock);
-      staffPassInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerStaffUnlock(); } });
-
-      if (localStorage.getItem('staff_logged') === 'true') {
-        staffGate.style.display = 'none';
-        loadStaffPanel();
+        
+        loadUniversalDashboard(role);
         if (!useFallback) {
           fetchAllFromAPI().then(() => {
             if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
@@ -2400,7 +2365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      const directBookBtn = document.getElementById(`add-direct-booking-${role}`);
+      const directBookBtn = document.getElementById('add-direct-booking-btn');
       if (directBookBtn) {
         directBookBtn.addEventListener('click', openDirectBookingSelector);
       }
@@ -2660,575 +2625,6 @@ document.addEventListener('DOMContentLoaded', () => {
       registerCRUD('Private Excursion', getPrivate, setPrivate, 'admin-private-list', 'admin-add-private-form', 'private');
       registerCRUD('Free Diving Option', getFreeDiving, setFreeDiving, 'admin-fd-list', 'admin-add-fd-form', 'fd');
       registerCRUD('Resort Deal', getResorts, setResorts, 'admin-resorts-list', 'admin-add-resort-form', 'resort');
-      registerCRUD('Photography Package', getPhotography, setPhotography, 'admin-photography-list', 'admin-add-photo-form', 'photo');
-
-      // --- Crew Management Tab ---
-      const crewListContainer = document.getElementById('admin-crew-list');
-      const crewForm = document.getElementById('admin-add-crew-form');
-
-      const renderCrewList = () => {
-        if (!crewListContainer) return;
-        const list = getCrew();
-        crewListContainer.innerHTML = list.map(item => {
-          if (!item) return '';
-          return `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <h4 style="color:#fff;">${item.name}</h4>
-                <p style="color:#38bdf8; font-size:0.9rem;">${item.role}</p>
-              </div>
-              <div>
-                <button class="btn crew-edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
-                <button class="btn crew-delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        crewListContainer.querySelectorAll('.crew-delete-btn').forEach(btn => {
-          btn.addEventListener('click', async (e) => {
-            if (!confirm('Are you sure you want to delete this crew member?')) return;
-            const items = getCrew().filter(x => x.id !== e.target.dataset.id);
-            await setCrew(items);
-            renderCrewList();
-            if (typeof renderCrewGridFn === 'function') renderCrewGridFn();
-          });
-        });
-
-        crewListContainer.querySelectorAll('.crew-edit-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const item = getCrew().find(x => x.id === e.target.dataset.id);
-            if (!item) return;
-            document.getElementById('crew-id').value = item.id;
-            document.getElementById('crew-name').value = item.name || '';
-            document.getElementById('crew-role').value = item.role || '';
-            document.getElementById('crew-bio').value = item.bio || '';
-            document.getElementById('crew-licenses').value = item.licenses || '';
-            document.getElementById('crew-image').value = (item.image && !item.image.startsWith('data:')) ? item.image : '';
-            document.getElementById('crew-form-title').textContent = 'Edit Crew Member';
-            document.getElementById('crew-submit-btn').textContent = 'Save Changes';
-            document.getElementById('crew-cancel-btn').style.display = 'block';
-          });
-        });
-      };
-
-      const resetCrewForm = () => {
-        if (crewForm) crewForm.reset();
-        document.getElementById('crew-id').value = '';
-        document.getElementById('crew-form-title').textContent = 'Add New Crew Member';
-        document.getElementById('crew-submit-btn').textContent = 'Add Crew Member';
-        document.getElementById('crew-cancel-btn').style.display = 'none';
-      };
-
-      const crewCancelBtn = document.getElementById('crew-cancel-btn');
-      if (crewCancelBtn) crewCancelBtn.addEventListener('click', resetCrewForm);
-
-      if (crewForm) {
-        crewForm.onsubmit = async (e) => {
-          e.preventDefault();
-          const submitBtn = document.getElementById('crew-submit-btn');
-          const origBtnText = submitBtn ? submitBtn.textContent : '';
-          if (submitBtn) {
-            submitBtn.textContent = 'Uploading & Saving...';
-            submitBtn.disabled = true;
-          }
-
-          try {
-            const idVal = document.getElementById('crew-id').value;
-            const list = [...getCrew()];
-            const name = document.getElementById('crew-name').value.trim();
-            const roleVal = document.getElementById('crew-role').value.trim();
-            const bio = document.getElementById('crew-bio').value.trim();
-            const licenses = document.getElementById('crew-licenses').value.trim();
-            const imageFileEl = document.getElementById('crew-image-file');
-            
-            let image = '';
-            if (imageFileEl && imageFileEl.files && imageFileEl.files.length > 0) {
-              image = await uploadFileToCloudinary(imageFileEl, 'crew');
-            } else {
-              image = document.getElementById('crew-image').value.trim();
-            }
-
-            const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
-            itemData.name = name;
-            itemData.role = roleVal;
-            itemData.bio = bio;
-            itemData.licenses = licenses;
-            itemData.image = image;
-
-            if (!idVal) {
-              list.push(itemData);
-            }
-            await setCrew(list);
-            resetCrewForm();
-            renderCrewList();
-            if (typeof renderCrewGridFn === 'function') renderCrewGridFn();
-            alert('Crew member saved successfully!');
-          } catch (error) {
-            console.error(error);
-            alert('Failed to save crew member: ' + error.message);
-          } finally {
-            if (submitBtn) {
-              submitBtn.textContent = origBtnText;
-              submitBtn.disabled = false;
-            }
-          }
-        };
-      }
-
-      renderCrewList();
-      if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
-      window.dashboardRenderLists.push(renderCrewList);
-
-      // --- Seasonal Offers Tab ---
-      const offerContainer = document.getElementById('admin-offer-status-container');
-      const renderOfferSection = () => {
-        if (!offerContainer) return;
-        const offer = getOffer();
-        if (offer && offer.title) {
-          const appliesToDisplay = Array.isArray(offer.category) ? offer.category.join(', ') : (offer.category || 'All Categories');
-          const subcatDisplay = offer.subcategory ? ` (${offer.subcategory})` : '';
-          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-preview-offer-btn" class="btn" style="background: #10b981; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Preview</button><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
-          document.getElementById('admin-preview-offer-btn').addEventListener('click', () => {
-            const existing = document.getElementById('offer-preview-modal');
-            if (existing) existing.remove();
-
-            const modal = document.createElement('div');
-            modal.id = 'offer-preview-modal';
-            modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
-
-            modal.innerHTML = `
-              <div class="modal-content-minimal" style="max-width: 400px; width: 90%; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; text-align: center; font-family: 'Inter', sans-serif;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                  <h3 style="color: #fff; margin: 0; font-size: 1.2rem;">Promo Offer Live Preview</h3>
-                  <button id="close-offer-preview" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #858e8e;">&times;</button>
-                </div>
-                <div class="offer-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); color:#fff; text-align: left; position: relative; width: 100%;">
-                  <span style="background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 0.75rem;">${offer.discount}</span>
-                  <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; color: #fff; line-height: 1.3;">${offer.title}</h4>
-                  <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">${offer.description}</p>
-                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <div>
-                      <div style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Promo Code</div>
-                      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fde047; font-size: 1.1rem; margin-top: 2px;">${offer.code || 'None'}</div>
-                    </div>
-                  </div>
-                  <div style="font-size: 0.8rem; color: #94a3b8; text-align: left; display: flex; align-items: center; gap: 5px;"><i class="fa-regular fa-clock"></i> <span>${offer.validity}</span></div>
-                </div>
-              </div>
-            `;
-            document.body.appendChild(modal);
-            modal.querySelector('#close-offer-preview').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
-          });
-          document.getElementById('admin-edit-offer-btn').addEventListener('click', () => showOfferForm(offer));
-          document.getElementById('admin-delete-offer-btn').addEventListener('click', async () => { if (confirm('Are you sure you want to delete this seasonal offer?')) { await api.del('offer'); dataCache.offer = {}; renderOfferSection(); } });
-        } else { showOfferForm(); }
-      };
-
-      const showOfferForm = (existingOffer = null) => {
-        if (!offerContainer) return;
-        const offerCat = existingOffer ? (Array.isArray(existingOffer.category) ? existingOffer.category[0] : existingOffer.category) : 'All';
-        const offerSub = existingOffer ? existingOffer.subcategory : '';
-
-        offerContainer.innerHTML = `
-          <form id="admin-offer-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
-            <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-              <h4 style="color: #38bdf8; font-size: 1rem; font-weight: 600;">${existingOffer ? 'Edit Seasonal Offer Details' : 'Create New Seasonal Offer'}</h4>
-            </div>
-            <div class="form-group">
-              <label for="offer-title">Offer Name / Title</label>
-              <input type="text" id="offer-title" class="form-control" value="${existingOffer ? existingOffer.title : ''}" required>
-            </div>
-            <div class="form-group">
-              <label for="offer-discount">Discount Tag / Badge</label>
-              <input type="text" id="offer-discount" class="form-control" value="${existingOffer ? existingOffer.discount : ''}" required>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label for="offer-desc">Offer Description</label>
-              <textarea id="offer-desc" rows="3" class="form-control" required>${existingOffer ? existingOffer.description : ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label for="offer-category">Applied Category</label>
-              <select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                <option value="All" ${offerCat === 'All' ? 'selected' : ''}>All Categories</option>
-                <option value="Excursion" ${offerCat === 'Excursion' ? 'selected' : ''}>Excursion</option>
-                <option value="Private Booking" ${offerCat === 'Private Booking' ? 'selected' : ''}>Private Booking</option>
-                <option value="Free Diving" ${offerCat === 'Free Diving' ? 'selected' : ''}>Free Diving</option>
-                <option value="Resort" ${offerCat === 'Resort' ? 'selected' : ''}>Resort</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
-              <select id="offer-subcategory" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                <option value="">All Items</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="offer-code">Promo Code</label>
-              <input type="text" id="offer-code" class="form-control" value="${existingOffer ? existingOffer.code : ''}">
-            </div>
-            <div class="form-group">
-              <label for="offer-validity">Validity Info</label>
-              <input type="text" id="offer-validity" class="form-control" value="${existingOffer ? existingOffer.validity : ''}" required>
-            </div>
-            <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 0.5rem;">
-              <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Publish Seasonal Offer</button>
-              ${existingOffer ? `<button type="button" id="cancel-edit-offer-btn" class="btn" style="background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>` : ''}
-            </div>
-          </form>
-        `;
-
-        const categorySelect = document.getElementById('offer-category');
-        const subcategorySelect = document.getElementById('offer-subcategory');
-
-        const populateSubcategories = () => {
-          if (!categorySelect || !subcategorySelect) return;
-          const cat = categorySelect.value;
-          subcategorySelect.innerHTML = `<option value="">All Specific ${cat === 'All' ? 'Items' : cat + 's'}</option>`;
-
-          let items = [];
-          if (cat === 'Excursion') items = getExcursions();
-          else if (cat === 'Private Booking') items = getPrivate();
-          else if (cat === 'Free Diving') items = getFreeDiving();
-          else if (cat === 'Resort') items = getResorts();
-
-          items.forEach(item => {
-            const opt = document.createElement('option');
-            opt.value = item.title;
-            opt.textContent = item.title;
-            if (item.title === offerSub) {
-              opt.selected = true;
-            }
-            subcategorySelect.appendChild(opt);
-          });
-        };
-
-        if (categorySelect) {
-          categorySelect.addEventListener('change', populateSubcategories);
-        }
-        populateSubcategories();
-
-        const offerForm = document.getElementById('admin-offer-form');
-        if (offerForm) {
-          offerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await setOffer({
-              title: document.getElementById('offer-title').value,
-              discount: document.getElementById('offer-discount').value,
-              description: document.getElementById('offer-desc').value,
-              category: document.getElementById('offer-category').value,
-              subcategory: document.getElementById('offer-subcategory').value,
-              code: document.getElementById('offer-code').value.toUpperCase(),
-              validity: document.getElementById('offer-validity').value
-            });
-            renderOfferSection();
-            alert('Seasonal offer published!');
-          });
-        }
-        const cancel = document.getElementById('cancel-edit-offer-btn');
-        if (cancel) cancel.addEventListener('click', renderOfferSection);
-      };
-      renderOfferSection();
-
-      // --- Testimonials Tab ---
-      const testimoniesList = document.getElementById('admin-testimonies-list');
-      const renderTestimonialsTab = () => {
-        if (!testimoniesList) return;
-        const list = getTestimonials();
-        testimoniesList.innerHTML = list.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border: 1px solid rgba(255,255,255,0.05);"><div style="flex: 1; margin-right: 1rem;"><h4 style="color:#fff;">${t.name} <span style="color:#fde047; font-size:0.85rem; margin-left:10px;">★ ${t.rating}</span></h4><p style="color:#94a3b8; font-size:0.9rem; margin-top:0.25rem;">"${t.text}"</p></div><div><button class="btn preview-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#10b981; color:#fff; font-size:0.85rem; margin-right:5px;">Preview</button><button class="btn edit-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button><button class="btn delete-test-btn" data-id="${t.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button></div></div>`).join('');
-        testimoniesList.querySelectorAll('.delete-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this testimony?')) return; await setTestimonials(getTestimonials().filter(t => t.id !== e.target.dataset.id)); renderTestimonialsTab(); }); });
-        testimoniesList.querySelectorAll('.preview-test-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const t = getTestimonials().find(x => x.id === e.currentTarget.dataset.id);
-            if (!t) return;
-            const existing = document.getElementById('testimony-preview-modal');
-            if (existing) existing.remove();
-
-            const modal = document.createElement('div');
-            modal.id = 'testimony-preview-modal';
-            modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
-
-            let stars = '';
-            for (let i = 0; i < 5; i++) {
-              stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>';
-            }
-
-            modal.innerHTML = `
-              <div class="modal-content-minimal" style="max-width: 450px; width: 90%; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; text-align: center;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                  <h3 style="color: #fff; margin: 0; font-size: 1.2rem;">Testimonial Live Preview</h3>
-                  <button id="close-test-preview" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #858e8e;">&times;</button>
-                </div>
-                <div class="card" style="background: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius); text-align: left; margin-top: 1rem; width: 100%;">
-                  <div class="card-body" style="padding: 2rem;">
-                    <div style="margin-bottom: 1rem;">${stars}</div>
-                    <p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; font-family: 'Inter', sans-serif;">"${t.text}"</p>
-                    <h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700; font-family: 'Inter', sans-serif;">- ${t.name}</h4>
-                  </div>
-                </div>
-              </div>
-            `;
-            document.body.appendChild(modal);
-            modal.querySelector('#close-test-preview').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
-          });
-        });
-        testimoniesList.querySelectorAll('.edit-test-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const t = getTestimonials().find(x => x.id === e.target.dataset.id); if (!t) return; const newName = prompt('Edit Name:', t.name); const newRating = prompt('Edit Rating (1-5):', t.rating); const newText = prompt('Edit Testimony:', t.text); if (newName && newRating && newText) { t.name = newName; t.rating = parseInt(newRating) || 5; t.text = newText; await setTestimonials(getTestimonials().map(x => x.id === t.id ? t : x)); renderTestimonialsTab(); } }); });
-      };
-
-      const addTestForm = document.getElementById('admin-add-testimony-form');
-      if (addTestForm) { addTestForm.onsubmit = async (e) => { e.preventDefault(); const all = getTestimonials(); all.push({ id: Date.now().toString(), name: document.getElementById('testimony-name').value, rating: parseInt(document.getElementById('testimony-rating').value), text: document.getElementById('testimony-text').value }); await setTestimonials(all); addTestForm.reset(); renderTestimonialsTab(); alert('Testimony added!'); }; }
-      renderTestimonialsTab();
-
-      // --- Google Review ---
-      const reviewInput = document.getElementById('google-review-url');
-      if (reviewInput) {
-        reviewInput.value = getGoogleReview();
-        const saveGoogleReviewBtn = document.getElementById('save-google-review-btn');
-        if (saveGoogleReviewBtn) { saveGoogleReviewBtn.addEventListener('click', async () => { await setGoogleReview(reviewInput.value); alert('Google Review link saved!'); }); }
-      }
-
-      // --- Media Assets Tab (Background Video Slider) ---
-      const heroVideosList = document.getElementById('admin-hero-videos-list');
-      const addHeroVideoBtn = document.getElementById('add-hero-video-btn');
-      const saveHeroVideosBtn = document.getElementById('save-hero-videos-btn');
-
-      // Local state for hero videos being edited in this panel session
-      let localHeroVideos = Array.isArray(getHeroVideos()) ? [...getHeroVideos()].filter(Boolean) : [];
-
-      const renderHeroVideosManager = () => {
-        if (!heroVideosList) return;
-        // Re-sync from cache whenever called (e.g. after background API fetch)
-        const freshVideos = Array.isArray(getHeroVideos()) ? [...getHeroVideos()].filter(Boolean) : [];
-        if (freshVideos.length > localHeroVideos.length) localHeroVideos = freshVideos;
-        if (localHeroVideos.length === 0) {
-          heroVideosList.innerHTML = `<div style="padding: 1rem; color: #94a3b8; text-align: center; background: rgba(255,255,255,0.01); border-radius: 8px;">No videos in the slider. Add at least one video to play in background.</div>`;
-          return;
-        }
-
-        heroVideosList.innerHTML = localHeroVideos.map((videoPath, idx) => `
-          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; min-width: 0;">
-              <span style="font-weight: 700; color: #38bdf8; font-size: 1.1rem;">#${idx + 1}</span>
-              <div style="position: relative; width: 140px; height: 80px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
-                <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
-                  <source src="${videoPath}">
-                </video>
-              </div>
-              <div style="min-width: 0; flex: 1;">
-                <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Video Source</div>
-                <div style="font-family: monospace; font-size: 0.9rem; color: #cbd5e1; word-break: break-all; margin-top: 2px;">
-                  ${videoPath.startsWith('data:') ? 'Uploaded base64 video data' : videoPath}
-                </div>
-              </div>
-            </div>
-            <button class="btn delete-hero-vid-btn" data-index="${idx}" style="padding: 0.4rem 0.8rem; background: #ef4444; color: #fff; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
-          </div>
-        `).join('');
-
-        // Attach event listeners to delete buttons
-        heroVideosList.querySelectorAll('.delete-hero-vid-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const indexToDelete = parseInt(e.target.dataset.index);
-            localHeroVideos.splice(indexToDelete, 1);
-            renderHeroVideosManager();
-          });
-        });
-      };
-
-      // Add Video functionality — uses multipart upload for files, URL otherwise
-      if (addHeroVideoBtn) {
-        addHeroVideoBtn.addEventListener('click', async () => {
-          const urlInput = document.getElementById('new-hero-video-url');
-          const fileInput = document.getElementById('new-hero-video-file');
-
-          if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            // Use multipart upload for files (no base64 size limit)
-            const file = fileInput.files[0];
-            const origText = addHeroVideoBtn.textContent;
-            addHeroVideoBtn.textContent = 'Uploading to Cloudinary...';
-            addHeroVideoBtn.disabled = true;
-            try {
-              const formData = new FormData();
-              formData.append('file', file);
-              formData.append('folder', 'hero');
-              const res = await fetchWithTimeout(`${API_BASE}/upload`, {
-                method: 'POST',
-                body: formData,
-                timeout: 180000 // 3 min for large videos
-              });
-              if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-              const data = await res.json();
-              if (!data.url) throw new Error('No URL returned from upload');
-              localHeroVideos.push(data.url);
-              renderHeroVideosManager();
-              if (fileInput) fileInput.value = '';
-              if (urlInput) urlInput.value = '';
-            } catch (err) {
-              console.error('Video upload error:', err);
-              alert('Video upload failed: ' + err.message + '\nCheck Cloudinary settings in Render environment variables.');
-            } finally {
-              addHeroVideoBtn.textContent = origText;
-              addHeroVideoBtn.disabled = false;
-            }
-          } else if (urlInput && urlInput.value.trim()) {
-            // Direct URL — add as-is
-            localHeroVideos.push(urlInput.value.trim());
-            renderHeroVideosManager();
-            urlInput.value = '';
-          } else {
-            alert('Please specify a video URL or select a file to upload first.');
-          }
-        });
-      }
-
-      // Save changes to database / cache / backend
-      if (saveHeroVideosBtn) {
-        saveHeroVideosBtn.addEventListener('click', async () => {
-          if (localHeroVideos.length === 0) {
-            alert('Please add at least one video to save.');
-            return;
-          }
-          const origText = saveHeroVideosBtn.textContent;
-          saveHeroVideosBtn.textContent = 'Saving...';
-          saveHeroVideosBtn.disabled = true;
-          try {
-            await setHeroVideos(localHeroVideos);
-            // Update the live hero slider on the page
-            if (typeof initGlobalHeroVideoFn === 'function') initGlobalHeroVideoFn();
-            alert('Hero background video slider saved successfully!');
-          } catch (err) {
-            console.error('Slider save error:', err);
-            alert('Failed to save: ' + err.message);
-          } finally {
-            saveHeroVideosBtn.textContent = origText;
-            saveHeroVideosBtn.disabled = false;
-          }
-        });
-      }
-
-      // Reels Management
-      const reelsList = document.getElementById('admin-reels-list');
-      const addReelBtn = document.getElementById('add-reel-btn');
-      const renderReelsManager = () => {
-        if (!reelsList) return;
-        const list = getReels();
-        reelsList.innerHTML = list.map((reel, idx) => {
-          const isVid = isMediaVideo(reel.image);
-          return `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; position: relative;"><button class="delete-reel-btn" data-id="${reel.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button><h4 style="color:#fff; margin-bottom:0.5rem;">Reel ${idx + 1}</h4>${isVid ? `<video src="${reel.image}" autoplay loop muted playsinline style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;"></video>` : `<img src="${reel.image}" style="width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;">`}<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.3rem;">Upload Image or Video file directly:</div><input type="file" class="form-control reel-file-input" data-id="${reel.id}" accept="image/*,video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div>`;
-        }).join('');
-        reelsList.querySelectorAll('.delete-reel-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this reel?')) return; await setReels(getReels().filter(x => x.id !== e.target.dataset.id)); renderReelsManager(); }); });
-        
-        // Add file input change preview listeners
-        reelsList.querySelectorAll('.reel-file-input').forEach(input => {
-          input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const container = e.target.closest('div');
-            const previewContainer = container.querySelector('img, video');
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-              const src = evt.target.result;
-              const isVid = src.startsWith('data:video') || /\.(mp4|mov|webm|ogv|3gp|m4v)(?:[\?#]|$)/i.test(file.name);
-              if (previewContainer) previewContainer.remove();
-              
-              const newPreview = isVid 
-                ? document.createElement('video') 
-                : document.createElement('img');
-              
-              newPreview.src = src;
-              newPreview.style.cssText = "width:100%; height:200px; object-fit:cover; aspect-ratio:9/16; border-radius:4px; margin-bottom:0.5rem;";
-              if (isVid) {
-                newPreview.autoplay = true;
-                newPreview.loop = true;
-                newPreview.muted = true;
-                newPreview.playsInline = true;
-              }
-              container.insertBefore(newPreview, container.querySelector('div'));
-            };
-            reader.readAsDataURL(file);
-          });
-        });
-      };
-      if (addReelBtn) { addReelBtn.addEventListener('click', () => { const reels = getReels(); reels.push({ id: Date.now().toString(), image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=450&h=800&q=80' }); renderReelsManager(); }); }
-      const saveReelsBtn = document.getElementById('save-reels-btn');
-      if (saveReelsBtn) {
-        saveReelsBtn.addEventListener('click', async () => {
-          const reels = getReels();
-          const origText = saveReelsBtn.textContent;
-          saveReelsBtn.textContent = 'Uploading & Saving...';
-          saveReelsBtn.disabled = true;
-          try {
-            for (let el of Array.from(document.querySelectorAll('.reel-file-input'))) {
-              const reel = reels.find(x => x.id === el.dataset.id);
-              if (reel && el.files && el.files.length > 0) {
-                reel.image = await uploadFileToCloudinary(el, 'reels');
-              }
-            }
-            await setReels(reels);
-            renderReelsManager();
-            alert('Reels updated successfully!');
-          } catch (e) {
-            console.error('Reels update failed:', e);
-            alert('Failed to save reels: ' + e.message);
-          } finally {
-            saveReelsBtn.textContent = origText;
-            saveReelsBtn.disabled = false;
-          }
-        });
-      }
-      renderReelsManager();
- 
-      // Gallery Videos Management
-      const galleryListEl = document.getElementById('admin-gallery-list');
-      const addGalleryBtn = document.getElementById('add-gallery-btn');
-      const renderGalleryManager = () => {
-        if (!galleryListEl) return;
-        const list = getGallery();
-        galleryListEl.innerHTML = list.map((item, idx) => `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom:1rem; position: relative;"><button class="delete-gallery-btn" data-id="${item.id}" style="position: absolute; top: 10px; right: 10px; background: #ef4444; border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete Card</button><h4 style="color:#fff; margin-bottom:1rem;">Gallery Card ${idx + 1}</h4><div style="display:grid; grid-template-columns: 1fr 1fr 1fr 150px; gap:1rem;"><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Title</label><input type="text" class="form-control gal-title" data-id="${item.id}" value="${item.title}"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Preview Image (Direct Upload)</label><input type="file" class="form-control gal-img-file" data-id="${item.id}" accept="image/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Video File (Direct Upload)</label><input type="file" class="form-control gal-vid-file" data-id="${item.id}" accept="video/*" style="background:transparent; border:1px dashed rgba(255,255,255,0.2);"></div><div class="form-group" style="margin-bottom:0;"><label style="color:#94a3b8; font-size:0.85rem;">Aspect Ratio</label><select class="form-control gal-ratio" data-id="${item.id}" style="background:#080d1a; color:#fff; height:42px;"><option value="16:9" ${item.aspectRatio === '9:16' ? '' : 'selected'}>16:9 (Standard)</option><option value="9:16" ${item.aspectRatio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option></select></div></div></div>`).join('');
-        galleryListEl.querySelectorAll('.delete-gallery-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Delete this gallery card?')) return; await setGallery(getGallery().filter(x => x.id !== e.target.dataset.id)); renderGalleryManager(); }); });
-      };
-      if (addGalleryBtn) { addGalleryBtn.addEventListener('click', () => { const gallery = getGallery(); gallery.push({ id: Date.now().toString(), title: 'New Video Card', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', video: '', aspectRatio: '16:9' }); renderGalleryManager(); }); }
-      const saveGalleryBtn = document.getElementById('save-gallery-btn');
-      if (saveGalleryBtn) {
-        saveGalleryBtn.addEventListener('click', async () => {
-          const gallery = getGallery();
-          const origText = saveGalleryBtn.textContent;
-          saveGalleryBtn.textContent = 'Uploading & Saving...';
-          saveGalleryBtn.disabled = true;
-          try {
-            for (let input of Array.from(document.querySelectorAll('.gal-title'))) {
-              const item = gallery.find(x => x.id === input.dataset.id);
-              if (item) {
-                item.title = input.value;
-                const imgFile = document.querySelector(`.gal-img-file[data-id="${item.id}"]`);
-                if (imgFile && imgFile.files && imgFile.files.length > 0) {
-                  item.image = await uploadFileToCloudinary(imgFile, 'gallery');
-                }
-                const vidFile = document.querySelector(`.gal-vid-file[data-id="${item.id}"]`);
-                if (vidFile && vidFile.files && vidFile.files.length > 0) {
-                  item.video = await uploadFileToCloudinary(vidFile, 'gallery');
-                }
-                const ratioInput = document.querySelector(`.gal-ratio[data-id="${item.id}"]`);
-                if (ratioInput) {
-                  item.aspectRatio = ratioInput.value || '16:9';
-                }
-              }
-            }
-            await setGallery(gallery);
-            renderGalleryManager();
-            alert('Gallery videos updated successfully!');
-          } catch (e) {
-            console.error('Gallery update failed:', e);
-            alert('Failed to save gallery: ' + e.message);
-          } finally {
-            saveGalleryBtn.textContent = origText;
-            saveGalleryBtn.disabled = false;
-          }
-        });
-      }
-      renderGalleryManager();
 
       // Finally render bookings (FIXED: no longer trapped in reviewInput block)
       renderBookings();

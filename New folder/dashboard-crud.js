@@ -8,6 +8,7 @@
 
   /* ── Utility ──────────────────────────────────────────────────────────── */
   function S(id) { return document.getElementById(id); }
+  const isAdmin = () => localStorage.getItem('admin_logged') === 'true';
   function card(style='') {
     return `background:#121824;border:1px solid rgba(255,255,255,0.07);
             padding:1rem;border-radius:8px;margin-bottom:0.75rem;${style}`;
@@ -68,6 +69,7 @@
     const listEl = S('admin-photography-list');
     const form   = S('admin-add-photo-form');
     if (!listEl || !form) return;
+    if (form && !isAdmin()) form.closest('.admin-form').style.display = 'none';
 
     async function renderList() {
       loading(listEl);
@@ -85,10 +87,10 @@
               <span style="color:#38bdf8;font-size:0.85rem">$${it.price || 0} · ${it.duration || ''}</span>
               <p style="color:#94a3b8;font-size:0.82rem;margin:4px 0 0">${it.description || ''}</p>
             </div>
-            <div style="display:flex;gap:6px;flex-shrink:0;margin-left:1rem">
+            ${isAdmin() ? `<div style="display:flex;gap:6px;flex-shrink:0;margin-left:1rem">
               <button onclick="photoCRUD.edit('${it.id}')" style="${btnStyle('#3b82f6')}">Edit</button>
               <button onclick="photoCRUD.del('${it.id}')" style="${btnStyle('#ef4444')}">Delete</button>
-            </div>
+            </div>` : ''}
           </div>
         </div>`).join('');
     }
@@ -176,7 +178,7 @@
             <p style="color:#64748b;font-size:0.82rem;margin:0">Code: <strong style="color:#38bdf8">${offer.code || 'None'}</strong> · ${offer.validity || ''}</p>
           ` : ''}
         </div>
-        <form id="offer-edit-form" style="display:grid;gap:0.75rem;max-width:620px">
+        <form id="offer-edit-form" style="display:${isAdmin() ? 'grid' : 'none'};gap:0.75rem;max-width:620px">
           <div class="form-group">
             <label>Offer Title</label>
             <input class="form-control" id="offer-title" value="${hasOffer ? (offer.title||'') : ''}" required>
@@ -242,6 +244,8 @@
     const form   = S('admin-add-testimony-form');
     const grBtn  = S('save-google-review-btn');
     if (!listEl) return;
+    if (form && !isAdmin()) form.style.display = 'none';
+    if (grBtn && !isAdmin()) grBtn.closest('div').style.display = 'none';
 
     // Load google review URL
     if (grBtn) {
@@ -274,10 +278,10 @@
               <p style="color:#cbd5e1;font-style:italic;font-size:0.9rem;margin:0 0 4px">"${it.text}"</p>
               <span style="color:#38bdf8;font-weight:700;font-size:0.85rem">— ${it.name}</span>
             </div>
-            <div style="display:flex;gap:6px;margin-left:1rem;flex-shrink:0">
+            ${isAdmin() ? `<div style="display:flex;gap:6px;margin-left:1rem;flex-shrink:0">
               <button onclick="testCRUD.edit('${it.id}')" style="${btnStyle('#3b82f6')}">Edit</button>
               <button onclick="testCRUD.del('${it.id}')" style="${btnStyle('#ef4444')}">Delete</button>
-            </div>
+            </div>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -332,6 +336,11 @@
     const saveBtn   = S('save-hero-videos-btn');
     if (!listEl) return;
 
+    if (!isAdmin()) {
+      if (addBtn && addBtn.parentElement) addBtn.parentElement.parentElement.style.display = 'none';
+      if (saveBtn) saveBtn.style.display = 'none';
+    }
+
     let localVideos = [];
 
     async function renderVideoList() {
@@ -350,7 +359,7 @@
           <div style="flex:1;min-width:0;font-family:monospace;font-size:0.8rem;color:#cbd5e1;word-break:break-all">
             ${v.startsWith('data:') ? 'Uploaded base64 video' : v}
           </div>
-          <button onclick="mediaCRUD.remove(${i})" style="${btnStyle('#ef4444')}">Delete</button>
+          ${isAdmin() ? `<button onclick="mediaCRUD.remove(${i})" style="${btnStyle('#ef4444')}">Delete</button>` : ''}
         </div>`).join('');
     }
 
@@ -401,6 +410,7 @@
     const listEl = S('admin-crew-list');
     const form   = S('admin-add-crew-form');
     if (!listEl || !form) return;
+    if (form && !isAdmin()) form.closest('.admin-form').style.display = 'none';
 
     let editingId = null;
 
@@ -421,10 +431,10 @@
               ${it.licenses ? `<div style="color:#94a3b8;font-size:0.78rem;margin-top:2px">${it.licenses}</div>` : ''}
             </div>
           </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;margin-left:1rem">
+          ${isAdmin() ? `<div style="display:flex;gap:6px;flex-shrink:0;margin-left:1rem">
             <button onclick="crewCRUD.edit('${it.id}')" style="${btnStyle('#3b82f6')}">Edit</button>
             <button onclick="crewCRUD.del('${it.id}')" style="${btnStyle('#ef4444')}">Delete</button>
-          </div>
+          </div>` : ''}
         </div>`).join('');
     }
 
@@ -518,7 +528,7 @@
           <td style="padding:0.9rem 0.5rem"><span style="background:rgba(56,189,248,0.1);color:#38bdf8;font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700">New</span></td>
           <td style="padding:0.9rem 0.5rem">
             ${m.email ? `<a href="mailto:${m.email}" style="${btnStyle('#3b82f6','display:inline-block;margin-bottom:4px;text-decoration:none')}">Reply</a><br>` : ''}
-            <button onclick="contactCRUD.del('${m.id}')" style="${btnStyle('#ef4444')}">Delete</button>
+            ${isAdmin() ? `<button onclick="contactCRUD.del('${m.id}')" style="${btnStyle('#ef4444')}">Delete</button>` : ''}
           </td>
         </tr>`).join('');
     }
@@ -550,6 +560,7 @@
     const listEl = S('admin-gallery-list');
     const form   = S('admin-add-gallery-form');
     if (!listEl || !form) return;
+    if (form && !isAdmin()) form.closest('.admin-form').style.display = 'none';
     let editingId = null;
 
     async function renderList() {
@@ -564,10 +575,10 @@
           ${it.image?`<img src="${it.image}" style="width:72px;height:54px;object-fit:cover;border-radius:5px;flex-shrink:0">`:''}
           <div style="flex:1"><h4 style="color:#fff;margin:0 0 2px">${it.title||''}</h4>
             <span style="color:#64748b;font-size:0.8rem">${it.aspectRatio||'16:9'}</span></div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
+          ${isAdmin() ? `<div style="display:flex;gap:6px;flex-shrink:0">
             <button onclick="galleryCRUD.edit('${it.id}')" style="${btnStyle('#3b82f6')}">Edit</button>
             <button onclick="galleryCRUD.del('${it.id}')" style="${btnStyle('#ef4444')}">Delete</button>
-          </div>
+          </div>` : ''}
         </div>`).join('');
     }
     window.galleryCRUD = {
