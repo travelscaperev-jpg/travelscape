@@ -655,33 +655,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const container = document.createElement('div');
       container.id = 'floating-offer-widget';
-      container.style.cssText = `position: fixed; bottom: 30px; right: 30px; z-index: 999999; font-family: 'Inter', sans-serif;`;
 
       const catText = offer.category && offer.category !== 'All' ? ` on ${offer.category}s` : '';
 
       container.innerHTML = `
-        <div id="offer-detail-card" style="display: none; position: absolute; bottom: 75px; right: 0; width: 320px; background: rgba(8, 13, 26, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 1.5rem; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); color: #fff; transform: translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;">
-          <button id="close-offer-card" style="position: absolute; top: 10px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; outline: none;">&times;</button>
-          <span style="background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 0.75rem;">${offer.discount}</span>
-          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.3;">${offer.title}</h4>
-          <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">${offer.description}${catText}</p>
-          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div id="offer-detail-card">
+          <button id="close-offer-card">&times;</button>
+          <span class="offer-discount-badge">${offer.discount}</span>
+          <h4 class="offer-card-title">${offer.title}</h4>
+          <p class="offer-card-desc">${offer.description}${catText}</p>
+          <div class="offer-code-box">
             <div>
-              <div style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Promo Code</div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fde047; font-size: 1rem; margin-top: 2px;">${offer.code || 'None'}</div>
+              <div class="offer-code-label">Promo Code</div>
+              <div class="offer-code-val">${offer.code || 'None'}</div>
             </div>
-            ${offer.code ? `<button id="copy-offer-code" style="background: #38bdf8; color: #080d1a; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;">Copy</button>` : ''}
+            ${offer.code ? `<button id="copy-offer-code">Copy</button>` : ''}
           </div>
-          <div style="font-size: 0.75rem; color: #94a3b8; text-align: left; display: flex; align-items: center; gap: 5px;"><i class="fa-regular fa-clock"></i> <span>${offer.validity}</span></div>
+          <div class="offer-validity-box"><i class="fa-regular fa-clock"></i> <span>${offer.validity}</span></div>
         </div>
-        <button id="offer-trigger-circle" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #b91c1c); border: 2px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5); color: #fff; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s; outline: none;">
-          <i class="fa-solid fa-gift" style="font-size: 1.2rem; margin-bottom: 2px; animation: giftPulse 2s infinite;"></i>
-          <span style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2px;">Offer</span>
+        <button id="offer-trigger-circle">
+          <i class="fa-solid fa-gift"></i>
+          <span>Offer</span>
         </button>
-        <style>
-          @keyframes giftPulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-          #offer-trigger-circle:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 15px 30px rgba(239, 68, 68, 0.7); }
-        </style>
       `;
 
       document.body.appendChild(container);
@@ -1017,10 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       grid.innerHTML = itemsToRender.map(ex => {
         if (!ex) return '';
-        const isVideo = isMediaVideo(ex.video) || isMediaVideo(ex.image);
-        const mediaHtml = isVideo 
-          ? `<video src="${ex.video || ex.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>` 
-          : `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        const mediaHtml = `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
         const ratioStyle = ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '';
         return `
         <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
