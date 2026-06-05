@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let dataCache = {};
 
   async function loadAllData() {
-    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
+    const [excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew, photography] = await Promise.all([
       api.get('excursions'),
       api.get('private'),
       api.get('freediving'),
@@ -359,7 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('google-review'),
       api.get('contact_messages'),
       api.get('instagram_config'),
-      api.get('crew')
+      api.get('crew'),
+      api.get('photography')
     ]);
 
     dataCache = {
@@ -377,7 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
       googleReview: (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
       instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew: crew || []
+      crew: crew || [],
+      photography: photography || []
     };
     return dataCache;
   }
@@ -473,6 +475,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try { const db = localDb.read(); db.crew = data; localDb.write(db); } catch(e) {}
     await api.post('crew', data);
   };
+  const getPhotography = () => dataCache.photography || [];
+  const setPhotography = async (data) => {
+    dataCache.photography = data;
+    try { const db = localDb.read(); db.photography = data; localDb.write(db); } catch(e) {}
+    await api.post('photography', data);
+  };
 
   const getOfferBadgeHTML = (category, isCard = false) => {
     const offer = getOffer();
@@ -505,12 +513,13 @@ document.addEventListener('DOMContentLoaded', () => {
       googleReview: cachedDb.google_review || '',
       contactMessages: cachedDb.contact_messages || [],
       instagramConfig: cachedDb.instagram_config || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew: cachedDb.crew || []
+      crew: cachedDb.crew || [],
+      photography: cachedDb.photography || []
     };
   };
 
   // Build dataCache from API results
-  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
+  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew, photography]) => {
     dataCache = {
       excursions:    excursions    || [],
       private:       privateBookings || [],
@@ -526,7 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
       googleReview:  (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
       instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew:          crew          || []
+      crew:          crew          || [],
+      photography:   photography   || []
     };
     try {
       const db = localDb.read();
@@ -545,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db.contact_messages = dataCache.contactMessages;
       db.instagram_config = dataCache.instagramConfig;
       db.crew = dataCache.crew;
+      db.photography = dataCache.photography;
       localDb.write(db);
     } catch(e) {
       console.warn('Failed to sync API data to localStorage:', e);
@@ -568,7 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('google-review'),
       api.get('contact_messages'),
       api.get('instagram_config'),
-      api.get('crew')
+      api.get('crew'),
+      api.get('photography')
     ]);
     // Extract values (null for failed calls)
     const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
@@ -586,6 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setupParallaxLayerFn(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
       setupParallaxLayerFn(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
       setupParallaxLayerFn(5, 'RESORTS', getResorts(), 'Resort');
+      setupParallaxLayerFn(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
     }
     // Re-render cards
     if (typeof renderCardGridFn === 'function') {
@@ -837,6 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="detail-row"><span class="label">Excursion:</span><span class="value">${b.excursionTitle}</span></div>
             <div class="detail-row"><span class="label">Date:</span><span class="value">${b.bookingDate}</span></div>
             <div class="detail-row"><span class="label">Trip Category:</span><span class="value">${b.isPrivate ? 'Private Charter' : 'Standard'}</span></div>
+            ${b.photographyOption ? `<div class="detail-row"><span class="label">Photography Option:</span><span class="value">${b.photographyOption}</span></div>` : ''}
             <div class="detail-row"><span class="label">Booking Type:</span><span class="value">${b.bookingType || 'Individual'}</span></div>
             ${b.bookingType === 'Group' ? `
             <div class="detail-row"><span class="label">Adults:</span><span class="value">${b.adults || 1}</span></div>
@@ -965,6 +979,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div>
               <span class="duration-badge" style="display: inline-block; background: rgba(6, 182, 212, 0.08); color: #06b6d4; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(6, 182, 212, 0.15); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${ex.duration}</span>
+              ${ex.price !== undefined ? `<span class="duration-badge" style="display: inline-block; background: rgba(16, 185, 129, 0.08); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.15); margin-bottom: 0.75rem; margin-left: 8px;">$${ex.price}</span>` : ''}
               <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0;">${ex.description}</p>
               ${ex.fullDescription ? `<p style="color: #94a3b8; line-height: 1.6; font-size: 0.95rem; margin: 0;">${ex.fullDescription}</p>` : ''}
             </div>
@@ -1221,6 +1236,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
     setupParallaxLayer(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
     setupParallaxLayer(5, 'RESORTS', getResorts(), 'Resort');
+    setupParallaxLayer(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
+
+    const bookPhotoBtn = document.getElementById('book-photography-btn');
+    if (bookPhotoBtn) {
+      bookPhotoBtn.addEventListener('click', () => {
+        const pkgs = getPhotography();
+        if (pkgs.length > 0) {
+          openBookingModal(pkgs[0].id, pkgs[0].title);
+        } else {
+          alert('No photography packages available at the moment.');
+        }
+      });
+    }
 
     // Request native OS notification permission on load
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -1295,7 +1323,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ...getExcursions().map(e => ({ id: e.id, title: e.title, group: 'Excursions' })),
         ...getPrivate().map(e => ({ id: e.id, title: e.title, group: 'Private Charters' })),
         ...getFreeDiving().map(e => ({ id: e.id, title: e.title, group: 'Free Diving' })),
-        ...getResorts().map(e => ({ id: e.id, title: e.title, group: 'Resorts' }))
+        ...getResorts().map(e => ({ id: e.id, title: e.title, group: 'Resorts' })),
+        ...getPhotography().map(e => ({ id: e.id, title: e.title, group: 'Photography' }))
       ];
 
       bookingModal.innerHTML = `
@@ -1309,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Select Package</label>
               <select id="direct-package-select" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                 <option value="">-- Choose a Package --</option>
-                ${['Excursions', 'Private Charters', 'Free Diving', 'Resorts'].map(grp => {
+                ${['Excursions', 'Private Charters', 'Free Diving', 'Resorts', 'Photography'].map(grp => {
                   const items = allPackages.filter(p => p.group === grp);
                   if (items.length === 0) return '';
                   return `<optgroup label="${grp}" style="background: #080d1a; color: #94a3b8;">
@@ -1359,7 +1388,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ...getExcursions(),
           ...getPrivate(),
           ...getFreeDiving(),
-          ...getResorts()
+          ...getResorts(),
+          ...getPhotography()
         ];
         const pkg = allPackages.find(x => x.id === id);
         if (!pkg) return;
@@ -1634,7 +1664,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...getExcursions(),
             ...getPrivate(),
             ...getFreeDiving(),
-            ...getResorts()
+            ...getResorts(),
+            ...getPhotography()
           ];
           const pkg = allPackages.find(x => x.id === id);
           if (pkg) {
@@ -1702,10 +1733,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } else {
         // Standard Excursion or Private Charter Form
+        const isPhotographyBooking = id.startsWith('photo');
         bookingModal.innerHTML = `
           <div class="modal-content-minimal" style="max-width: 460px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">${isPrivateCharter ? 'Book Private Charter' : 'Book Excursion & Service'}</h3>
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">${isPhotographyBooking ? 'Book Photography Package' : (isPrivateCharter ? 'Book Private Charter' : 'Book Excursion & Service')}</h3>
               <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
             </div>
             <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Selected: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
@@ -1716,10 +1748,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div>
               
-
-
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
                 <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;" ${isPrivateCharter ? 'checked disabled' : ''}>
                 <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
@@ -1727,18 +1757,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div id="booking-type-container">
                 <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
-                <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                   <option value="Individual">Individual Booking</option>
                   <option value="Group">Group Booking</option>
                 </select>
               </div>
 
-              <div id="booking-group-details" style="display: none; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; flex-direction: column; gap: 1rem;">
-                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Adults</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-                <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div id="booking-group-details" style="display: none; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem; flex-direction: column; gap: 1rem;">
+                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Adults</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               </div>
-              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              
+              ${isPhotographyBooking ? '' : `
+              <div>
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Add Professional Photography</label>
+                <select id="booking-photography-pkg" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                  <option value="">-- No Photography --</option>
+                  ${getPhotography().map(p => `<option value="${p.id}" data-title="${p.title}" data-price="${p.price}">${p.title} (+$${p.price})</option>`).join('')}
+                </select>
+              </div>
+              `}
+
+              <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
+                <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
+              </div>
+              
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
             </form>
           </div>
@@ -1767,6 +1813,24 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
+        const photoSelect = bookingModal.querySelector('#booking-photography-pkg');
+        const priceDisplay = bookingModal.querySelector('#booking-price-display');
+        const updateEXTotalPrice = () => {
+          if (!priceDisplay) return;
+          let total = 0;
+          if (isPhotographyBooking) {
+            const photoPkg = getPhotography().find(x => x.id === id);
+            total = photoPkg ? (parseFloat(photoPkg.price) || 0) : 0;
+          } else if (photoSelect) {
+            const selectedOpt = photoSelect.options[photoSelect.selectedIndex];
+            if (selectedOpt && selectedOpt.value) {
+              total = parseFloat(selectedOpt.dataset.price) || 0;
+            }
+          }
+          priceDisplay.textContent = `$${total}`;
+        };
+        if (photoSelect) photoSelect.addEventListener('change', updateEXTotalPrice);
+
         privateCheck.addEventListener('change', () => { syncBookingTypeFields(); checkSlotsAvailability(); });
         typeSelect.addEventListener('change', (e) => { groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none'; checkSlotsAvailability(); });
         kidsInput.addEventListener('input', (e) => { kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none'; checkSlotsAvailability(); });
@@ -1792,6 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Run sync initially for default check states
         syncBookingTypeFields();
+        updateEXTotalPrice();
 
         const form = bookingModal.querySelector('#booking-form-dynamic');
         form.addEventListener('submit', async (e) => {
@@ -1813,7 +1878,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...getExcursions(),
             ...getPrivate(),
             ...getFreeDiving(),
-            ...getResorts()
+            ...getResorts(),
+            ...getPhotography()
           ];
           const pkg = allPackages.find(x => x.id === id);
           if (pkg) {
@@ -1830,12 +1896,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
+          let photographyOption = '';
+          let photoPrice = 0;
+
+          if (isPhotographyBooking) {
+            const photoPkg = getPhotography().find(x => x.id === id);
+            photographyOption = title;
+            photoPrice = photoPkg ? (parseFloat(photoPkg.price) || 0) : 0;
+          } else {
+            const photoSelectEl = form.querySelector('#booking-photography-pkg');
+            const selectedPhotoOpt = photoSelectEl ? photoSelectEl.options[photoSelectEl.selectedIndex] : null;
+            photographyOption = selectedPhotoOpt && selectedPhotoOpt.value ? selectedPhotoOpt.dataset.title : '';
+            photoPrice = selectedPhotoOpt && selectedPhotoOpt.value ? parseFloat(selectedPhotoOpt.dataset.price) || 0 : 0;
+          }
+
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
             customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
             isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
-            totalPrice: 0,
+            totalPrice: photoPrice,
+            photographyOption,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
             bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
             enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
@@ -1848,7 +1929,8 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: isPrivateCharter ? 'Private Charter' : 'Excursion', total: 'Calculated at Office' });
+          const bookingTypeLabel = isPhotographyBooking ? 'Photography Package' : (isPrivateCharter ? 'Private Charter' : 'Excursion');
+          showBookingConfirmationModal(newBooking, { type: bookingTypeLabel, total: photoPrice > 0 ? `$${photoPrice}` : 'Calculated at Office' });
         });
       }
 
@@ -2114,6 +2196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!typeVal || typeVal === 'Private Charters') list = list.concat(getPrivate());
         if (!typeVal || typeVal === 'Free Diving') list = list.concat(getFreeDiving());
         if (!typeVal || typeVal === 'Resorts') list = list.concat(getResorts());
+        if (!typeVal || typeVal === 'Photography') list = list.concat(getPhotography());
 
         list.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.title; opt.textContent = ex.title; filterExcursion.appendChild(opt); });
       };
@@ -2169,6 +2252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (id.startsWith('p') || getPrivate().some(x => x.id === id)) group = 'Private Charters';
             else if (id.startsWith('fd') || getFreeDiving().some(x => x.id === id)) group = 'Free Diving';
             else if (id.startsWith('rs') || getResorts().some(x => x.id === id)) group = 'Resorts';
+            else if (id.startsWith('photo') || getPhotography().some(x => x.id === id)) group = 'Photography';
             return group === typeVal;
           });
         }
@@ -2378,9 +2462,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const list = getData();
           listContainer.innerHTML = list.map(item => {
             if (!item) return '';
+            const priceInfo = item.price !== undefined ? ` | Price: $${item.price}` : '';
             return `
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
-              <div><h4 style="color:#fff;">${item.title}</h4><p style="color:#38bdf8; font-size:0.9rem;">${prefix === 'resort' ? 'Resort Pass' : 'Duration: ' + item.duration}</p></div>
+              <div><h4 style="color:#fff;">${item.title}</h4><p style="color:#38bdf8; font-size:0.9rem;">${prefix === 'resort' ? 'Resort Pass' : 'Duration: ' + item.duration}${priceInfo}</p></div>
               <div>
                 <button class="btn preview-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#10b981; color:#fff; font-size:0.85rem; margin-right:5px;">Preview</button>
                 <button class="btn edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
@@ -2389,7 +2474,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `; }).join('');
 
-          listContainer.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm(`Are you sure you want to delete this ${type}?`)) return; const items = getData().filter(x => x.id !== e.target.dataset.id); await setData(items); renderList(); populateExcursionFilter(); }); });
+          listContainer.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm(`Are you sure you want to delete this ${type}?`)) return; const items = getData().filter(x => x.id !== e.target.dataset.id); await setData(items); renderList(); populateExcursionFilter(); if (prefix === 'photo' && typeof setupParallaxLayerFn === 'function') { setupParallaxLayerFn(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography'); } }); });
           listContainer.querySelectorAll('.preview-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
               const item = getData().find(x => x.id === e.target.dataset.id);
@@ -2409,6 +2494,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const videoRatioEl = document.getElementById(`${prefix}-video-ratio`); if (videoRatioEl) videoRatioEl.value = item.videoRatio || '16:9';
               const descEl = document.getElementById(`${prefix}-desc`); if (descEl) descEl.value = item.description || '';
               const fullDescEl = document.getElementById(`${prefix}-full-desc`); if (fullDescEl) fullDescEl.value = item.fullDescription || '';
+              const priceEl = document.getElementById(`${prefix}-price`); if (priceEl) priceEl.value = item.price !== undefined ? item.price : '';
               const subImagesEl = document.getElementById(`${prefix}-sub-images`);
               if (subImagesEl) { const urls = []; if (item.image && !item.image.startsWith('data:')) urls.push(item.image); if (item.subImg1 && !item.subImg1.startsWith('data:')) urls.push(item.subImg1); if (item.subImg2 && !item.subImg2.startsWith('data:')) urls.push(item.subImg2); subImagesEl.value = urls.join(', '); }
               if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); if (mapLinkEl) mapLinkEl.value = item.mapLink || ''; }
@@ -2430,7 +2516,22 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } };
+        const resetForm = () => {
+          form.reset();
+          document.getElementById(`${prefix}-id`).value = '';
+          document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`;
+          document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type}`;
+          document.getElementById(`${prefix}-cancel-btn`).style.display = 'none';
+          const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0';
+          const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0';
+          const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20';
+          const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9';
+          const pr = document.getElementById(`${prefix}-price`); if (pr) pr.value = '';
+          if (prefix === 'resort') {
+            const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); }
+            const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); }
+          }
+        };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -2480,12 +2581,23 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
             const videoRatioEl = document.getElementById(`${prefix}-video-ratio`);
             itemData.videoRatio = videoRatioEl ? videoRatioEl.value : '16:9';
-            const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
-            const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
-            const maxCapacity = parseInt(document.getElementById(`${prefix}-max-capacity`).value) || 20;
+
+            const kidHalfEl = document.getElementById(`${prefix}-kid-half`);
+            const kidAgeHalf = kidHalfEl ? (parseInt(kidHalfEl.value) || 0) : 0;
+            const kidFreeEl = document.getElementById(`${prefix}-kid-free`);
+            const kidAgeFree = kidFreeEl ? (parseInt(kidFreeEl.value) || 0) : 0;
+            const maxCapEl = document.getElementById(`${prefix}-max-capacity`);
+            const maxCapacity = maxCapEl ? (parseInt(maxCapEl.value) || 20) : 20;
+            
             itemData.kidAgeHalf = kidAgeHalf;
             itemData.kidAgeFree = kidAgeFree;
             itemData.maxCapacity = maxCapacity;
+
+            const priceEl = document.getElementById(`${prefix}-price`);
+            if (priceEl) {
+              itemData.price = parseFloat(priceEl.value) || 0;
+            }
+
             if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
             if (prefix === 'resort') {
               itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
@@ -2495,7 +2607,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
             }
             if (!idVal) list.push(itemData);
-            await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
+            await setData(list); resetForm(); renderList(); populateExcursionFilter(); if (prefix === 'photo' && typeof setupParallaxLayerFn === 'function') { setupParallaxLayerFn(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography'); } alert(`${type} saved successfully!`);
           } catch (error) {
             console.error(error);
             alert('Failed to save excursion: ' + error.message);
@@ -2515,6 +2627,7 @@ document.addEventListener('DOMContentLoaded', () => {
       registerCRUD('Private Excursion', getPrivate, setPrivate, 'admin-private-list', 'admin-add-private-form', 'private');
       registerCRUD('Free Diving Option', getFreeDiving, setFreeDiving, 'admin-fd-list', 'admin-add-fd-form', 'fd');
       registerCRUD('Resort Deal', getResorts, setResorts, 'admin-resorts-list', 'admin-add-resort-form', 'resort');
+      registerCRUD('Photography Package', getPhotography, setPhotography, 'admin-photography-list', 'admin-add-photo-form', 'photo');
 
       // --- Crew Management Tab ---
       const crewListContainer = document.getElementById('admin-crew-list');
