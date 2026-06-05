@@ -87,6 +87,7 @@
       <a onclick="switchDashboardTab('offers')" id="tab-btn-offers">Special Offers</a>
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
+      <a onclick="switchDashboardTab('reels')" id="tab-btn-reels">Instagram Reels</a>
       <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
       <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span id="contact-msg-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
       <a href="#" onclick="localStorage.removeItem('admin_logged'); localStorage.removeItem('staff_logged'); window.location.reload();"
@@ -860,6 +861,38 @@
           <div id="admin-no-messages" style="display:none; text-align:center; padding:3rem 1rem; color:#64748b;">
             <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:1rem; display:block; color:#38bdf8; opacity:0.4;"></i>
             No contact messages yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 8B: REELS -->
+      <div id="tab-reels" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="reel-form-title">Add New Reel</h3>
+            <form id="admin-add-reel-form" style="margin-top: 1rem;">
+              <input type="hidden" id="reel-id">
+              <div class="form-group">
+                <label for="reel-title">Title / Description</label>
+                <input type="text" id="reel-title" class="form-control" placeholder="Optional brief caption">
+              </div>
+              <div class="form-group">
+                <label for="reel-image">Reel Video/Image URL (Cloudinary)</label>
+                <input type="text" id="reel-image" class="form-control" required placeholder="https://...">
+              </div>
+              <div class="form-group">
+                <label>Or Upload Video/Image</label>
+                <input type="file" id="reel-image-file" class="form-control" accept="image/*,video/*">
+              </div>
+              <button type="submit" id="reel-submit-btn" class="action-btn" style="background:#10b981; margin-top:0.5rem;">Save Reel</button>
+              <button type="button" id="reel-cancel-btn" class="action-btn" style="background:#ef4444; margin-top:0.5rem; display:none;" onclick="document.getElementById('admin-add-reel-form').reset(); document.getElementById('reel-id').value=''; document.getElementById('reel-form-title').textContent='Add New Reel'; document.getElementById('reel-submit-btn').textContent='Save Reel'; this.style.display='none';">Cancel Edit</button>
+            </form>
+          </div>
+          <div>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Reels</h3>
+            <div id="admin-reels-list" style="margin-top: 1rem; display: grid; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 10px;">
+              <!-- Injected by JS -->
+            </div>
           </div>
         </div>
       </div>

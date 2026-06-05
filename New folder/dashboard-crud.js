@@ -8,7 +8,8 @@
 
   /* ── Utility ──────────────────────────────────────────────────────────── */
   function S(id) { return document.getElementById(id); }
-  const isAdmin = () => localStorage.getItem('admin_logged') === 'true';
+  // Staff and Admin now have full access to everything in dashboard-crud.js
+  const isAdmin = () => true;
   function card(style='') {
     return `background:#121824;border:1px solid rgba(255,255,255,0.07);
             padding:1rem;border-radius:8px;margin-bottom:0.75rem;${style}`;
@@ -555,6 +556,78 @@
     setInterval(renderMessages, 30000);
   }
 
+  /* ── Reels ───────────────────────────────────────────────────────────── */
+  async function initReels() {
+    const listEl = S('admin-reels-list');
+    const form   = S('admin-add-reel-form');
+    if (!listEl || !form) return;
+
+    async function renderList() {
+      loading(listEl);
+      const items = await api('GET', 'reels');
+      if (!items || !items.length) {
+        listEl.innerHTML = '<div style="color:#94a3b8;padding:1rem;text-align:center">No reels added yet.</div>';
+        return;
+      }
+      listEl.innerHTML = items.map(it => `
+        <div style="${card()} display:flex; gap:1rem; align-items:center;" id="reel-row-${it.id}">
+          ${it.image ? `<img src="${it.image}" style="width:60px;height:100px;object-fit:cover;border-radius:5px;">` : ''}
+          <div style="flex:1;">
+            <h4 style="color:#fff;margin:0 0 4px">${it.title || 'Untitled Reel'}</h4>
+            <a href="${it.image}" target="_blank" style="color:#38bdf8;font-size:0.8rem;word-break:break-all">${it.image}</a>
+          </div>
+          ${isAdmin() ? `<div style="display:flex;flex-direction:column;gap:6px;">
+            <button onclick="reelsCRUD.edit('${it.id}')" style="${btnStyle('#3b82f6')}">Edit</button>
+            <button onclick="reelsCRUD.del('${it.id}')" style="${btnStyle('#ef4444')}">Delete</button>
+          </div>` : ''}
+        </div>`).join('');
+    }
+
+    window.reelsCRUD = {
+      _items: [],
+      async refresh() { this._items = await api('GET', 'reels'); renderList(); },
+      async edit(id) {
+        const it = (await api('GET', 'reels')).find(x => x.id === id);
+        if (!it) return;
+        S('reel-id').value = it.id;
+        S('reel-title').value = it.title || '';
+        S('reel-image').value = it.image || '';
+        S('reel-form-title').textContent = 'Edit Reel';
+        S('reel-submit-btn').textContent = 'Save Changes';
+        S('reel-cancel-btn').style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth' });
+      },
+      async del(id) {
+        if (!confirm('Delete this reel?')) return;
+        await api('DELETE', `reels/${id}`);
+        toast('Deleted!'); renderList();
+      }
+    };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = S('reel-submit-btn');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      try {
+        const id = S('reel-id').value || uid();
+        const image = await maybeUpload(S('reel-image-file'), S('reel-image'), 'reels');
+        const item = { id, title: S('reel-title').value, image };
+        await api('PUT', `reels/${id}`, item);
+        toast('Reel Saved!'); form.reset();
+        S('reel-id').value = '';
+        S('reel-form-title').textContent = 'Add New Reel';
+        S('reel-cancel-btn').style.display = 'none';
+        btn.textContent = 'Save Reel';
+        renderList();
+      } catch (err) {
+        toast('Error: ' + err.message, false);
+        btn.textContent = 'Save Reel'; btn.disabled = false;
+      }
+    };
+
+    renderList();
+  }
+
   /* ── Gallery & Reels ─────────────────────────────────────────────────── */
   async function initGallery() {
     const listEl = S('admin-gallery-list');
@@ -629,6 +702,7 @@
       initCrew().catch(console.error);
       initContactMessages().catch(console.error);
       initGallery().catch(console.error);
+      initReels().catch(console.error);
     }, 800);
   });
 
