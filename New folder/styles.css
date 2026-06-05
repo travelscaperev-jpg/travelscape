@@ -2446,14 +2446,13 @@ body.minimal-body {
   /* creates the slide-over effect */
   overflow: hidden;
   min-height: 600px;
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
 }
 
 .layer-3 {
   z-index: 20;
-  /* Slanted gradient matching the polygon angle for fusion */
-  background: linear-gradient(174.5deg, transparent 0%, rgba(2, 6, 23, 0.5) 20%, #020617 38%);
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.95) 0%, #020617 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
   margin-top: 0;
   /* creates the slide-over effect */
 }
@@ -2465,13 +2464,13 @@ body.minimal-body {
   /* creates the slide-over effect */
   overflow: hidden;
   min-height: 600px;
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
 }
 
 .layer-4 {
   z-index: 30;
   background: #080d1a;
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
   margin-top: 0;
   /* creates the slide-over effect */
   min-height: 100vh;
@@ -2487,9 +2486,8 @@ body.minimal-body {
 
 .layer-5-slider {
   z-index: 40;
-  /* Slanted gradient matching the polygon angle for fusion */
-  background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(8, 13, 26, 0.95) 0%, #080d1a 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
   margin-top: 0;
   /* creates the slide-over effect */
   overflow: hidden;
@@ -2498,9 +2496,8 @@ body.minimal-body {
 
 .layer-6-slider {
   z-index: 50;
-  /* Slanted gradient matching the polygon angle for fusion */
-  background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(8, 13, 26, 0.95) 0%, #080d1a 100%);
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
   margin-top: 0;
   /* creates the slide-over effect */
   overflow: hidden;
