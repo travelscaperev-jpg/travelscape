@@ -902,13 +902,13 @@ document.addEventListener('DOMContentLoaded', () => {
             th { background-color: #f8fafc; color: #475569; font-weight: bold; }
             tr:nth-child(even) { background-color: #f8fafc; }
             .badge { background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-            .badge-confirmed { background: #d1fae5; color: #065f46; } .badge-pending { background: #fef3c7; color: #92400e; }
+            .badge-confirmed { background: #d1fae5; color: #065f46; } .badge-pending { background: #fef3c7; color: #92400e; } .badge-cancelled { background: #fee2e2; color: #991b1b; }
             .footer { margin-top: 3rem; text-align: center; font-size: 0.85rem; color: #94a3b8; }
           </style></head><body>
           <h2>Travelscape Maldives - Booking Manifest</h2>
           <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()} | <strong>Filter Mode:</strong> Active</p>
           <table><thead><tr><th>Booking ID</th><th>Guest Name</th><th>Excursion</th><th>Date</th><th>Trip Type</th><th>Payment Basis</th><th>Device</th><th>Status</th></tr></thead>
-          <tbody>${bookings.map(b => `<tr><td>#${b.id}</td><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'}">${b.status}</span></td></tr>`).join('')}</tbody></table>
+          <tbody>${bookings.map(b => `<tr><td>#${b.id}</td><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : (b.status === 'Cancelled' ? 'badge-cancelled' : 'badge-pending')}">${b.status}</span></td></tr>`).join('')}</tbody></table>
           <div class="footer">End of Report</div>
           <script>window.onload = function() { window.print(); window.close(); }<\/script>
         </body></html>
@@ -1191,12 +1191,15 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <h1 class="ex-title">${ex.title}</h1>
               <p class="ex-desc">${ex.description}</p>
-              <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center;">
+              <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center; flex-wrap: wrap;">
                 <button class="glass-btn layer${layerNum}-floating-details" data-id="${ex.id}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Details</button>
-                <button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>
+                ${layerNum === 6 ? '' : `<button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>`}
               </div>
+              ${layerNum === 6 ? `<p style="color: #38bdf8; font-size: 0.85rem; font-weight: 600; margin-top: 1rem; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-circle-info"></i> Note: You can add professional photography while booking any excursion, freediving, or private trip.</p>` : ''}
             `;
-            detailsOverlay.querySelector(`.layer${layerNum}-floating-book`).addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
+            if (layerNum !== 6) {
+              detailsOverlay.querySelector(`.layer${layerNum}-floating-book`).addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
+            }
             detailsOverlay.querySelector(`.layer${layerNum}-floating-details`).addEventListener('click', (e) => {
               const id = e.target.dataset.id;
               const found = listData.find(item => item.id === id);
@@ -1238,17 +1241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupParallaxLayer(5, 'RESORTS', getResorts(), 'Resort');
     setupParallaxLayer(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
 
-    const bookPhotoBtn = document.getElementById('book-photography-btn');
-    if (bookPhotoBtn) {
-      bookPhotoBtn.addEventListener('click', () => {
-        const pkgs = getPhotography();
-        if (pkgs.length > 0) {
-          openBookingModal(pkgs[0].id, pkgs[0].title);
-        } else {
-          alert('No photography packages available at the moment.');
-        }
-      });
-    }
 
     // Request native OS notification permission on load
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -1481,13 +1473,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <!-- Private Trip and Group settings -->
+              <!-- Resort Group settings -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;">
-                  <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
-                </div>
-
                 <div id="booking-type-container">
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
                   <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
@@ -1556,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
           const basePrice = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
 
-          const isPrivate = privateCheck.checked;
+          const isPrivate = privateCheck ? privateCheck.checked : false;
           const isGroup = isPrivate || typeSelect.value === 'Group';
           const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
           const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
@@ -1609,17 +1596,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         tierSelect.addEventListener('change', updateTotalPrice);
 
-        privateCheck.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            typeSelect.value = 'Group';
-            typeContainer.style.display = 'none';
-            groupDetails.style.display = 'flex';
-          } else {
-            typeContainer.style.display = 'block';
-            groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
-          }
-          updateTotalPrice();
-        });
+        if (privateCheck) {
+          privateCheck.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              typeSelect.value = 'Group';
+              typeContainer.style.display = 'none';
+              groupDetails.style.display = 'flex';
+            } else {
+              typeContainer.style.display = 'block';
+              groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
+            }
+            updateTotalPrice();
+          });
+        }
 
         typeSelect.addEventListener('change', (e) => {
           groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none';
@@ -1652,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const emailId = form.querySelector('#booking-email').value;
           const bookingDate = form.querySelector('#booking-date').value;
 
-          const isPrivate = privateCheck.checked;
+          const isPrivate = privateCheck ? privateCheck.checked : false;
           const bookingType = isPrivate ? 'Group' : typeSelect.value;
           const isGroup = bookingType === 'Group';
           const adults = isGroup ? (parseInt(form.querySelector('#booking-adults').value) || 1) : 1;
@@ -1713,7 +1702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kidsAges,
             isPrivate: isPrivate,
             numPersons: isGroup ? (adults + kids) : 1,
-            status: isOfficeUser ? 'Pending' : 'Confirmed',
+            status: 'Confirmed',
             ratePaid: ratePaid,
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
@@ -1914,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
             customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
-            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
+            isPrivate: isPrivate, numPersons: isGroup ? (adults + kids) : 1, status: 'Confirmed',
             totalPrice: photoPrice,
             photographyOption,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
@@ -2282,18 +2271,52 @@ document.addEventListener('DOMContentLoaded', () => {
               ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;">Promo: ${b.offerCode}</div>` : ''}
               ${b.deviceType ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid ${b.deviceType === 'Mobile' ? 'fa-mobile-screen-button' : (b.deviceType === 'Tablet' ? 'fa-tablet-screen-button' : 'fa-laptop')}" style="margin-right: 4px;"></i>${b.deviceType}</div>` : ''}
             </td>
-            <td style="padding: 1rem 0; color: ${b.status === 'Confirmed' ? '#10b981' : '#f59e0b'};">${b.status}</td>
+            <td style="padding: 1rem 0; color: ${b.status === 'Confirmed' ? '#10b981' : (b.status === 'Cancelled' ? '#ef4444' : '#f59e0b')}; font-weight: 700;">${b.status}</td>
             <td style="padding: 1rem 0;">
-              ${b.status === 'Pending' && role === 'admin' ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
+              ${(b.status === 'Pending' || b.status === 'Cancelled') ? `<button class="btn confirm-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Confirm</button>` : ''}
+              ${(b.status === 'Pending' || b.status === 'Confirmed') ? `<button class="btn cancel-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#f59e0b; color:#fff; font-size:0.8rem; margin-right:5px;">Cancel</button>` : ''}
               <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
-              <button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>
+              ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Delete</button>` : ''}
             </td>
           </tr>
         `).join('');
 
-        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await setBookings(list); renderBookings(); } }); });
+        document.querySelectorAll('.confirm-booking-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const list = getBookings();
+            const found = list.find(item => item.id === e.target.dataset.id);
+            if (found) {
+              found.status = 'Confirmed';
+              await setBookings(list);
+              renderBookings();
+            }
+          });
+        });
+
+        document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (!confirm('Are you sure you want to cancel this booking?')) return;
+            const list = getBookings();
+            const found = list.find(item => item.id === e.target.dataset.id);
+            if (found) {
+              found.status = 'Cancelled';
+              await setBookings(list);
+              renderBookings();
+            }
+          });
+        });
+
         document.querySelectorAll('.print-booking-btn').forEach(btn => { btn.addEventListener('click', (e) => printIndividualBooking(e.target.dataset.id)); });
-        document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const list = getBookings(); await setBookings(list.filter(item => item.id !== e.target.dataset.id)); renderBookings(); }); });
+
+        document.querySelectorAll('.delete-booking-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (role !== 'admin') return;
+            if (!confirm('Are you sure you want to permanently DELETE this booking? This cannot be undone.')) return;
+            const list = getBookings();
+            await setBookings(list.filter(item => item.id !== e.target.dataset.id));
+            renderBookings();
+          });
+        });
       };
 
       if (filterSearch) filterSearch.addEventListener('input', renderBookings);
@@ -2349,29 +2372,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (directBookBtn) {
         directBookBtn.addEventListener('click', openDirectBookingSelector);
       }
-
-      // Real-Time Polling for Bookings
-      let lastBookingCount = getBookings().length;
-      if (window.bookingPollInterval) clearInterval(window.bookingPollInterval);
-      window.bookingPollInterval = setInterval(() => {
-        const currentBookings = getBookings();
-        if (currentBookings.length > lastBookingCount) {
-          const newBooking = currentBookings[currentBookings.length - 1];
-          if (newBooking.bookedBy !== 'Admin' && newBooking.bookedBy !== 'Staff') {
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position:fixed; top:20px; right:20px; background:#10b981; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:99999; font-weight:600; display:flex; align-items:center; gap:10px; transform:translateX(100%); transition:transform 0.3s ease;';
-            toast.innerHTML = `<i class="fas fa-bell"></i> <div>New Booking Received<br><span style="font-size:0.8rem; font-weight:normal;">${newBooking.customerName} - ${newBooking.excursionTitle}</span></div>`;
-            document.body.appendChild(toast);
-            setTimeout(() => { toast.style.transform = 'translateX(0)'; }, 50);
-            setTimeout(() => { toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }, 5000);
-          }
-          renderBookings();
-          lastBookingCount = currentBookings.length;
-        } else if (currentBookings.length < lastBookingCount) {
-          renderBookings();
-          lastBookingCount = currentBookings.length;
-        }
-      }, 3000);
+      // Real-Time Polling for Bookings is handled globally below
 
       // File upload helpers
       const getFileBase64 = (fileInput) => new Promise((resolve) => { if (!fileInput || !fileInput.files || fileInput.files.length === 0) { resolve(''); return; } const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => resolve(''); reader.readAsDataURL(fileInput.files[0]); });
@@ -3225,7 +3226,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
-      let pollInterval = setInterval(pollForNewBookings, 4000);
+      if (window.bookingsPollInterval) clearInterval(window.bookingsPollInterval);
+      window.bookingsPollInterval = setInterval(pollForNewBookings, 4000);
 
       // --- Contact Messages Tab Rendering ---
       const contactMsgTable = document.getElementById('admin-contact-messages-table');
@@ -3378,7 +3380,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
-      let contactPollInterval = setInterval(pollForNewMessages, 4000);
+      if (window.messagesPollInterval) clearInterval(window.messagesPollInterval);
+      window.messagesPollInterval = setInterval(pollForNewMessages, 4000);
 
       // Assign dashboard refresh hooks in this active scope
       refreshAdminTablesFn = () => {

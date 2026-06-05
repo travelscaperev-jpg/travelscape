@@ -3366,7 +3366,7 @@ body.minimal-body {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 999999;
+  z-index: 9999;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
