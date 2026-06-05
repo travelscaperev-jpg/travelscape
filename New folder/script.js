@@ -2117,6 +2117,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('admin_logged') === 'true') {
         adminGate.style.display = 'none';
         loadAdminPanel();
+        if (!useFallback) {
+          fetchAllFromAPI().then(() => {
+            if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+          }).catch(() => {
+            // Retry after cold-start delay
+            setTimeout(() => {
+              fetchAllFromAPI().then(() => {
+                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+              }).catch(() => {});
+            }, 35000);
+          });
+        }
       }
     }
 
@@ -2167,6 +2179,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('staff_logged') === 'true') {
         staffGate.style.display = 'none';
         loadStaffPanel();
+        if (!useFallback) {
+          fetchAllFromAPI().then(() => {
+            if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+          }).catch(() => {
+            // Retry after cold-start delay
+            setTimeout(() => {
+              fetchAllFromAPI().then(() => {
+                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+              }).catch(() => {});
+            }, 35000);
+          });
+        }
       }
     }
 
@@ -2975,6 +2999,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const renderHeroVideosManager = () => {
         if (!heroVideosList) return;
+        // Re-sync from cache whenever called (e.g. after background API fetch)
+        const freshVideos = Array.isArray(getHeroVideos()) ? [...getHeroVideos()].filter(Boolean) : [];
+        if (freshVideos.length > localHeroVideos.length) localHeroVideos = freshVideos;
         if (localHeroVideos.length === 0) {
           heroVideosList.innerHTML = `<div style="padding: 1rem; color: #94a3b8; text-align: center; background: rgba(255,255,255,0.01); border-radius: 8px;">No videos in the slider. Add at least one video to play in background.</div>`;
           return;
