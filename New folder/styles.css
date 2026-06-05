@@ -2207,8 +2207,8 @@ body.minimal-body {
     top: auto;
     margin-top: 0;
     margin-bottom: 10px;
-    right: 50%;
-    transform: translateX(50%);
+    right: 0;
+    transform: none;
   }
 
   /* Intro / Hero mobile view adjustments */
