@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- API Helper ---
   let useFallback = false;
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
-  const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
+  const RENDER_SERVER_URL = 'https://travelscape-backend-wudc.onrender.com'; 
   let API_BASE;
   if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
     API_BASE = window.location.port === '3000' ? '/api' : 'http://localhost:3000/api';
