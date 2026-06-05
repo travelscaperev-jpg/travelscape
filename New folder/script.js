@@ -2085,13 +2085,15 @@ document.addEventListener('DOMContentLoaded', () => {
           if (result && result.success) {
             adminGate.style.display = 'none';
             localStorage.setItem('admin_logged', 'true');
-            if (!useFallback) {
-              fetchAllFromAPI().catch(() => {});
-            }
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
             loadAdminPanel();
+            if (!useFallback) {
+              fetchAllFromAPI().then(() => {
+                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+              }).catch(() => {});
+            }
           } else {
             adminError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             adminError.style.display = 'block';
@@ -2133,13 +2135,15 @@ document.addEventListener('DOMContentLoaded', () => {
           if (result && result.success) {
             staffGate.style.display = 'none';
             localStorage.setItem('staff_logged', 'true');
-            if (!useFallback) {
-              fetchAllFromAPI().catch(() => {});
-            }
             if (typeof Notification !== 'undefined') {
               Notification.requestPermission();
             }
             loadStaffPanel();
+            if (!useFallback) {
+              fetchAllFromAPI().then(() => {
+                if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+              }).catch(() => {});
+            }
           } else {
             staffError.textContent = (result && result.message) || 'Incorrect password. Please try again.';
             staffError.style.display = 'block';
