@@ -226,9 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let useFallback = false;
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
   const RENDER_SERVER_URL = 'https://travelscape-backend.onrender.com'; 
-  const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
-    ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
-    : (window.location.origin.includes('github.io') ? RENDER_SERVER_URL + '/api' : '/api');
+  let API_BASE;
+  if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
+    API_BASE = window.location.port === '3000' ? '/api' : 'http://localhost:3000/api';
+  } else if (window.location.origin === RENDER_SERVER_URL) {
+    API_BASE = '/api';
+  } else {
+    API_BASE = RENDER_SERVER_URL + '/api';
+  }
 
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
@@ -520,24 +525,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Build dataCache from API results
   const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew, photography]) => {
-    dataCache = {
-      excursions:    excursions    || [],
-      private:       privateBookings || [],
-      freediving:    freediving    || [],
-      resorts:       resorts       || [],
-      bookings:      bookings      || [],
-      testimonials:  testimonials  || [],
-      reels:         reels         || [],
-      gallery:       gallery       || [],
-      offer:         offer         || {},
-      heroVideo:     (heroVideoData  && heroVideoData.video)  || '',
-      heroVideos:    heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
-      googleReview:  (googleReviewData && googleReviewData.url) || '',
-      contactMessages: contactMessages || [],
-      instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew:          crew          || [],
-      photography:   photography   || []
-    };
+    if (excursions !== null)       dataCache.excursions = excursions;
+    if (privateBookings !== null)  dataCache.private = privateBookings;
+    if (freediving !== null)       dataCache.freediving = freediving;
+    if (resorts !== null)          dataCache.resorts = resorts;
+    if (bookings !== null)         dataCache.bookings = bookings;
+    if (testimonials !== null)     dataCache.testimonials = testimonials;
+    if (reels !== null)            dataCache.reels = reels;
+    if (gallery !== null)          dataCache.gallery = gallery;
+    if (offer !== null)            dataCache.offer = offer;
+    if (heroVideoData !== null)    dataCache.heroVideo = (heroVideoData && heroVideoData.video) || '';
+    if (heroVideosData !== null)   dataCache.heroVideos = heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []);
+    if (googleReviewData !== null) dataCache.googleReview = (googleReviewData && googleReviewData.url) || '';
+    if (contactMessages !== null)  dataCache.contactMessages = contactMessages;
+    if (instagramConfig !== null)  dataCache.instagramConfig = instagramConfig;
+    if (crew !== null)             dataCache.crew = crew;
+    if (photography !== null)      dataCache.photography = photography;
+
     try {
       const db = localDb.read();
       db.excursions = dataCache.excursions;
