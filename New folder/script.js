@@ -752,6 +752,10 @@ document.addEventListener('DOMContentLoaded', () => {
           videoEl.loop = true;
           videoEl.muted = true;
           videoEl.playsInline = true;
+          videoEl.setAttribute('autoplay', 'autoplay');
+          videoEl.setAttribute('loop', 'loop');
+          videoEl.setAttribute('muted', 'muted');
+          videoEl.setAttribute('playsinline', 'playsinline');
           videoEl.className = 'global-hero-video-slide' + (index === 0 ? ' active' : '');
 
           const sourceEl = document.createElement('source');
