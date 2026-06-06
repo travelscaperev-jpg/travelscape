@@ -756,6 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
           videoEl.setAttribute('loop', 'loop');
           videoEl.setAttribute('muted', 'muted');
           videoEl.setAttribute('playsinline', 'playsinline');
+          videoEl.setAttribute('webkit-playsinline', 'webkit-playsinline');
           videoEl.className = 'global-hero-video-slide' + (index === 0 ? ' active' : '');
 
           const sourceEl = document.createElement('source');
@@ -764,6 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           sliderContainer.appendChild(videoEl);
           videoEl.muted = true;
+          videoEl.playsInline = true;
           videoEl.play().catch(err => console.warn('Hero video play blocked:', err));
           slideElements.push(videoEl);
         });
@@ -795,6 +797,10 @@ document.addEventListener('DOMContentLoaded', () => {
               source.setAttribute('src', activeVideo);
               vid.load();
               vid.muted = true;
+              vid.playsInline = true;
+              vid.setAttribute('muted', 'muted');
+              vid.setAttribute('playsinline', 'playsinline');
+              vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
               vid.play().catch(e => console.warn('Static video autoplay blocked:', e));
             }
           });
@@ -1123,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isVideo) {
             return `
               <div class="reel-item" style="cursor: pointer;" onclick="window.open('https://instagram.com/travelscapemaldives', '_blank')">
-                <video src="${reel.image}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <video src="${reel.image}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <div class="reel-overlay"><i class="fa-brands fa-instagram"></i></div>
               </div>
             `;
@@ -1136,6 +1142,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
           }
         }).join('');
+        reelsGrid.querySelectorAll('video').forEach(vid => {
+          vid.muted = true;
+          vid.playsInline = true;
+          vid.setAttribute('muted', 'muted');
+          vid.setAttribute('playsinline', 'playsinline');
+          vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+          vid.play().catch(e => console.warn('Reel video autoplay blocked:', e));
+        });
       }
     };
     renderReelsFn = renderReels;
@@ -1154,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hasVideo) {
             return `
               <div class="video-card ${ratioClass}" style="cursor: default;">
-                <video src="${src}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <video src="${src}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
               </div>
             `;
@@ -1167,6 +1181,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
           }
         }).join('');
+        galleryGrid.querySelectorAll('video').forEach(vid => {
+          vid.muted = true;
+          vid.playsInline = true;
+          vid.setAttribute('muted', 'muted');
+          vid.setAttribute('playsinline', 'playsinline');
+          vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+          vid.play().catch(e => console.warn('Gallery video autoplay blocked:', e));
+        });
       }
     };
     renderGalleryFn = renderGallery;
