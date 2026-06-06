@@ -741,33 +741,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         lastInjectedVideos = [...videos];
         sliderContainer.style.display = 'block';
-        // Clear existing slides
-        sliderContainer.innerHTML = '';
-
-        // Create video slides
-        const slideElements = [];
+        // Clear existing slides and rebuild via innerHTML for better Safari parsing
+        let slidesHTML = '';
         videos.forEach((videoPath, index) => {
-          const videoEl = document.createElement('video');
-          videoEl.autoplay = true;
-          videoEl.loop = true;
+          const activeClass = index === 0 ? ' active' : '';
+          slidesHTML += `<video src="${videoPath}" class="global-hero-video-slide${activeClass}" autoplay loop muted playsinline webkit-playsinline></video>`;
+        });
+        sliderContainer.innerHTML = slidesHTML;
+
+        // Force strict mobile Safari properties on newly parsed DOM nodes
+        const slideElements = Array.from(sliderContainer.querySelectorAll('.global-hero-video-slide'));
+        slideElements.forEach(videoEl => {
           videoEl.muted = true;
+          videoEl.defaultMuted = true;
           videoEl.playsInline = true;
-          videoEl.setAttribute('autoplay', 'autoplay');
-          videoEl.setAttribute('loop', 'loop');
           videoEl.setAttribute('muted', 'muted');
           videoEl.setAttribute('playsinline', 'playsinline');
           videoEl.setAttribute('webkit-playsinline', 'webkit-playsinline');
-          videoEl.className = 'global-hero-video-slide' + (index === 0 ? ' active' : '');
-
-          const sourceEl = document.createElement('source');
-          sourceEl.src = videoPath;
-          videoEl.appendChild(sourceEl);
-
-          sliderContainer.appendChild(videoEl);
-          videoEl.muted = true;
-          videoEl.playsInline = true;
-          videoEl.play().catch(err => console.warn('Hero video play blocked:', err));
-          slideElements.push(videoEl);
+          videoEl.load();
+          const playPromise = videoEl.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => console.warn('Hero video play blocked:', err));
+          }
         });
 
         // Slideshow interval
@@ -788,20 +783,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeVideo) {
           document.querySelectorAll('.global-hero-video').forEach(vid => {
             vid.style.display = 'block';
-            let source = vid.querySelector('source');
-            if (!source) {
-              source = document.createElement('source');
-              vid.appendChild(source);
-            }
-            if (source.getAttribute('src') !== activeVideo) {
-              source.setAttribute('src', activeVideo);
+            vid.muted = true;
+            vid.defaultMuted = true;
+            vid.playsInline = true;
+            vid.setAttribute('muted', 'muted');
+            vid.setAttribute('playsinline', 'playsinline');
+            vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+            
+            // Prefer setting src directly on video for Safari instead of <source>
+            if (vid.getAttribute('src') !== activeVideo) {
+              vid.src = activeVideo;
+              vid.querySelectorAll('source').forEach(s => s.remove());
               vid.load();
-              vid.muted = true;
-              vid.playsInline = true;
-              vid.setAttribute('muted', 'muted');
-              vid.setAttribute('playsinline', 'playsinline');
-              vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
-              vid.play().catch(e => console.warn('Static video autoplay blocked:', e));
+              const playPromise = vid.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(e => console.warn('Static video autoplay blocked:', e));
+              }
             }
           });
         } else {
