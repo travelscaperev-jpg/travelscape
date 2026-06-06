@@ -197,6 +197,32 @@ nav {
   box-shadow: 0 12px 25px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+/* Premium Glass Button */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50px;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255,255,255,0.15);
+  transform: translateY(-3px);
+  color: #38bdf8;
+}
+
 /* Animation Container */
 .animation-container {
   position: absolute;
@@ -2095,19 +2121,25 @@ body.minimal-body {
   position: fixed;
   top: 1.5rem;
   right: 2.5rem;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   /* Transparent Glass */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 100px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   z-index: 100001;
   height: 48px;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
-  transition: background 0.3s;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  width: max-content; /* Fix Safari width calculation */
+}
+
+.right-side-island-menu:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 .right-side-island-menu:hover {
@@ -2119,6 +2151,7 @@ body.minimal-body {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+  white-space: nowrap;
 }
 
 .island-nav-links a {
@@ -2178,9 +2211,16 @@ body.minimal-body {
     transform: translateX(-50%);
     width: 90%;
     max-width: 480px;
-    justify-content: center;
+    justify-content: flex-start;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    padding: 0 1rem;
+    padding: 0 1.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .right-side-island-menu::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   .right-side-island-menu:hover {
@@ -2188,9 +2228,10 @@ body.minimal-body {
   }
 
   .island-nav-links {
-    gap: 0.8rem;
-    width: 100%;
-    justify-content: space-around;
+    gap: 1.2rem;
+    width: max-content;
+    justify-content: flex-start;
+    padding-right: 1.5rem;
   }
 
   .island-nav-links a {
