@@ -3359,36 +3359,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (isAdmin || isStaff) {
     // 1. Ask for push notifications
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      navigator.serviceWorker.register('/sw.js').then(swReg => {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            const publicVapidKey = 'BH0r9wEhp1WMlLapNhkqQXwSXXutqK7nD3l0JccbMytELzU9qu5nqc2a6v0bU3LVpXwUZgIYR26M0yQ1CLWF54A';
-            
-            function urlBase64ToUint8Array(base64String) {
-              const padding = '='.repeat((4 - base64String.length % 4) % 4);
-              const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-              const rawData = window.atob(base64);
-              const outputArray = new Uint8Array(rawData.length);
-              for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
+    const setupPush = () => {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker.register('/sw.js').then(swReg => {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              const publicVapidKey = 'BH0r9wEhp1WMlLapNhkqQXwSXXutqK7nD3l0JccbMytELzU9qu5nqc2a6v0bU3LVpXwUZgIYR26M0yQ1CLWF54A';
+              
+              function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                  outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
               }
-              return outputArray;
-            }
 
-            swReg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-            }).then(subscription => {
-              fetch('/api/notifications/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription)
-              }).catch(e => console.warn('Push subscription save failed:', e));
-            }).catch(e => console.warn('Push subscription failed:', e));
-          }
-        });
-      }).catch(e => console.warn('SW registration failed:', e));
+              swReg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+              }).then(subscription => {
+                fetch('/api/notifications/subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(subscription)
+                }).catch(e => console.warn('Push subscription save failed:', e));
+              }).catch(e => console.warn('Push subscription failed:', e));
+            }
+          });
+        }).catch(e => console.warn('SW registration failed:', e));
+      }
+    };
+
+    // Auto-setup push
+    setupPush();
+
+    // Add button to right-side-island-menu to trigger push on mobile
+    const navLinks = document.querySelector('.island-nav-links');
+    if (navLinks) {
+      const notifBtn = document.createElement('a');
+      notifBtn.href = '#';
+      notifBtn.innerHTML = '<i class="fa-solid fa-bell" style="color: #fde047;"></i> Notifications';
+      notifBtn.onclick = (e) => {
+        e.preventDefault();
+        setupPush();
+        alert('Push notifications requested! Please ensure notifications are enabled in your browser and device settings.');
+      };
+      navLinks.prepend(notifBtn);
     }
 
     // 2. Load Socket.io and listen
