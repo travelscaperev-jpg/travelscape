@@ -3622,3 +3622,32 @@ video::-webkit-media-controls-start-playback-button {
   transform: rotate(-180deg);
 }
 
+/* Mobile Active Dropdown (Appended to Body) */
+.mobile-active-dropdown {
+  display: flex !important;
+  flex-direction: column !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  bottom: 6rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 99999 !important;
+  background: rgba(18, 24, 36, 0.95);
+  backdrop-filter: blur(20px);
+  width: 90% !important;
+  max-width: 300px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6) !important;
+  padding: 0.8rem 0 !important;
+  margin: 0 !important;
+}
+.mobile-active-dropdown a {
+  padding: 0.8rem 1.5rem !important;
+  font-size: 0.95rem !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  text-align: center !important;
+}
+

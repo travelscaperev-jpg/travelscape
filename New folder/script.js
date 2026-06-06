@@ -2134,6 +2134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!typeVal || typeVal === 'Private Charters') list = list.concat(getPrivate());
         if (!typeVal || typeVal === 'Free Diving') list = list.concat(getFreeDiving());
         if (!typeVal || typeVal === 'Resorts') list = list.concat(getResorts());
+        if (!typeVal || typeVal === 'Photography') list = list.concat(getPhotography());
 
         list.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.title; opt.textContent = ex.title; filterExcursion.appendChild(opt); });
       };
@@ -2189,6 +2190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (id.startsWith('p') || getPrivate().some(x => x.id === id)) group = 'Private Charters';
             else if (id.startsWith('fd') || getFreeDiving().some(x => x.id === id)) group = 'Free Diving';
             else if (id.startsWith('rs') || getResorts().some(x => x.id === id)) group = 'Resorts';
+            else if (id.startsWith('ph') || getPhotography().some(x => x.id === id)) group = 'Photography';
             return group === typeVal;
           });
         }
@@ -2222,14 +2224,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="padding: 1rem 0;">
               ${b.status === 'Pending' && role === 'admin' ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
               <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
-              <button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>
+              ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>` : ''}
             </td>
           </tr>
         `).join('');
 
-        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await setBookings(list); renderBookings(); } }); });
+        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await api.put('bookings/' + found.id, found); try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); } }); });
         document.querySelectorAll('.print-booking-btn').forEach(btn => { btn.addEventListener('click', (e) => printIndividualBooking(e.target.dataset.id)); });
-        document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const list = getBookings(); await setBookings(list.filter(item => item.id !== e.target.dataset.id)); renderBookings(); }); });
+        document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const id = e.target.dataset.id; await api.del('bookings/' + id); const list = getBookings().filter(item => item.id !== id); dataCache.bookings = list; try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); }); });
       };
 
       if (filterSearch) filterSearch.addEventListener('input', renderBookings);
@@ -3458,12 +3460,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile touch support for dropdown menu
   const dropdowns = document.querySelectorAll('.dropdown');
   dropdowns.forEach(dropdown => {
+    const content = dropdown.querySelector('.dropdown-content');
     dropdown.addEventListener('click', (e) => {
       if (window.innerWidth <= 1024) {
+        e.stopPropagation();
         const isActive = dropdown.classList.contains('active');
-        dropdowns.forEach(d => d.classList.remove('active'));
-        if (!isActive) {
+        // Close all
+        dropdowns.forEach(d => {
+          d.classList.remove('active');
+          const activeContent = document.querySelector('.mobile-active-dropdown');
+          if (activeContent && activeContent.dataset.parentId === d.id) {
+            activeContent.classList.remove('mobile-active-dropdown');
+            d.appendChild(activeContent);
+          }
+        });
+        
+        if (!isActive && content) {
+          dropdown.id = dropdown.id || 'dropdown-' + Math.random().toString(36).substr(2, 9);
           dropdown.classList.add('active');
+          content.dataset.parentId = dropdown.id;
+          document.body.appendChild(content);
+          // Small delay to allow CSS transition
+          requestAnimationFrame(() => {
+            content.classList.add('mobile-active-dropdown');
+          });
         }
       }
     });
@@ -3471,8 +3491,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown')) {
-      dropdowns.forEach(d => d.classList.remove('active'));
+    if (!e.target.closest('.dropdown') && !e.target.closest('.dropdown-content')) {
+      dropdowns.forEach(d => {
+        d.classList.remove('active');
+        const activeContent = document.querySelector('.mobile-active-dropdown');
+        if (activeContent && activeContent.dataset.parentId === d.id) {
+          activeContent.classList.remove('mobile-active-dropdown');
+          d.appendChild(activeContent);
+        }
+      });
     }
   });
 
