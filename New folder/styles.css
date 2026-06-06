@@ -2537,9 +2537,14 @@ body.minimal-body {
   /* the last section doesn't need to be sticky */
 }
 
-/* Ensure content in layer-4 clears the clipped top edge */
+/* Ensure content in layers clears the clipped top edge */
+.layer-2 .layer-content,
+.layer-3 .layer-content,
+.layer-4-slider .layer-content,
+.layer-5-slider .layer-content,
+.layer-6-slider .layer-content,
 .layer-4 .layer-content {
-  padding-top: 25vh;
+  padding-top: 15vh;
 }
 
 .layer-5-slider {
@@ -3365,6 +3370,30 @@ input[type="date"] {
     min-height: auto !important;
     padding: 4rem 1.5rem 2rem 1.5rem !important;
   }
+  
+  /* Disable sticky parallax on mobile to prevent layers crushing/overlapping */
+  .parallax-layer {
+    position: relative !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  
+  .layer-2, .layer-3, .layer-4-slider, .layer-5-slider, .layer-6-slider {
+    clip-path: none !important;
+  }
+  
+  .layer3-bg-slides, .layer5-bg-slides {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+  
+  .layer-3 {
+    background: var(--dark) !important;
+  }
+  .layer-5-slider {
+    background: #080d1a !important;
+  }
+
   .excursion-details-overlay {
     text-align: center !important;
     margin-left: 0 !important;
