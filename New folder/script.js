@@ -3351,4 +3351,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
   } // end initApp
 
+  // --- Real-time Notifications & Web Push ---
+  const isAdmin = localStorage.getItem('admin_logged') === 'true';
+  const isStaff = localStorage.getItem('staff_logged') === 'true';
+
+  if (isAdmin || isStaff) {
+    // 1. Ask for push notifications
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js').then(swReg => {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            const publicVapidKey = 'BH0r9wEhp1WMlLapNhkqQXwSXXutqK7nD3l0JccbMytELzU9qu5nqc2a6v0bU3LVpXwUZgIYR26M0yQ1CLWF54A';
+            
+            function urlBase64ToUint8Array(base64String) {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4);
+              const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            }
+
+            swReg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            }).then(subscription => {
+              fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+              }).catch(e => console.warn('Push subscription save failed:', e));
+            }).catch(e => console.warn('Push subscription failed:', e));
+          }
+        });
+      }).catch(e => console.warn('SW registration failed:', e));
+    }
+
+    // 2. Load Socket.io and listen
+    const socketScript = document.createElement('script');
+    socketScript.src = '/socket.io/socket.io.js';
+    socketScript.onload = () => {
+      const socket = io();
+      
+      const playBeep = () => {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.5);
+        } catch (e) {
+          console.warn('Audio play blocked:', e);
+        }
+      };
+      
+      socket.on('new_booking', () => {
+        playBeep();
+        if (typeof fetchAllFromAPI === 'function') {
+          fetchAllFromAPI().then(() => {
+            if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+          });
+        }
+      });
+
+      socket.on('new_contact', () => {
+        playBeep();
+        if (typeof fetchAllFromAPI === 'function') {
+          fetchAllFromAPI().then(() => {
+            if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+            
+            // Also refresh contact msg badge
+            const list = getContactMessages();
+            const badge = document.getElementById('contact-msg-badge');
+            if (badge) {
+              badge.textContent = list.length;
+              badge.style.display = list.length > 0 ? 'inline-block' : 'none';
+            }
+          });
+        }
+      });
+    };
+    document.body.appendChild(socketScript);
+  }
+
 });

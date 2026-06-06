@@ -7,11 +7,21 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const { Server } = require('socket.io');
+const webpush = require('web-push');
 
 // Multer disk storage for file uploads (500MB limit for large videos) to avoid server OOM crash
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 const PORT = process.env.PORT || 3000;
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
@@ -247,6 +257,16 @@ function registerCollectionRoutes(routePath, dbKey) {
         }));
       }
       await setCacheValue(dbKey, list);
+      
+      // Notify via Socket.IO
+      if (dbKey === 'bookings') {
+        io.emit('new_booking', { message: 'New booking received' });
+        sendPushNotifications('New Booking', 'You have received a new booking!');
+      } else if (dbKey === 'contact_messages') {
+        io.emit('new_contact', { message: 'New contact message received' });
+        sendPushNotifications('New Message', 'You have received a new contact message!');
+      }
+
       res.json({ success: true });
     } catch (e) {
       console.error(`POST ${routePath} error:`, e.message);
@@ -269,10 +289,22 @@ function registerCollectionRoutes(routePath, dbKey) {
         item.subImages = await Promise.all(item.subImages.map(s => s.startsWith('data:') ? uploadToCloudinary(s, dbKey) : s));
       }
 
-      if (idx >= 0) list[idx] = { ...list[idx], ...item };
+      const isNew = idx < 0;
+      if (!isNew) list[idx] = { ...list[idx], ...item };
       else list.push(item);
 
       await setCacheValue(dbKey, list);
+
+      if (isNew) {
+        if (dbKey === 'bookings') {
+          io.emit('new_booking', { message: 'New booking received' });
+          sendPushNotifications('New Booking', 'You have received a new booking!');
+        } else if (dbKey === 'contact_messages') {
+          io.emit('new_contact', { message: 'New contact message received' });
+          sendPushNotifications('New Message', 'You have received a new contact message!');
+        }
+      }
+
       res.json({ success: true, item });
     } catch (e) {
       console.error(`PUT ${routePath} error:`, e.message);
@@ -651,8 +683,62 @@ async function seedDatabaseIfEmpty() {
   }
 }
 
+// ─── Web Push & Subscriptions ──────────────────────────────────────────────────
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:contact@travelscape.mv',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+app.post('/api/notifications/subscribe', async (req, res) => {
+  try {
+    const subscription = req.body;
+    const subs = await getCacheValue('push_subscriptions', []) || [];
+    
+    // Check if it already exists
+    const exists = subs.find(s => s.endpoint === subscription.endpoint);
+    if (!exists) {
+      subs.push(subscription);
+      await setCacheValue('push_subscriptions', subs);
+    }
+    
+    res.status(201).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+async function sendPushNotifications(title, body) {
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+
+  const payload = JSON.stringify({ title, body, icon: '/1.png' });
+  const subs = await getCacheValue('push_subscriptions', []) || [];
+
+  const validSubs = [];
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(sub, payload);
+      validSubs.push(sub);
+    } catch (error) {
+      if (error.statusCode === 404 || error.statusCode === 410) {
+        console.log('Subscription has expired or is no longer valid');
+      } else {
+        console.error('Error sending push notification:', error);
+        validSubs.push(sub); // Keep it if it was another error
+      }
+    }
+  }
+
+  // Clean up invalid subscriptions
+  if (validSubs.length !== subs.length) {
+    await setCacheValue('push_subscriptions', validSubs);
+  }
+}
+
 // ─── Start Server ─────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`\n  🌊 Travelscape Maldives Production Server`);
   console.log(`  ──────────────────────────────────────────`);
   console.log(`  🚀 Port: ${PORT}`);
