@@ -3610,3 +3610,15 @@ video::-webkit-media-controls-start-playback-button {
   -webkit-appearance: none;
 }
 
+/* Mobile Touch Support for Dropdown */
+.dropdown.active .dropdown-content {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+.dropdown.active .arrow {
+  transform: rotate(-180deg);
+}
+

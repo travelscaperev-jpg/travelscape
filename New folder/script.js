@@ -1916,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
 
-          <button id="close-confirmation-modal" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">View Dashboard / Done</button>
+          <button id="close-confirmation-modal" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Done</button>
         </div>
       `;
       document.body.appendChild(modal);
@@ -3440,6 +3440,40 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
     document.body.appendChild(socketScript);
+  } else {
+    // Unsubscribe from push notifications if logged out
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(swReg => {
+        swReg.pushManager.getSubscription().then(subscription => {
+          if (subscription) {
+            subscription.unsubscribe().then(() => {
+              console.log('Unsubscribed from push notifications.');
+            }).catch(e => console.warn('Unsubscribe failed:', e));
+          }
+        });
+      });
+    }
   }
+
+  // Mobile touch support for dropdown menu
+  const dropdowns = document.querySelectorAll('.dropdown');
+  dropdowns.forEach(dropdown => {
+    dropdown.addEventListener('click', (e) => {
+      if (window.innerWidth <= 1024) {
+        const isActive = dropdown.classList.contains('active');
+        dropdowns.forEach(d => d.classList.remove('active'));
+        if (!isActive) {
+          dropdown.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+      dropdowns.forEach(d => d.classList.remove('active'));
+    }
+  });
 
 });
