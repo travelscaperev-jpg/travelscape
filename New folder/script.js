@@ -2209,7 +2209,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}
               <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div>
             </td>
-            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div></td>
+            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
             <td style="padding: 1rem 0;">
               <div>${b.bookingDate}</div>
               <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Entry: ${b.entryTime || 'N/A'}</div>
@@ -3396,18 +3396,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-setup push
     setupPush();
 
-    // Add button to right-side-island-menu to trigger push on mobile
-    const navLinks = document.querySelector('.island-nav-links');
-    if (navLinks) {
-      const notifBtn = document.createElement('a');
-      notifBtn.href = '#';
-      notifBtn.innerHTML = '<i class="fa-solid fa-bell" style="color: #fde047;"></i> Notifications';
-      notifBtn.onclick = (e) => {
-        e.preventDefault();
-        setupPush();
-        alert('Push notifications requested! Please ensure notifications are enabled in your browser and device settings.');
-      };
-      navLinks.prepend(notifBtn);
+    // Add button to right-side-island-menu to trigger push on mobile (only on portals)
+    const isPortal = window.location.pathname.includes('admin.html') || window.location.pathname.includes('staff.html');
+    if (isPortal) {
+      const navLinks = document.querySelector('.island-nav-links');
+      if (navLinks) {
+        const notifBtn = document.createElement('a');
+        notifBtn.href = '#';
+        notifBtn.innerHTML = '<i class="fa-solid fa-bell" style="color: #fde047;"></i> Notifications';
+        notifBtn.onclick = (e) => {
+          e.preventDefault();
+          setupPush();
+          alert('Push notifications requested! Please ensure notifications are enabled in your browser and device settings.');
+        };
+        navLinks.prepend(notifBtn);
+      }
     }
 
     // 2. Load Socket.io and listen
