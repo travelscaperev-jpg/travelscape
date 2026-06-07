@@ -1770,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Destination Island</label>
                   <select id="transfer-to" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => \`<option value="\${island.name}">\${island.name}</option>\`).join('') : '<option value="">No islands available</option>'}
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="">No islands available</option>'}
                   </select>
                 </div>
 
@@ -1797,7 +1797,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <button type="submit" class="btn btn-primary" id="transfer-submit-btn" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
-        \`;
+        `;
 
         const closeBtn = bookingModal.querySelector('#close-booking-modal-btn');
         closeBtn.addEventListener('click', closeBookingModal);
@@ -1822,7 +1822,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (pax > maxAllowed) {
             paxWarning.style.display = 'block';
-            paxWarning.textContent = \`Exceeds maximum capacity (\${maxAllowed} pax) for \${boat === 'small' ? 'Small' : 'Big'} Boat.\`;
+            paxWarning.textContent = `Exceeds maximum capacity (${maxAllowed} pax) for ${boat === 'small' ? 'Small' : 'Big'} Boat.`;
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
           } else {
@@ -1840,7 +1840,7 @@ document.addEventListener('DOMContentLoaded', () => {
               price = boat === 'small' ? islandConfig.maafushiSmall : islandConfig.maafushiBig;
             }
           }
-          priceDisplay.textContent = \`$\${price || 0}\`;
+          priceDisplay.textContent = `$${price || 0}`;
         };
 
         fromSelect.addEventListener('change', updateTransferPrice);
@@ -1869,7 +1869,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const pax = parseInt(paxInput.value) || 1;
           const totalPrice = parseFloat(priceDisplay.textContent.replace('$', '')) || 0;
 
-          const detailedTitle = \`\${title} (From: \${fromStr} To: \${toStr} | \${boatStr})\`;
+          const detailedTitle = `${title} (From: ${fromStr} To: ${toStr} | ${boatStr})`;
           
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
 
