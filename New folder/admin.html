@@ -749,13 +749,56 @@
 
       <!-- TAB 6: SPECIAL OFFERS -->
       <div id="tab-offers" class="tab-content-section">
-        <div
-          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
-          <h3
-            style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
-            Manage Seasonal / Special Offer</h3>
-          <div id="admin-offer-status-container">
-            <!-- Injected by script.js -->
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="offer-form-title">Add New Special Offer</h3>
+            <form id="admin-offer-form" style="margin-top: 1rem;">
+              <input type="hidden" id="offer-id">
+              <div class="form-group">
+                <label for="offer-title">Offer Name / Title</label>
+                <input type="text" id="offer-title" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="offer-discount">Discount Tag / Badge</label>
+                <input type="text" id="offer-discount" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="offer-desc">Offer Description</label>
+                <textarea id="offer-desc" rows="3" class="form-control" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="offer-category">Applied Category</label>
+                <select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="All">All Categories</option>
+                  <option value="Excursion">Excursion</option>
+                  <option value="Private Booking">Private Booking</option>
+                  <option value="Free Diving">Free Diving</option>
+                  <option value="Resort">Resort</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
+                <select id="offer-subcategory" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                  <option value="">All Items</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="offer-code">Promo Code</label>
+                <input type="text" id="offer-code" class="form-control">
+              </div>
+              <div class="form-group">
+                <label for="offer-validity">Validity Info</label>
+                <input type="text" id="offer-validity" class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="offer-submit-btn">Publish Special Offer</button>
+              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="offer-cancel-btn">Cancel Edit</button>
+            </form>
+          </div>
+          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Special Offers</h3>
+            <div id="admin-offers-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Injected by script.js -->
+            </div>
           </div>
         </div>
       </div>

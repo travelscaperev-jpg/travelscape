@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
       "cachedPosts": [],
       "lastFetched": null
     },
-    "offer": {},
+    "offers": [],
     "crew": []
   };
 
@@ -159,12 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
       db[dbKey] = data;
       localDb.write(db);
     },
-    getOffer: () => {
-      return localDb.read().offer || {};
+    getOffers: () => {
+      return localDb.read().offers || [];
     },
-    setOffer: (data) => {
+    setOffers: (data) => {
       const db = localDb.read();
-      db.offer = data;
+      db.offers = data;
       localDb.write(db);
     },
     getHeroVideo: () => {
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const api = {
     get: async (path) => {
       if (useFallback) {
-        if (path === 'offer') return localDb.getOffer();
+        if (path === 'offers') return localDb.getOffers();
         if (path === 'hero-video') return localDb.getHeroVideo();
         if (path === 'hero-videos') return localDb.getHeroVideos();
         if (path === 'google-review') return localDb.getGoogleReview();
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     post: async (path, data) => {
       if (useFallback) {
         if (path === 'auth/login') return localDb.login(data.role, data.password);
-        if (path === 'offer') { localDb.setOffer(data); return { success: true }; }
+        if (path === 'offers') { localDb.setOffers(data); return { success: true }; }
         if (path === 'hero-video') { localDb.setHeroVideo(data.video); return { success: true }; }
         if (path === 'hero-videos') { localDb.setHeroVideos(data.videos); return { success: true }; }
         if (path === 'google-review') { localDb.setGoogleReview(data.url); return { success: true }; }
@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     del: async (path) => {
       if (useFallback) {
-        if (path === 'offer') { localDb.setOffer({}); return { success: true }; }
+        if (path === 'offers') { localDb.setOffers([]); return { success: true }; }
         const parts = path.split('/');
         if (parts.length === 2) {
           const [collection, id] = parts;
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let dataCache = {};
 
   async function loadAllData() {
-    const [excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
+    const [excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offers, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew] = await Promise.all([
       api.get('excursions'),
       api.get('private'),
       api.get('freediving'),
@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('testimonials'),
       api.get('reels'),
       api.get('gallery'),
-      api.get('offer'),
+      api.get('offers'),
       api.get('hero-video'),
       api.get('hero-videos'),
       api.get('google-review'),
@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
       testimonials: testimonials || [],
       reels: reels || [],
       gallery: gallery || [],
-      offer: offer || {},
+      offers: offers || [],
       heroVideo: (heroVideoData && heroVideoData.video) || '',
       heroVideos: heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
       googleReview: (googleReviewData && googleReviewData.url) || '',
@@ -451,11 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try { const db = localDb.read(); db.bookings = data; localDb.write(db); } catch(e) {}
     await api.post('bookings', data);
   };
-  const getOffer = () => dataCache.offer || {};
-  const setOffer = async (data) => {
-    dataCache.offer = data;
-    try { const db = localDb.read(); db.offer = data; localDb.write(db); } catch(e) {}
-    await api.post('offer', data);
+  const getOffers = () => dataCache.offers || [];
+  const setOffers = async (data) => {
+    dataCache.offers = data;
+    try { const db = localDb.read(); db.offers = data; localDb.write(db); } catch(e) {}
+    await api.post('offers', data);
   };
   const getTestimonials = () => dataCache.testimonials || [];
   const setTestimonials = async (data) => {
@@ -489,9 +489,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const getOfferBadgeHTML = (category, isCard = false) => {
-    const offer = getOffer();
-    const appliesTo = offer && offer.category ? (Array.isArray(offer.category) ? offer.category : [offer.category]) : ['All'];
-    if (offer && offer.title && (appliesTo.includes('All') || appliesTo.includes(category))) {
+    const offers = getOffers();
+    const offer = offers.find(o => {
+      const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+      return appliesTo.includes('All') || appliesTo.includes(category);
+    });
+    if (offer && offer.title) {
       if (isCard) {
         return `<span class="offer-card-badge" style="background: #ef4444; color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase;">${offer.discount}</span>`;
       }
@@ -514,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
       testimonials: cachedDb.testimonials || [],
       reels: cachedDb.reels || [],
       gallery: cachedDb.gallery || [],
-      offer: cachedDb.offer || {},
+      offers: cachedDb.offers || [],
       heroVideo: cachedDb.hero_video || '',
       heroVideos: cachedDb.hero_videos && cachedDb.hero_videos.length > 0 ? cachedDb.hero_videos : [],
       googleReview: cachedDb.google_review || '',
@@ -525,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Build dataCache from API results
-  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offer, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
+  const applyDataFromAPI = ([excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offers, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
     dataCache = {
       excursions:    excursions    || [],
       private:       privateBookings || [],
@@ -536,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
       testimonials:  testimonials  || [],
       reels:         reels         || [],
       gallery:       gallery       || [],
-      offer:         offer         || {},
+      offers:        offers        || [],
       heroVideo:     (heroVideoData  && heroVideoData.video)  || '',
       heroVideos:    heroVideosData && Array.isArray(heroVideosData.videos) ? heroVideosData.videos : (heroVideosData && Array.isArray(heroVideosData) ? heroVideosData : []),
       googleReview:  (googleReviewData && googleReviewData.url) || '',
@@ -555,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db.testimonials = dataCache.testimonials;
       db.reels = dataCache.reels;
       db.gallery = dataCache.gallery;
-      db.offer = dataCache.offer;
+      db.offers = dataCache.offers;
       db.hero_video = dataCache.heroVideo;
       db.hero_videos = dataCache.heroVideos;
       db.google_review = dataCache.googleReview;
@@ -580,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('testimonials'),
       api.get('reels'),
       api.get('gallery'),
-      api.get('offer'),
+      api.get('offers'),
       api.get('hero-video'),
       api.get('hero-videos'),
       api.get('google-review'),
@@ -669,7 +672,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Promo bar widget ---
     const displayGlobalPromoBar = () => {
       if (document.getElementById('admin-password-gate') || document.getElementById('staff-password-gate')) return;
-      const offer = getOffer();
+      const offersList = getOffers();
+      if (!offersList || offersList.length === 0) return;
+      const offer = offersList[0];
       if (!offer || !offer.title) return;
 
       const container = document.createElement('div');
@@ -931,10 +936,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Seasonal Offer on Home Page
     const offerSection = document.getElementById('seasonal-offer-section');
     if (offerSection) {
-      const offer = getOffer();
-      if (offer && offer.title) {
-        offerSection.innerHTML = `
-          <div class="offer-card">
+      const offersList = getOffers();
+      if (offersList && offersList.length > 0) {
+        offerSection.innerHTML = offersList.map(offer => `
+          <div class="offer-card" style="margin-bottom: 2rem;">
             <div class="particles"><span class="particle p1"></span><span class="particle p2"></span><span class="particle p3"></span><span class="particle p4"></span><span class="particle p5"></span></div>
             <div class="offer-content">
               <div class="badge-wrapper"><span class="offer-badge">${offer.discount}</span></div>
@@ -946,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="offer-validity-tag">${offer.validity}</span>
             </div>
           </div>
-        `;
+        `).join('');
         offerSection.style.display = 'block';
       } else {
         offerSection.style.display = 'none';
@@ -1597,11 +1602,13 @@ document.addEventListener('DOMContentLoaded', () => {
           total += photoPrice;
           const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
           const offerMessage = bookingModal.querySelector('#booking-offer-message');
-          const code = offerCodeInput ? offerCodeInput.value.trim() : '';
-          const offer = getOffer();
+          const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          const offer = getOffers().find(o => {
+             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Resort'));
+          });
           if (code) {
-             const appliesTo = offer && offer.category ? (Array.isArray(offer.category) ? offer.category : [offer.category]) : ['All'];
-             if (offer.title && offer.code === code.toUpperCase() && (appliesTo.includes('All') || appliesTo.includes('Resort'))) {
+             if (offer && offer.title) {
                  let match = offer.discount.match(/(\d+)%/);
                  if (match) total = total * (1 - (parseInt(match[1]) / 100));
                  else {
@@ -2052,10 +2059,12 @@ document.addEventListener('DOMContentLoaded', () => {
           offerCodeInputEX.addEventListener('input', (e) => {
             const code = e.target.value.trim().toUpperCase();
             if (!code) { if (offerMessageEX) offerMessageEX.textContent = ''; return; }
-            const offer = getOffer();
-            const appliesTo = offer && offer.category ? (Array.isArray(offer.category) ? offer.category : [offer.category]) : ['All'];
             const currentCat = isPrivateCharter ? 'Private Booking' : 'Excursion';
-            if (offer && offer.title && offer.code === code && (appliesTo.includes('All') || appliesTo.includes(currentCat))) {
+            const offer = getOffers().find(o => {
+              const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+              return o.code === code && (appliesTo.includes('All') || appliesTo.includes(currentCat));
+            });
+            if (offer && offer.title) {
               if (offerMessageEX) { offerMessageEX.textContent = `Applied: ${offer.discount}`; offerMessageEX.style.color = '#10b981'; }
             } else {
               if (offerMessageEX) { offerMessageEX.textContent = 'Invalid or not applicable code'; offerMessageEX.style.color = '#ef4444'; }
@@ -3028,15 +3037,53 @@ document.addEventListener('DOMContentLoaded', () => {
       window.dashboardRenderLists.push(renderCrewList);
 
       // --- Seasonal Offers Tab ---
-      const offerContainer = document.getElementById('admin-offer-status-container');
-      const renderOfferSection = () => {
-        if (!offerContainer) return;
-        const offer = getOffer();
-        if (offer && offer.title) {
+      // --- Seasonal Offers Tab ---
+      const offerForm = document.getElementById('admin-offer-form');
+      const offersList = document.getElementById('admin-offers-list');
+
+      const renderOffersList = () => {
+        if (!offersList) return;
+        const list = getOffers();
+        offersList.innerHTML = list.map(offer => {
           const appliesToDisplay = Array.isArray(offer.category) ? offer.category.join(', ') : (offer.category || 'All Categories');
           const subcatDisplay = offer.subcategory ? ` (${offer.subcategory})` : '';
-          offerContainer.innerHTML = `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button id="admin-preview-offer-btn" class="btn" style="background: #10b981; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Preview</button><button id="admin-edit-offer-btn" class="btn" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit Offer</button><button id="admin-delete-offer-btn" class="btn" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete Offer</button></div></div>`;
-          document.getElementById('admin-preview-offer-btn').addEventListener('click', () => {
+          return `<div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;"><div><span style="background: #f59e0b; color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${offer.discount}</span><h4 style="color: #fff; margin-top: 0.5rem; font-size: 1.2rem;">${offer.title}</h4><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem;">${offer.description}</p><div style="margin-top: 0.75rem; font-size: 0.85rem; color: #64748b;"><strong>Promo Code:</strong> <span style="color: #fde047; font-family: monospace;">${offer.code || 'None'}</span> &nbsp;|&nbsp; <strong>Validity:</strong> <span>${offer.validity}</span> &nbsp;|&nbsp; <strong>Applies To:</strong> <span style="color: #38bdf8; font-weight: 600;">${appliesToDisplay}${subcatDisplay}</span></div></div><div style="display: flex; gap: 10px;"><button class="btn preview-offer-btn" data-id="${offer.id}" style="background: #10b981; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Preview</button><button class="btn edit-offer-btn" data-id="${offer.id}" style="background: #3b82f6; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Edit</button><button class="btn delete-offer-btn" data-id="${offer.id}" style="background: #ef4444; color: #fff; font-size: 0.85rem; padding: 0.5rem 1rem;">Delete</button></div></div>`;
+        }).join('');
+
+        offersList.querySelectorAll('.delete-offer-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (!confirm('Are you sure you want to delete this special offer?')) return;
+            await setOffers(getOffers().filter(o => o.id !== e.target.dataset.id));
+            renderOffersList();
+            if (typeof updateAllViews === 'function') updateAllViews();
+          });
+        });
+
+        offersList.querySelectorAll('.edit-offer-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const offer = getOffers().find(o => o.id === e.target.dataset.id);
+            if (!offer) return;
+            document.getElementById('offer-id').value = offer.id;
+            document.getElementById('offer-title').value = offer.title || '';
+            document.getElementById('offer-discount').value = offer.discount || '';
+            document.getElementById('offer-desc').value = offer.description || '';
+            document.getElementById('offer-category').value = Array.isArray(offer.category) ? offer.category[0] : (offer.category || 'All');
+            // Trigger change to populate subcategories
+            document.getElementById('offer-category').dispatchEvent(new Event('change'));
+            setTimeout(() => { document.getElementById('offer-subcategory').value = offer.subcategory || ''; }, 50);
+            document.getElementById('offer-code').value = offer.code || '';
+            document.getElementById('offer-validity').value = offer.validity || '';
+            
+            document.getElementById('offer-form-title').textContent = 'Edit Special Offer';
+            document.getElementById('offer-submit-btn').textContent = 'Save Changes';
+            document.getElementById('offer-cancel-btn').style.display = 'block';
+          });
+        });
+
+        offersList.querySelectorAll('.preview-offer-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const offer = getOffers().find(o => o.id === e.target.dataset.id);
+            if (!offer) return;
             const existing = document.getElementById('offer-preview-modal');
             if (existing) existing.remove();
 
@@ -3068,63 +3115,48 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.querySelector('#close-offer-preview').addEventListener('click', () => modal.remove());
             modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
           });
-          document.getElementById('admin-edit-offer-btn').addEventListener('click', () => showOfferForm(offer));
-          document.getElementById('admin-delete-offer-btn').addEventListener('click', async () => { if (confirm('Are you sure you want to delete this seasonal offer?')) { await api.del('offer'); dataCache.offer = {}; renderOfferSection(); } });
-        } else { showOfferForm(); }
+        });
       };
 
-      const showOfferForm = (existingOffer = null) => {
-        if (!offerContainer) return;
-        const offerCat = existingOffer ? (Array.isArray(existingOffer.category) ? existingOffer.category[0] : existingOffer.category) : 'All';
-        const offerSub = existingOffer ? existingOffer.subcategory : '';
+      const resetOfferForm = () => {
+        if (offerForm) offerForm.reset();
+        const idInput = document.getElementById('offer-id');
+        if (idInput) idInput.value = '';
+        const titleEl = document.getElementById('offer-form-title');
+        if (titleEl) titleEl.textContent = 'Add New Special Offer';
+        const submitBtn = document.getElementById('offer-submit-btn');
+        if (submitBtn) submitBtn.textContent = 'Publish Special Offer';
+        const cancelBtn = document.getElementById('offer-cancel-btn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      };
 
-        offerContainer.innerHTML = `
-          <form id="admin-offer-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
-            <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-              <h4 style="color: #38bdf8; font-size: 1rem; font-weight: 600;">${existingOffer ? 'Edit Seasonal Offer Details' : 'Create New Seasonal Offer'}</h4>
-            </div>
-            <div class="form-group">
-              <label for="offer-title">Offer Name / Title</label>
-              <input type="text" id="offer-title" class="form-control" value="${existingOffer ? existingOffer.title : ''}" required>
-            </div>
-            <div class="form-group">
-              <label for="offer-discount">Discount Tag / Badge</label>
-              <input type="text" id="offer-discount" class="form-control" value="${existingOffer ? existingOffer.discount : ''}" required>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label for="offer-desc">Offer Description</label>
-              <textarea id="offer-desc" rows="3" class="form-control" required>${existingOffer ? existingOffer.description : ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label for="offer-category">Applied Category</label>
-              <select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                <option value="All" ${offerCat === 'All' ? 'selected' : ''}>All Categories</option>
-                <option value="Excursion" ${offerCat === 'Excursion' ? 'selected' : ''}>Excursion</option>
-                <option value="Private Booking" ${offerCat === 'Private Booking' ? 'selected' : ''}>Private Booking</option>
-                <option value="Free Diving" ${offerCat === 'Free Diving' ? 'selected' : ''}>Free Diving</option>
-                <option value="Resort" ${offerCat === 'Resort' ? 'selected' : ''}>Resort</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
-              <select id="offer-subcategory" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                <option value="">All Items</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="offer-code">Promo Code</label>
-              <input type="text" id="offer-code" class="form-control" value="${existingOffer ? existingOffer.code : ''}">
-            </div>
-            <div class="form-group">
-              <label for="offer-validity">Validity Info</label>
-              <input type="text" id="offer-validity" class="form-control" value="${existingOffer ? existingOffer.validity : ''}" required>
-            </div>
-            <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 0.5rem;">
-              <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Publish Seasonal Offer</button>
-              ${existingOffer ? `<button type="button" id="cancel-edit-offer-btn" class="btn" style="background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Cancel</button>` : ''}
-            </div>
-          </form>
-        `;
+      const offerCancelBtn = document.getElementById('offer-cancel-btn');
+      if (offerCancelBtn) offerCancelBtn.addEventListener('click', resetOfferForm);
+
+      if (offerForm) {
+        offerForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const idVal = document.getElementById('offer-id').value;
+          const list = [...getOffers()];
+          
+          const offerData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
+          offerData.title = document.getElementById('offer-title').value;
+          offerData.discount = document.getElementById('offer-discount').value;
+          offerData.description = document.getElementById('offer-desc').value;
+          offerData.category = document.getElementById('offer-category').value;
+          offerData.subcategory = document.getElementById('offer-subcategory').value;
+          offerData.code = document.getElementById('offer-code').value.toUpperCase();
+          offerData.validity = document.getElementById('offer-validity').value;
+
+          if (!idVal) {
+            list.push(offerData);
+          }
+          await setOffers(list);
+          resetOfferForm();
+          renderOffersList();
+          if (typeof updateAllViews === 'function') updateAllViews();
+          alert('Special offer published successfully!');
+        };
 
         const categorySelect = document.getElementById('offer-category');
         const subcategorySelect = document.getElementById('offer-subcategory');
@@ -3144,39 +3176,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const opt = document.createElement('option');
             opt.value = item.title;
             opt.textContent = item.title;
-            if (item.title === offerSub) {
-              opt.selected = true;
-            }
             subcategorySelect.appendChild(opt);
           });
         };
 
-        if (categorySelect) {
-          categorySelect.addEventListener('change', populateSubcategories);
-        }
+        if (categorySelect) categorySelect.addEventListener('change', populateSubcategories);
         populateSubcategories();
+      }
 
-        const offerForm = document.getElementById('admin-offer-form');
-        if (offerForm) {
-          offerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await setOffer({
-              title: document.getElementById('offer-title').value,
-              discount: document.getElementById('offer-discount').value,
-              description: document.getElementById('offer-desc').value,
-              category: document.getElementById('offer-category').value,
-              subcategory: document.getElementById('offer-subcategory').value,
-              code: document.getElementById('offer-code').value.toUpperCase(),
-              validity: document.getElementById('offer-validity').value
-            });
-            renderOfferSection();
-            alert('Seasonal offer published!');
-          });
-        }
-        const cancel = document.getElementById('cancel-edit-offer-btn');
-        if (cancel) cancel.addEventListener('click', renderOfferSection);
-      };
-      renderOfferSection();
+      renderOffersList();
+      if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
+      window.dashboardRenderLists.push(renderOffersList);
 
       // --- Testimonials Tab ---
       const testimoniesList = document.getElementById('admin-testimonies-list');
