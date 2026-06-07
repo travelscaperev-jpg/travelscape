@@ -2225,7 +2225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
             <td style="padding: 1rem 0;">
               <strong style="color: #fff;">${b.customerName}</strong>
-              ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact}</div>` : ''}
+              ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact} <a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" style="color:#25D366; margin-left:8px; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></div>` : ''}
               <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div>
             </td>
             <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
@@ -3580,24 +3580,31 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     const animateLayers = () => {
-      currentX += (targetX - currentX) * 0.05;
-      currentY += (targetY - currentY) * 0.05;
+      if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
+        currentX += (targetX - currentX) * 0.05;
+        currentY += (targetY - currentY) * 0.05;
 
-      parallaxLayers.forEach((layer, index) => {
-        let factor = 20 - (index * 3);
-        if (factor < 2) factor = 2; 
+        parallaxLayers.forEach((layer, index) => {
+          let factor = 20 - (index * 3);
+          if (factor < 2) factor = 2; 
 
-        const xOffset = currentX * factor;
-        const yOffset = currentY * factor;
+          const xOffset = currentX * factor;
+          const yOffset = currentY * factor;
 
-        const content = layer.querySelector('.layer-content') || layer;
-        content.style.transform = `translate3d(${xOffset}px, ${yOffset}px, 0)`;
-      });
-
+          const content = layer.querySelector('.layer-content') || layer;
+          content.style.transform = `translate3d(${xOffset}px, ${yOffset}px, 0)`;
+        });
+      }
       requestAnimationFrame(animateLayers);
     };
 
     requestAnimationFrame(animateLayers);
+
+    window.addEventListener('scroll', () => {
+      if (window.innerWidth <= 768 || ('ontouchstart' in window)) {
+        targetY = (window.scrollY * 0.002);
+      }
+    }, { passive: true });
   }
 
 });
