@@ -2405,6 +2405,8 @@ body.minimal-body {
 .logo-icon-wrap svg {
   width: 100%;
   height: 100%;
+}
+
 @keyframes pull-boat-zoom {
   0% { left: -500px; }
   60% { left: calc(50% + 180px); }
