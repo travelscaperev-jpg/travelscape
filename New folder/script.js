@@ -231,6 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
     : (window.location.origin.includes('github.io') ? RENDER_SERVER_URL + '/api' : '/api');
 
+  window.PAYMENT_LINK = '';
+  try {
+    fetch(`${API_BASE}/config`).then(r => r.json()).then(d => { if(d.paymentLink) window.PAYMENT_LINK = d.paymentLink; }).catch(()=>{});
+  } catch(e) {}
+
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
     const controller = new AbortController();
@@ -1514,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -1725,6 +1730,9 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Resort Package', total: totalPrice });
+          if (window.PAYMENT_LINK) {
+            window.open(window.PAYMENT_LINK, '_blank');
+          }
         });
 
       } else {
@@ -1775,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
 
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">Confirm Booking</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -1888,6 +1896,9 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: isPrivateCharter ? 'Private Charter' : 'Excursion', total: 'Calculated at Office' });
+          if (window.PAYMENT_LINK) {
+            window.open(window.PAYMENT_LINK, '_blank');
+          }
         });
       }
 
@@ -2226,7 +2237,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="padding: 1rem 0;">
               <strong style="color: #fff;">${b.customerName}</strong>
               ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact} <a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" style="color:#25D366; margin-left:8px; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></div>` : ''}
-              <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: ${b.customerEmail}</div>
+              <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: <a href="mailto:${b.customerEmail}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${b.customerEmail}</a></div>
             </td>
             <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
             <td style="padding: 1rem 0;">
@@ -3211,7 +3222,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <td style="padding: 1rem 0;">
                 <strong style="color: #fff;">${m.name}</strong>
                 ${isUnread ? '<span style="display:inline-block; width:8px; height:8px; background:#a855f7; border-radius:50%; margin-left:6px; vertical-align:middle;"></span>' : ''}
-                <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">${m.email}</div>
+                <div style="font-size:0.8rem; color:#64748b; margin-top:2px;"><a href="mailto:${m.email}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${m.email}</a></div>
               </td>
               <td style="padding: 1rem 0; color: #cbd5e1; font-weight: 600;">${m.subject || 'General Inquiry'}</td>
               <td style="padding: 1rem 0; color: #94a3b8; font-size: 0.85rem; max-width: 300px;"><div style="overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${m.message}</div></td>
@@ -3566,18 +3577,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    const onTouchMove = (e) => {
-      if (e.touches && e.touches.length > 0) {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        targetX = (e.touches[0].clientX - centerX) / centerX;
-        targetY = (e.touches[0].clientY - centerY) / centerY;
-      }
-    };
-
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('deviceorientation', onDeviceOrientation);
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     const animateLayers = () => {
       if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {

@@ -171,6 +171,12 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    paymentLink: process.env.PAYMENT_LINK || ''
+  });
+});
+
 // ─── File Upload Endpoint (multipart) ────────────────────────────────────────
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {

@@ -1801,7 +1801,7 @@ body.minimal-body {
   height: 100%;
   background: rgba(12, 13, 13, 0.4);
   backdrop-filter: blur(8px);
-  z-index: 9999;
+  z-index: 999999 !important;
   display: flex;
   justify-content: center;
   align-items: center;
