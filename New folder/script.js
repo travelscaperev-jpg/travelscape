@@ -3556,7 +3556,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Homepage Layer Animation System ---
-  const parallaxLayers = document.querySelectorAll('.parallax-layer');
+  // Exclude heavy slider layers (4, 5, 6) from continuous transform repaints to prevent compositor crushing/lag on PC
+  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider)');
   if (parallaxLayers.length > 0) {
     let targetX = 0;
     let targetY = 0;
@@ -3602,7 +3603,8 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(animateLayers);
 
     window.addEventListener('scroll', () => {
-      if (window.innerWidth <= 768 || ('ontouchstart' in window)) {
+      // Only apply scroll parallax on mobile widths to prevent event fighting with mousemove on touch-enabled PCs
+      if (window.innerWidth <= 768) {
         // Use Math.sin to bound the movement between -1 and 1, creating a gentle float instead of an infinite crush.
         targetY = Math.sin(window.scrollY * 0.003);
         targetX = Math.cos(window.scrollY * 0.003) * 0.5;
