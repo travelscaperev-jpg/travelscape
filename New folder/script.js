@@ -1430,7 +1430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const remaining = maxCap - alreadyBooked;
 
         if (remaining <= 0) {
-          slotsInfo.innerHTML = `<span style="color: #ef4444; font-weight: 700; display: block; margin-top: 5px;"><i class="fa-solid fa-circle-xmark"></i> Fully Booked (0 slots remaining / Max: ${maxCap})</span>`;
+          slotsInfo.innerHTML = `<span style="color: #ef4444; font-weight: 700; display: block; margin-top: 5px;"><i class="fa-solid fa-circle-xmark"></i> Fully Booked</span>`;
           if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
@@ -1444,7 +1444,7 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.style.cursor = 'not-allowed';
           }
         } else {
-          slotsInfo.innerHTML = `<span style="color: #10b981; font-weight: 700; display: block; margin-top: 5px;"><i class="fa-solid fa-circle-check"></i> ${remaining} / ${maxCap} slots available.</span>`;
+          slotsInfo.innerHTML = `<span style="color: #10b981; font-weight: 700; display: block; margin-top: 5px;"><i class="fa-solid fa-circle-check"></i> Seats Available</span>`;
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = '1';
@@ -1456,6 +1456,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const isPrivateCharter = id.startsWith('p');
       const isResort = id.startsWith('rs');
       const resort = isResort ? (getResorts().find(item => item.id === id) || {}) : {};
+      const allPkgs = [...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPhotography()];
+      const pkgObj = allPkgs.find(x => x.id === id) || {};
+      const isBoatTransfer = isPrivateCharter && pkgObj.isTransfer === true;
 
       if (isResort) {
         bookingModal.innerHTML = `
@@ -1730,6 +1733,178 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Resort Package', total: totalPrice });
+          if (window.PAYMENT_LINK) {
+            window.open(window.PAYMENT_LINK, '_blank');
+          }
+        });
+
+      } else if (isBoatTransfer) {
+        // Specific Booking Form for Boat Transfers
+        bookingModal.innerHTML = `
+          <div class="modal-content-minimal" style="max-width: 480px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">Book Boat Transfer</h3>
+              <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
+            </div>
+            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Transfer Route: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
+            <form id="booking-form-dynamic" style="display: flex; flex-direction: column; gap: 1rem;">
+              <input type="hidden" id="booking-excursion-id" value="${id}">
+              <input type="hidden" id="booking-excursion-title" value="${title}">
+              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Transfer</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              
+              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <h5 style="color: #38bdf8; margin: 0; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Transfer Settings</h5>
+                
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Departing From</label>
+                  <select id="transfer-from" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    <option value="male">Airport / Male</option>
+                    <option value="maafushi">Maafushi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Destination Island</label>
+                  <select id="transfer-to" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => \`<option value="\${island.name}">\${island.name}</option>\`).join('') : '<option value="">No islands available</option>'}
+                  </select>
+                </div>
+
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Select Boat Type</label>
+                  <select id="transfer-boat" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    <option value="small">Small Boat (Max ${pkgObj.maxPaxSmall || 8} Pax)</option>
+                    <option value="big">Big Boat (Max ${pkgObj.maxPaxBig || 20} Pax)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Passengers</label>
+                  <input type="number" id="transfer-pax" required min="1" value="1" max="${pkgObj.maxPaxSmall || 8}" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                  <div id="transfer-pax-warning" style="color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;">Exceeds maximum capacity for this boat.</div>
+                </div>
+              </div>
+
+              <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
+                <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="transfer-submit-btn" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+            </form>
+          </div>
+        \`;
+
+        const closeBtn = bookingModal.querySelector('#close-booking-modal-btn');
+        closeBtn.addEventListener('click', closeBookingModal);
+
+        const fromSelect = bookingModal.querySelector('#transfer-from');
+        const toSelect = bookingModal.querySelector('#transfer-to');
+        const boatSelect = bookingModal.querySelector('#transfer-boat');
+        const paxInput = bookingModal.querySelector('#transfer-pax');
+        const paxWarning = bookingModal.querySelector('#transfer-pax-warning');
+        const priceDisplay = bookingModal.querySelector('#booking-price-display');
+        const submitBtn = bookingModal.querySelector('#transfer-submit-btn');
+        const dateInput = bookingModal.querySelector('#booking-date');
+
+        const updateTransferPrice = () => {
+          const from = fromSelect.value;
+          const to = toSelect.value;
+          const boat = boatSelect.value;
+          const pax = parseInt(paxInput.value) || 1;
+          
+          let maxAllowed = boat === 'small' ? (pkgObj.maxPaxSmall || 8) : (pkgObj.maxPaxBig || 20);
+          paxInput.max = maxAllowed;
+          
+          if (pax > maxAllowed) {
+            paxWarning.style.display = 'block';
+            paxWarning.textContent = \`Exceeds maximum capacity (\${maxAllowed} pax) for \${boat === 'small' ? 'Small' : 'Big'} Boat.\`;
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+          } else {
+            paxWarning.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+          }
+
+          const islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
+          let price = 0;
+          if (islandConfig) {
+            if (from === 'male') {
+              price = boat === 'small' ? islandConfig.maleSmall : islandConfig.maleBig;
+            } else {
+              price = boat === 'small' ? islandConfig.maafushiSmall : islandConfig.maafushiBig;
+            }
+          }
+          priceDisplay.textContent = \`$\${price || 0}\`;
+        };
+
+        fromSelect.addEventListener('change', updateTransferPrice);
+        toSelect.addEventListener('change', updateTransferPrice);
+        boatSelect.addEventListener('change', updateTransferPrice);
+        paxInput.addEventListener('input', updateTransferPrice);
+        updateTransferPrice();
+
+        if (dateInput) {
+          dateInput.addEventListener('change', checkSlotsAvailability);
+        }
+
+        const form = bookingModal.querySelector('#booking-form-dynamic');
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const customerName = form.querySelector('#booking-name').value.trim();
+          const contactNumber = form.querySelector('#booking-contact').value.trim();
+          const emailId = form.querySelector('#booking-email').value.trim();
+          const bookingDate = form.querySelector('#booking-date').value;
+          
+          if (submitBtn.disabled) return;
+
+          const fromStr = fromSelect.value === 'male' ? 'Male/Airport' : 'Maafushi';
+          const toStr = toSelect.value;
+          const boatStr = boatSelect.value === 'small' ? 'Small Boat' : 'Big Boat';
+          const pax = parseInt(paxInput.value) || 1;
+          const totalPrice = parseFloat(priceDisplay.textContent.replace('$', '')) || 0;
+
+          const detailedTitle = \`\${title} (From: \${fromStr} To: \${toStr} | \${boatStr})\`;
+          
+          const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+
+          const newBooking = {
+            id: Date.now().toString(),
+            excursionId: id,
+            excursionTitle: detailedTitle,
+            customerName,
+            customerEmail: emailId,
+            customerContact: contactNumber,
+            bookingDate,
+            paymentBasis: isOfficeUser ? 'Office Direct' : 'Payment Gateway',
+            bookingType: 'Transfer',
+            adults: pax,
+            kids: 0,
+            isPrivate: true,
+            numPersons: pax,
+            status: isOfficeUser ? 'Pending' : 'Confirmed',
+            ratePaid: totalPrice,
+            totalPrice: totalPrice,
+            transferFrom: fromStr,
+            transferTo: toStr,
+            transferBoat: boatStr,
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            entryTime: new Date().toLocaleString(),
+            deviceType: getDeviceType()
+          };
+
+          const currentBookings = getBookings();
+          currentBookings.push(newBooking);
+          await setBookings(currentBookings);
+          showSystemNotification(newBooking);
+          closeBookingModal();
+          showBookingConfirmationModal(newBooking, { type: 'Boat Transfer', total: totalPrice });
           if (window.PAYMENT_LINK) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
@@ -2239,7 +2414,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact} <a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" style="color:#25D366; margin-left:8px; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></div>` : ''}
               <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: <a href="mailto:${b.customerEmail}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${b.customerEmail}</a></div>
             </td>
-            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
+            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}${b.bookingType === 'Transfer' ? ` (${b.adults || 1} Pax)` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
             <td style="padding: 1rem 0;">
               <div>${b.bookingDate}</div>
               <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Entry: ${b.entryTime || 'N/A'}</div>
@@ -2426,6 +2601,40 @@ document.addEventListener('DOMContentLoaded', () => {
           if (stayNightCheckbox && stayNightDetails) { stayNightCheckbox.addEventListener('change', (e) => { stayNightDetails.style.display = e.target.checked ? 'block' : 'none'; }); }
         }
 
+        if (prefix === 'private') {
+          const isTransferCheckbox = document.getElementById('private-is-transfer');
+          const transferDetails = document.getElementById('private-transfer-details');
+          const addIslandBtn = document.getElementById('private-add-island-btn');
+          const islandsContainer = document.getElementById('private-islands-container');
+          
+          if (isTransferCheckbox && transferDetails) {
+            isTransferCheckbox.addEventListener('change', (e) => {
+              transferDetails.style.display = e.target.checked ? 'flex' : 'none';
+            });
+          }
+          if (addIslandBtn && islandsContainer) {
+            addIslandBtn.addEventListener('click', () => {
+              const div = document.createElement('div');
+              div.className = 'island-row';
+              div.style = 'background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.1); position: relative;';
+              div.innerHTML = `
+                <button type="button" class="btn remove-island-btn" style="position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; color: #fff; padding: 0.2rem 0.5rem; font-size: 0.7rem;">&times;</button>
+                <div style="margin-bottom: 0.5rem;"><label style="font-size:0.75rem;">Island Name</label><input type="text" class="form-control island-name" required placeholder="e.g. Maafushi"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <div><label style="font-size:0.75rem;">From Male (Small)</label><input type="number" class="form-control male-small" required placeholder="$"></div>
+                  <div><label style="font-size:0.75rem;">From Male (Big)</label><input type="number" class="form-control male-big" required placeholder="$"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <div><label style="font-size:0.75rem;">From Maafushi (Small)</label><input type="number" class="form-control maafushi-small" required placeholder="$"></div>
+                  <div><label style="font-size:0.75rem;">From Maafushi (Big)</label><input type="number" class="form-control maafushi-big" required placeholder="$"></div>
+                </div>
+              `;
+              div.querySelector('.remove-island-btn').addEventListener('click', () => div.remove());
+              islandsContainer.appendChild(div);
+            });
+          }
+        }
+
         const renderList = () => {
           const list = getData();
           listContainer.innerHTML = list.map(item => {
@@ -2475,6 +2684,32 @@ document.addEventListener('DOMContentLoaded', () => {
               if (prefix === 'photography') {
                 const priceEl = document.getElementById('photography-price'); if (priceEl) priceEl.value = item.price || 0;
               }
+              if (prefix === 'private') {
+                const isTransferCheckbox = document.getElementById('private-is-transfer');
+                if (isTransferCheckbox) {
+                  isTransferCheckbox.checked = !!item.isTransfer;
+                  isTransferCheckbox.dispatchEvent(new Event('change'));
+                }
+                const maxSmall = document.getElementById('private-max-pax-small'); if (maxSmall) maxSmall.value = item.maxPaxSmall || 8;
+                const maxBig = document.getElementById('private-max-pax-big'); if (maxBig) maxBig.value = item.maxPaxBig || 20;
+                const islandsContainer = document.getElementById('private-islands-container');
+                if (islandsContainer) {
+                  islandsContainer.innerHTML = '';
+                  (item.transferIslands || []).forEach(island => {
+                    const btn = document.getElementById('private-add-island-btn');
+                    if (btn) btn.click();
+                    const rows = islandsContainer.querySelectorAll('.island-row');
+                    const lastRow = rows[rows.length - 1];
+                    if (lastRow) {
+                      lastRow.querySelector('.island-name').value = island.name;
+                      lastRow.querySelector('.male-small').value = island.maleSmall;
+                      lastRow.querySelector('.male-big').value = island.maleBig;
+                      lastRow.querySelector('.maafushi-small').value = island.maafushiSmall;
+                      lastRow.querySelector('.maafushi-big').value = island.maafushiBig;
+                    }
+                  });
+                }
+              }
               const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
               const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
               const maxCapEl = document.getElementById(`${prefix}-max-capacity`); if (maxCapEl) maxCapEl.value = item.maxCapacity || 20;
@@ -2485,7 +2720,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } };
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isTrans = document.getElementById('private-is-transfer'); if (isTrans) { isTrans.checked = false; isTrans.dispatchEvent(new Event('change')); } const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; const mp1 = document.getElementById('private-max-pax-small'); if(mp1) mp1.value = 8; const mp2 = document.getElementById('private-max-pax-big'); if(mp2) mp2.value = 20; } };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -2552,6 +2787,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prefix === 'photography') {
               const priceEl = document.getElementById('photography-price');
               itemData.price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
+            }
+            if (prefix === 'private') {
+              const isTransferCheckbox = document.getElementById('private-is-transfer');
+              itemData.isTransfer = isTransferCheckbox ? isTransferCheckbox.checked : false;
+              if (itemData.isTransfer) {
+                itemData.maxPaxSmall = parseInt(document.getElementById('private-max-pax-small').value) || 8;
+                itemData.maxPaxBig = parseInt(document.getElementById('private-max-pax-big').value) || 20;
+                itemData.transferIslands = [];
+                const islandsContainer = document.getElementById('private-islands-container');
+                if (islandsContainer) {
+                  islandsContainer.querySelectorAll('.island-row').forEach(row => {
+                    itemData.transferIslands.push({
+                      name: row.querySelector('.island-name').value,
+                      maleSmall: parseFloat(row.querySelector('.male-small').value) || 0,
+                      maleBig: parseFloat(row.querySelector('.male-big').value) || 0,
+                      maafushiSmall: parseFloat(row.querySelector('.maafushi-small').value) || 0,
+                      maafushiBig: parseFloat(row.querySelector('.maafushi-big').value) || 0
+                    });
+                  });
+                }
+              }
             }
             if (!idVal) list.push(itemData);
             await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
