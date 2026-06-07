@@ -437,9 +437,10 @@ async function seedDatabaseIfEmpty() {
       {
         id: "crew-2",
         name: "Aishath Nazeer",
-        role: "Marine Biologist & Divemaster Guide",
-        bio: "Aisha holds a master's in marine ecology and leads snorkeling safaris, educating guests on reef preservation.",
-        licenses: "PADI Divemaster, Reef Conservation Specialist",
+        role: "Marine Biologist & Instructor",
+        bio: "Aisha holds a master's in marine ecology and educates guests on reef preservation.",
+        experience: "6 Years",
+        licenses: "PADI Certified Instructor, Reef Conservation Specialist",
         image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
       },
       {

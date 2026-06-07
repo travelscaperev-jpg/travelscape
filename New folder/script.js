@@ -3544,4 +3544,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- Homepage Layer Animation System ---
+  const parallaxLayers = document.querySelectorAll('.parallax-layer');
+  if (parallaxLayers.length > 0) {
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const onMouseMove = (e) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      targetX = (e.clientX - centerX) / centerX;
+      targetY = (e.clientY - centerY) / centerY;
+    };
+
+    const onDeviceOrientation = (e) => {
+      if (e.gamma !== null && e.beta !== null) {
+        targetX = Math.min(Math.max(e.gamma / 45, -1), 1);
+        targetY = Math.min(Math.max((e.beta - 45) / 45, -1), 1);
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('deviceorientation', onDeviceOrientation);
+
+    const animateLayers = () => {
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+
+      parallaxLayers.forEach((layer, index) => {
+        let factor = 20 - (index * 3);
+        if (factor < 2) factor = 2; 
+
+        const xOffset = currentX * factor;
+        const yOffset = currentY * factor;
+
+        const content = layer.querySelector('.layer-content') || layer;
+        content.style.transform = `translate3d(${xOffset}px, ${yOffset}px, 0)`;
+      });
+
+      requestAnimationFrame(animateLayers);
+    };
+
+    requestAnimationFrame(animateLayers);
+  }
+
 });

@@ -2354,23 +2354,23 @@ body.minimal-body {
 
 .animated-boat {
   position: absolute;
-  top: 50px;
+  top: -20px;
   left: -300px;
-  width: 150px;
+  width: 320px; /* Big in size than logo */
   height: auto;
   animation: pull-boat-zoom 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   z-index: 10;
 }
 
-.tow-rope {
+.tow-net {
   position: absolute;
-  top: 80px;
+  top: 100px;
   left: -400px;
-  width: 150px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.5);
+  width: 250px; /* Spacing so it doesn't overlap */
+  height: 80px;
   animation: pull-rope-snap 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   z-index: 9;
+  transform-origin: left center;
 }
 
 .pulled-logo-container {
@@ -2405,50 +2405,18 @@ body.minimal-body {
 .logo-icon-wrap svg {
   width: 100%;
   height: 100%;
-}
-
 @keyframes pull-boat-zoom {
-  0% {
-    left: -300px;
-  }
-
-  60% {
-    left: calc(75% - 50px);
-  }
-
-  65% {
-    left: calc(75% - 50px);
-  }
-
-  /* Short pause when rope detaches */
-  100% {
-    left: 120vw;
-  }
-
-  /* Zooms off-screen */
+  0% { left: -500px; }
+  60% { left: calc(50% + 180px); }
+  75% { left: calc(50% + 180px); }
+  100% { left: 120vw; }
 }
 
 @keyframes pull-rope-snap {
-  0% {
-    left: -450px;
-    opacity: 1;
-  }
-
-  60% {
-    left: calc(75% - 200px);
-    opacity: 1;
-  }
-
-  65% {
-    left: calc(75% - 200px);
-    opacity: 0;
-  }
-
-  /* Snaps/fades completely */
-  100% {
-    left: 120vw;
-    opacity: 0;
-  }
+  0% { left: -400px; opacity: 1; transform: scaleX(1); }
+  60% { left: calc(50% - 70px); opacity: 1; transform: scaleX(1); }
+  75% { left: calc(50% - 70px); opacity: 0.5; transform: scaleX(0.8); }
+  100% { left: 120vw; opacity: 0; transform: scaleX(0); }
 }
 
 @keyframes pull-logo-stop {
@@ -3688,3 +3656,62 @@ video::-webkit-media-controls-start-playback-button {
   text-align: center !important;
 }
 
+/* --- AUTOMATIC OVERRIDES FOR RESPONSIVENESS AND ANIMATION FIXES --- */
+
+/* Mobile-first fluid typography */
+.giant-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem) !important;
+}
+
+.section-title {
+  font-size: clamp(2rem, 5vw, 2.8rem) !important;
+}
+
+.brand-title {
+  font-size: clamp(1.5rem, 4vw, 2.2rem) !important;
+}
+
+.offer-title-text {
+  font-size: clamp(1.8rem, 4vw, 2.5rem) !important;
+}
+
+/* 100vh / dvh fallback & Overflow fixes */
+.hero, .hero-minimal, .parallax-body, .parallax-layer {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Safe area insets for notches */
+.parallax-scroll-container {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+nav.minimal-nav, header.top-left-header {
+  padding-top: calc(env(safe-area-inset-top) + 24px);
+}
+
+/* Boat Animation (Bobbing) */
+@keyframes boat-bobbing {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-8px) rotate(-1.5deg); }
+}
+
+.animated-boat {
+  animation: pull-boat-zoom 5s cubic-bezier(0.4, 0, 0.2, 1) forwards, boat-bobbing 2s ease-in-out infinite alternate !important;
+}
+
+/* Visual Polishing: Softer Shadows & Glassmorphism without changing colors */
+.card, .glass-btn, nav {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.card {
+  border-radius: 20px !important;
+}
+.glass-btn {
+  border-radius: 50px !important;
+}
