@@ -2320,7 +2320,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadUniversalDashboard(role) {
       window.dashboardRenderLists = [];
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
+      const privateTableId = role === 'admin' ? 'admin-private-bookings-table' : 'staff-private-bookings-table';
       const bookingsTable = document.getElementById(tableId);
+      const privateBookingsTable = document.getElementById(privateTableId);
 
       const filterSearch = document.getElementById('filter-search');
       const filterPackageType = document.getElementById('filter-package-type');
@@ -2403,8 +2405,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dateVal) bookings = bookings.filter(b => b.bookingDate === dateVal);
         if (payVal) bookings = bookings.filter(b => (b.paymentBasis || 'Cash') === payVal);
 
-        if (bookings.length === 0) { bookingsTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#94a3b8;">No bookings found.</td></tr>`; return; }
-        bookingsTable.innerHTML = bookings.map(b => `
+        const standardBookings = bookings.filter(b => !b.isPrivate);
+        const privateBookingsList = bookings.filter(b => b.isPrivate);
+
+        const renderRow = (b) => `
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
             <td style="padding: 1rem 0; font-family:'JetBrains Mono', monospace; color:#fde047; font-weight:700; font-size:0.9rem;">
               #${b.id}
@@ -2414,7 +2418,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact} <a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" style="color:#25D366; margin-left:8px; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></div>` : ''}
               <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: <a href="mailto:${b.customerEmail}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${b.customerEmail}</a></div>
             </td>
-            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private Charter</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}${b.bookingType === 'Transfer' ? ` (${b.adults || 1} Pax)` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
+            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}${b.bookingType === 'Transfer' ? ` (${b.adults || 1} Pax)` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
             <td style="padding: 1rem 0;">
               <div>${b.bookingDate}</div>
               <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Entry: ${b.entryTime || 'N/A'}</div>
@@ -2432,7 +2436,23 @@ document.addEventListener('DOMContentLoaded', () => {
               ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>` : ''}
             </td>
           </tr>
-        `).join('');
+        `;
+
+        if (bookingsTable) {
+          if (standardBookings.length === 0) {
+            bookingsTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#94a3b8;">No standard bookings found.</td></tr>`;
+          } else {
+            bookingsTable.innerHTML = standardBookings.map(renderRow).join('');
+          }
+        }
+
+        if (privateBookingsTable) {
+          if (privateBookingsList.length === 0) {
+            privateBookingsTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#94a3b8;">No private or transfer bookings found.</td></tr>`;
+          } else {
+            privateBookingsTable.innerHTML = privateBookingsList.map(renderRow).join('');
+          }
+        }
 
         document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await api.put('bookings/' + found.id, found); try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); } }); });
         document.querySelectorAll('.print-booking-btn').forEach(btn => { btn.addEventListener('click', (e) => printIndividualBooking(e.target.dataset.id)); });

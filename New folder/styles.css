@@ -2488,7 +2488,7 @@ body.minimal-body {
 
 .layer-4-slider {
   z-index: 30;
-  background: var(--dark);
+  background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   margin-top: 0;
   /* creates the slide-over effect */
   overflow: hidden;
@@ -2531,7 +2531,7 @@ body.minimal-body {
 
 .layer-6-slider {
   z-index: 50;
-  background: var(--dark);
+  background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
   overflow: hidden;
