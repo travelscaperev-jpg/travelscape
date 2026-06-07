@@ -1958,6 +1958,11 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
 
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              
+              <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
+                <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
+              </div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
@@ -1984,12 +1989,61 @@ document.addEventListener('DOMContentLoaded', () => {
             typeContainer.style.display = 'block';
             groupDetails.style.display = typeSelect.value === 'Group' ? 'flex' : 'none';
           }
+          updateTotalPrice();
+        };
+
+        const updateTotalPrice = () => {
+          const priceDisplay = bookingModal.querySelector('#booking-price-display');
+          if (!priceDisplay || !pkgObj) return;
+          
+          let total = 0;
+          const isPrivate = privateCheck.checked || isPrivateCharter;
+          const basePrice = parseFloat(pkgObj.price) || 0;
+          const privatePrice = parseFloat(pkgObj.privatePrice) || 0;
+          
+          const photoSelect = bookingModal.querySelector('#booking-photography');
+          const photoOpt = photoSelect ? photoSelect.options[photoSelect.selectedIndex] : null;
+          const photoPrice = photoOpt ? (parseFloat(photoOpt.dataset.price) || 0) : 0;
+
+          if (isPrivate) {
+            total = privatePrice;
+          } else {
+            const isGroup = typeSelect.value === 'Group';
+            const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
+            const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
+            
+            total = basePrice * adults;
+            if (kids > 0) {
+              const kidsAgesStr = kidsInput.parentElement.parentElement.querySelector('#booking-kids-ages').value || '';
+              const kidsAges = kidsAgesStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+              const limitHalf = parseInt(pkgObj.kidAgeHalf) || 0;
+              const limitFree = parseInt(pkgObj.kidAgeFree) || 0;
+
+              for (let i = 0; i < kids; i++) {
+                const age = kidsAges[i] !== undefined ? kidsAges[i] : 99;
+                if (limitFree > 0 && age <= limitFree) {
+                  total += 0;
+                } else if (limitHalf > 0 && age <= limitHalf) {
+                  total += basePrice * 0.5;
+                } else {
+                  total += basePrice;
+                }
+              }
+            }
+          }
+          total += photoPrice;
+          priceDisplay.textContent = `$${total}`;
         };
 
         privateCheck.addEventListener('change', () => { syncBookingTypeFields(); checkSlotsAvailability(); });
-        typeSelect.addEventListener('change', (e) => { groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none'; checkSlotsAvailability(); });
-        kidsInput.addEventListener('input', (e) => { kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none'; checkSlotsAvailability(); });
-        if (adultsInput) adultsInput.addEventListener('input', checkSlotsAvailability);
+        typeSelect.addEventListener('change', (e) => { groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none'; checkSlotsAvailability(); updateTotalPrice(); });
+        kidsInput.addEventListener('input', (e) => { kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none'; checkSlotsAvailability(); updateTotalPrice(); });
+        if (adultsInput) adultsInput.addEventListener('input', () => { checkSlotsAvailability(); updateTotalPrice(); });
+        const kidsAgesInput = bookingModal.querySelector('#booking-kids-ages');
+        if (kidsAgesInput) kidsAgesInput.addEventListener('input', updateTotalPrice);
+        const photoSelect = bookingModal.querySelector('#booking-photography');
+        if (photoSelect) photoSelect.addEventListener('change', updateTotalPrice);
         const dateInputEX = bookingModal.querySelector('#booking-date');
         if (dateInputEX) dateInputEX.addEventListener('input', checkSlotsAvailability);
         const offerCodeInputEX = bookingModal.querySelector('#booking-offer-code');
@@ -2053,11 +2107,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const photoSelect = form.querySelector('#booking-photography');
           const photographyId = photoSelect ? photoSelect.value : '';
           
+          const priceDisp = document.getElementById('booking-price-display');
+          const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
+          
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
             customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
             isPrivate: isPrivate, photographyId: photographyId, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
-            totalPrice: 0,
+            totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
             bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
             enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
@@ -2070,7 +2127,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: isPrivateCharter ? 'Private Charter' : 'Excursion', total: 'Calculated at Office' });
+          showBookingConfirmationModal(newBooking, { type: isPrivateCharter ? 'Private Charter' : 'Excursion', total: totalPrice });
           if (window.PAYMENT_LINK) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
@@ -2705,11 +2762,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const priceEl = document.getElementById('photography-price'); if (priceEl) priceEl.value = item.price || 0;
               }
               if (prefix === 'private') {
-                const isTransferCheckbox = document.getElementById('private-is-transfer');
-                if (isTransferCheckbox) {
-                  isTransferCheckbox.checked = !!item.isTransfer;
-                  isTransferCheckbox.dispatchEvent(new Event('change'));
-                }
                 const maxSmall = document.getElementById('private-max-pax-small'); if (maxSmall) maxSmall.value = item.maxPaxSmall || 8;
                 const maxBig = document.getElementById('private-max-pax-big'); if (maxBig) maxBig.value = item.maxPaxBig || 20;
                 const islandsContainer = document.getElementById('private-islands-container');
@@ -2730,6 +2782,10 @@ document.addEventListener('DOMContentLoaded', () => {
                   });
                 }
               }
+              if (prefix === 'ex' || prefix === 'fd') {
+                const priceEl = document.getElementById(`${prefix}-price`); if (priceEl) priceEl.value = item.price || 0;
+                const privatePriceEl = document.getElementById(`${prefix}-private-price`); if (privatePriceEl) privatePriceEl.value = item.privatePrice || 0;
+              }
               const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
               const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
               const maxCapEl = document.getElementById(`${prefix}-max-capacity`); if (maxCapEl) maxCapEl.value = item.maxCapacity || 20;
@@ -2740,7 +2796,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isTrans = document.getElementById('private-is-transfer'); if (isTrans) { isTrans.checked = false; isTrans.dispatchEvent(new Event('change')); } const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; const mp1 = document.getElementById('private-max-pax-small'); if(mp1) mp1.value = 8; const mp2 = document.getElementById('private-max-pax-big'); if(mp2) mp2.value = 20; } };
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; const mp1 = document.getElementById('private-max-pax-small'); if(mp1) mp1.value = 8; const mp2 = document.getElementById('private-max-pax-big'); if(mp2) mp2.value = 20; } };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -2796,6 +2852,10 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.kidAgeHalf = kidAgeHalf;
             itemData.kidAgeFree = kidAgeFree;
             itemData.maxCapacity = maxCapacity;
+            if (prefix === 'ex' || prefix === 'fd') {
+              itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
+              itemData.privatePrice = parseFloat(document.getElementById(`${prefix}-private-price`).value) || 0;
+            }
             if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
             if (prefix === 'resort') {
               itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
@@ -2809,24 +2869,21 @@ document.addEventListener('DOMContentLoaded', () => {
               itemData.price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
             }
             if (prefix === 'private') {
-              const isTransferCheckbox = document.getElementById('private-is-transfer');
-              itemData.isTransfer = isTransferCheckbox ? isTransferCheckbox.checked : false;
-              if (itemData.isTransfer) {
-                itemData.maxPaxSmall = parseInt(document.getElementById('private-max-pax-small').value) || 8;
-                itemData.maxPaxBig = parseInt(document.getElementById('private-max-pax-big').value) || 20;
-                itemData.transferIslands = [];
-                const islandsContainer = document.getElementById('private-islands-container');
-                if (islandsContainer) {
-                  islandsContainer.querySelectorAll('.island-row').forEach(row => {
-                    itemData.transferIslands.push({
-                      name: row.querySelector('.island-name').value,
-                      maleSmall: parseFloat(row.querySelector('.male-small').value) || 0,
-                      maleBig: parseFloat(row.querySelector('.male-big').value) || 0,
-                      maafushiSmall: parseFloat(row.querySelector('.maafushi-small').value) || 0,
-                      maafushiBig: parseFloat(row.querySelector('.maafushi-big').value) || 0
-                    });
+              itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
+              itemData.maxPaxSmall = parseInt(document.getElementById('private-max-pax-small').value) || 8;
+              itemData.maxPaxBig = parseInt(document.getElementById('private-max-pax-big').value) || 20;
+              itemData.transferIslands = [];
+              const islandsContainer = document.getElementById('private-islands-container');
+              if (islandsContainer) {
+                islandsContainer.querySelectorAll('.island-row').forEach(row => {
+                  itemData.transferIslands.push({
+                    name: row.querySelector('.island-name').value,
+                    maleSmall: parseFloat(row.querySelector('.male-small').value) || 0,
+                    maleBig: parseFloat(row.querySelector('.male-big').value) || 0,
+                    maafushiSmall: parseFloat(row.querySelector('.maafushi-small').value) || 0,
+                    maafushiBig: parseFloat(row.querySelector('.maafushi-big').value) || 0
                   });
-                }
+                });
               }
             }
             if (!idVal) list.push(itemData);

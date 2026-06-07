@@ -2490,9 +2490,8 @@ body.minimal-body {
   z-index: 30;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   margin-top: 0;
-  /* creates the slide-over effect */
   overflow: hidden;
-  min-height: 600px;
+  height: 100vh;
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
 }
 
@@ -2501,11 +2500,8 @@ body.minimal-body {
   background: #080d1a;
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
-  /* creates the slide-over effect */
-  min-height: 100vh;
-  height: auto;
+  height: 100vh;
   position: relative;
-  /* the last section doesn't need to be sticky */
 }
 
 /* Ensure content in layers clears the clipped top edge */
@@ -2520,13 +2516,11 @@ body.minimal-body {
 
 .layer-5-slider {
   z-index: 40;
-  /* Slanted gradient matching the polygon angle for fusion */
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
-  /* creates the slide-over effect */
   overflow: hidden;
-  min-height: 600px;
+  height: 100vh;
 }
 
 .layer-6-slider {
@@ -2535,7 +2529,7 @@ body.minimal-body {
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
   overflow: hidden;
-  min-height: 600px;
+  height: 100vh;
 }
 
 .layer-7 {
@@ -3418,7 +3412,7 @@ input[type="date"] {
   .layer-5-slider,
   .layer-6-slider {
     margin-top: 0 !important;
-    min-height: auto !important;
+    height: 100vh !important;
     padding-bottom: 2rem !important;
   }
 }
