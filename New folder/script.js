@@ -3556,8 +3556,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Homepage Layer Animation System ---
-  // Exclude heavy slider layers (4, 5, 6) from continuous transform repaints to prevent compositor crushing/lag on PC
-  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider)');
+  // Exclude heavy slider layers (2, 3, 4, 5, 6) from continuous transform repaints to prevent compositor crushing/lag on PC
+  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-2):not(.layer-3):not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider)');
   if (parallaxLayers.length > 0) {
     let targetX = 0;
     let targetY = 0;
