@@ -3566,8 +3566,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    const onTouchMove = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        targetX = (e.touches[0].clientX - centerX) / centerX;
+        targetY = (e.touches[0].clientY - centerY) / centerY;
+      }
+    };
+
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('deviceorientation', onDeviceOrientation);
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     const animateLayers = () => {
       currentX += (targetX - currentX) * 0.05;

@@ -2364,12 +2364,12 @@ body.minimal-body {
 
 .tow-net {
   position: absolute;
-  top: 100px;
-  left: -400px;
-  width: 250px; /* Spacing so it doesn't overlap */
-  height: 80px;
+  top: 0px;
+  left: -1030px; /* Aligned strictly behind the boat */
+  width: 550px;
+  height: 180px;
   animation: pull-rope-snap 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  z-index: 9;
+  z-index: 12; /* OVERLAY the logo (logo is 11) */
   transform-origin: left center;
 }
 
@@ -2409,34 +2409,35 @@ body.minimal-body {
 
 @keyframes pull-boat-zoom {
   0% { left: -500px; }
-  60% { left: calc(50% + 180px); }
-  75% { left: calc(50% + 180px); }
+  60% { left: calc(50% + 280px); } /* Pushed further right so it doesn't overlap logo */
+  75% { left: calc(50% + 280px); }
   100% { left: 120vw; }
 }
 
 @keyframes pull-rope-snap {
-  0% { left: -400px; opacity: 1; transform: scaleX(1); }
-  60% { left: calc(50% - 70px); opacity: 1; transform: scaleX(1); }
-  75% { left: calc(50% - 70px); opacity: 0.5; transform: scaleX(0.8); }
+  0% { left: -1030px; opacity: 1; transform: scaleX(1); }
+  60% { left: calc(50% - 250px); opacity: 1; transform: scaleX(1); }
+  65% { left: calc(50% - 250px); opacity: 0; transform: scaleX(1); } /* Fade out rapidly so logo is perfectly clear */
+  75% { left: calc(50% - 250px); opacity: 0; transform: scaleX(0.8); }
   100% { left: 120vw; opacity: 0; transform: scaleX(0); }
 }
 
 @keyframes pull-logo-stop {
   0% {
-    left: -600px;
-    transform: scale(var(--logo-scale-start, 0.8)) translate(var(--logo-translate-start-x, 0), var(--logo-translate-start-y, 0));
+    left: -780px; /* Synchronized travel distance with boat/rope */
+    transform: scale(var(--logo-scale-stop, 1)) translate(-50%, var(--logo-translate-start-y, 0));
     opacity: 0.5;
   }
 
   60% {
-    left: var(--logo-left-stop, 80%);
-    transform: scale(var(--logo-scale-stop, 1)) translate(var(--logo-translate-stop-x, -100%), var(--logo-translate-stop-y, 0));
+    left: 50%;
+    transform: scale(var(--logo-scale-stop, 1)) translate(-50%, var(--logo-translate-stop-y, 0));
     opacity: 1;
   }
 
   100% {
-    left: var(--logo-left-stop, 80%);
-    transform: scale(var(--logo-scale-stop, 1)) translate(var(--logo-translate-stop-x, -100%), var(--logo-translate-stop-y, 0));
+    left: 50%;
+    transform: scale(var(--logo-scale-stop, 1)) translate(-50%, var(--logo-translate-stop-y, 0));
     opacity: 1;
   }
 }
