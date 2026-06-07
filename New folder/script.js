@@ -3603,7 +3603,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('scroll', () => {
       if (window.innerWidth <= 768 || ('ontouchstart' in window)) {
-        targetY = (window.scrollY * 0.002);
+        // Use Math.sin to bound the movement between -1 and 1, creating a gentle float instead of an infinite crush.
+        targetY = Math.sin(window.scrollY * 0.003);
+        targetX = Math.cos(window.scrollY * 0.003) * 0.5;
       }
     }, { passive: true });
   }

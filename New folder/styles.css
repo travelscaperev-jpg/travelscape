@@ -2258,7 +2258,7 @@ body.minimal-body {
     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
     padding: 0.8rem 0;
   }
-  
+
   .dropdown-content::before {
     display: none;
   }
@@ -3408,19 +3408,18 @@ input[type="date"] {
     padding-top: 100px !important;
   }
 
-  .layer-4 .layer-content,
-  .layer-6 .layer-content {
-    padding-top: 22vh !important;
+  .layer-4-slider .layer-content,
+  .layer-5-slider .layer-content,
+  .layer-6-slider .layer-content {
+    padding-top: 12vh !important;
   }
 
-  .layer-4 {
-    margin-top: -8vh !important;
-    min-height: auto !important;
-  }
-
-  .layer-6 {
+  .layer-4-slider,
+  .layer-5-slider,
+  .layer-6-slider {
     margin-top: 0 !important;
     min-height: auto !important;
+    padding-bottom: 2rem !important;
   }
 }
 
