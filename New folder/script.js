@@ -3038,7 +3038,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await setData(list); resetForm(); renderList(); populateExcursionFilter(); alert(`${type} saved successfully!`);
           } catch (error) {
             console.error(error);
-            alert('Failed to save excursion: ' + error.message);
+            alert('Failed to save ' + type + ': ' + error.message);
           } finally {
             if (submitBtn) {
               submitBtn.textContent = origBtnText;

@@ -332,6 +332,7 @@ function registerCollectionRoutes(routePath, dbKey) {
 }
 
 // Register all collections
+registerCollectionRoutes('packages',         'packages');
 registerCollectionRoutes('excursions',       'excursions');
 registerCollectionRoutes('private',          'private_bookings');
 registerCollectionRoutes('freediving',       'freediving');
@@ -667,6 +668,7 @@ async function seedDatabaseIfEmpty() {
     };
 
     const promises = [
+      seedKeyIfEmpty('packages',         []),
       seedKeyIfEmpty('excursions',       defaultExcursions),
       seedKeyIfEmpty('private_bookings', defaultPrivate),
       seedKeyIfEmpty('freediving',       defaultFreediving),
