@@ -2500,8 +2500,10 @@ body.minimal-body {
   background: #080d1a;
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   position: relative;
+  overflow: visible !important;
 }
 
 /* Ensure content in layers clears the clipped top edge */
@@ -2510,6 +2512,7 @@ body.minimal-body {
 .layer-4-slider .layer-content,
 .layer-5-slider .layer-content,
 .layer-6-slider .layer-content,
+.layer-8-slider .layer-content,
 .layer-4 .layer-content {
   padding-top: 15vh;
 }
@@ -2525,6 +2528,15 @@ body.minimal-body {
 
 .layer-6-slider {
   z-index: 50;
+  background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
+  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+  margin-top: 0;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.layer-8-slider {
+  z-index: 55;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   margin-top: 0;
@@ -3343,7 +3355,7 @@ input[type="date"] {
     min-height: 100vh !important;
   }
   
-  .layer-2, .layer-3, .layer-4-slider, .layer-5-slider, .layer-6-slider {
+  .layer-2, .layer-3, .layer-4-slider, .layer-5-slider, .layer-6-slider, .layer-8-slider {
     clip-path: none !important;
   }
   
@@ -3404,13 +3416,15 @@ input[type="date"] {
 
   .layer-4-slider .layer-content,
   .layer-5-slider .layer-content,
-  .layer-6-slider .layer-content {
+  .layer-6-slider .layer-content,
+  .layer-8-slider .layer-content {
     padding-top: 12vh !important;
   }
 
   .layer-4-slider,
   .layer-5-slider,
-  .layer-6-slider {
+  .layer-6-slider,
+  .layer-8-slider {
     margin-top: 0 !important;
     height: 100vh !important;
     padding-bottom: 2rem !important;
