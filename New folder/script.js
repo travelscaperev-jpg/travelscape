@@ -1091,8 +1091,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>`;
         }
 
+        const cardSizingStyle = isMinimalCard ? 'max-width: 280px; margin: 0 auto; width: 100%;' : '';
         return `
-        <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
+        <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer; ${cardSizingStyle}">
           <div class="card-img" style="position: relative; overflow: hidden; background: #000; ${ratioStyle}">${mediaHtml}</div>
           ${cardBodyHtml}
         </div>
