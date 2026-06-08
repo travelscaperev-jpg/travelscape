@@ -2170,7 +2170,27 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           }
-          total += photoPrice;
+          let photoCost = 0;
+          if (photoOpt) {
+            const photoRaw = String(photoOpt.dataset.price || '0').trim();
+            if (photoRaw.includes(':')) {
+              const photoTiers = photoRaw.split(',').map(s => {
+                const parts = s.split(':');
+                return { pax: parseInt(parts[0]), price: parseFloat(parts[1]) };
+              }).filter(t => !isNaN(t.pax) && !isNaN(t.price)).sort((a, b) => a.pax - b.pax);
+              
+              if (photoTiers.length > 0) {
+                const tier = photoTiers.find(t => pax <= t.pax);
+                photoCost = tier ? tier.price : photoTiers[photoTiers.length - 1].price;
+              } else {
+                photoCost = parseFloat(photoRaw) || 0;
+              }
+            } else {
+              photoCost = parseFloat(photoRaw) || 0;
+            }
+          }
+
+          total += photoCost;
           priceDisplay.textContent = `$${total}`;
         };
 
@@ -2997,7 +3017,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (prefix === 'photography') {
               const priceEl = document.getElementById('photography-price');
-              itemData.price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
+              itemData.price = priceEl ? priceEl.value.trim() : '0';
             }
             if (prefix === 'private') {
               itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
