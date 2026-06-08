@@ -1059,11 +1059,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
       grid.innerHTML = itemsToRender.map(ex => {
         if (!ex) return '';
-        const mediaHtml = `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
-        const ratioStyle = ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '';
-        return `
-        <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
-          <div class="card-img" style="position: relative; overflow: hidden; background: #000; ${ratioStyle}">${mediaHtml}</div>
+        
+        const isMinimalCard = (idPrefix === 'excursion' || idPrefix === 'freediving');
+        
+        let mediaHtml = '';
+        if (ex.video && isMediaVideo(ex.video)) {
+          mediaHtml = `<video src="${ex.video}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>`;
+        } else {
+          mediaHtml = `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        }
+
+        const ratioStyle = isMinimalCard ? 'height: auto; aspect-ratio: 9/16;' : (ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '');
+        
+        let cardBodyHtml = '';
+        if (isMinimalCard) {
+          cardBodyHtml = `
+          <div class="card-body" style="padding: 1.25rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; min-height: 80px;">
+            <h3 class="card-title" style="margin: 0; font-size: 1.15rem;">${ex.title}</h3>
+            <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>
+          </div>`;
+        } else {
+          cardBodyHtml = `
           <div class="card-body">
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
@@ -1072,7 +1088,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="card-title">${ex.title}</h3>
             <p class="card-description">${ex.description}</p>
             <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>
-          </div>
+          </div>`;
+        }
+
+        return `
+        <div class="card" id="${idPrefix}-card-${ex.id}" style="cursor: pointer;">
+          <div class="card-img" style="position: relative; overflow: hidden; background: #000; ${ratioStyle}">${mediaHtml}</div>
+          ${cardBodyHtml}
         </div>
       `;
       }).join('');
@@ -1809,19 +1831,35 @@ document.addEventListener('DOMContentLoaded', () => {
                   <select id="transfer-from" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                     <option value="male">Airport / Male</option>
                     <option value="maafushi">Maafushi</option>
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : ''}
                   </select>
                 </div>
 
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Destination Island</label>
                   <select id="transfer-to" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="">No islands available</option>'}
+                    <option value="male">Airport / Male</option>
+                    <option value="maafushi">Maafushi</option>
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : ''}
                   </select>
                 </div>
                 
+                <div style="display: flex; gap: 1rem;">
+                  <div style="flex: 1;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Adults</label>
+                    <input type="number" id="booking-adults" required min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                  </div>
+                  <div style="flex: 1;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids</label>
+                    <input type="number" id="booking-kids" required min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                  </div>
+                </div>
                 <div>
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Passengers</label>
-                  <input type="number" id="transfer-pax" required min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label>
+                  <input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;">
+                  <div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div>
+                </div>
+                <div>
                   <div id="transfer-pax-warning" style="color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
                   <div id="transfer-tier-info" style="color: #10b981; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
                 </div>
@@ -1842,7 +1880,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fromSelect = bookingModal.querySelector('#transfer-from');
         const toSelect = bookingModal.querySelector('#transfer-to');
-        const paxInput = bookingModal.querySelector('#transfer-pax');
+        const adultsInput = bookingModal.querySelector('#booking-adults');
+        const kidsInput = bookingModal.querySelector('#booking-kids');
+        const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
+        const offerMessage = bookingModal.querySelector('#booking-offer-message');
         const paxWarning = bookingModal.querySelector('#transfer-pax-warning');
         const tierInfo = bookingModal.querySelector('#transfer-tier-info');
         const priceDisplay = bookingModal.querySelector('#booking-price-display');
@@ -1852,9 +1893,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateTransferPrice = () => {
           const from = fromSelect.value;
           const to = toSelect.value;
-          const pax = parseInt(paxInput.value) || 1;
+          const adults = parseInt(adultsInput.value) || 1;
+          const kids = parseInt(kidsInput.value) || 0;
+          const pax = adults + kids;
 
-          const islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
+          let islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
+          let origin = from;
+          if (!islandConfig) {
+             islandConfig = (pkgObj.transferIslands || []).find(i => i.name === from);
+             origin = to;
+          }
+
           if (!islandConfig) {
             priceDisplay.textContent = '$0';
             paxWarning.style.display = 'none';
@@ -1862,22 +1911,43 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const tierStr = from === 'male' ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
+          const tierStr = (origin === 'male' || origin === 'Airport / Male') ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
           const result = lookupTierPrice(tierStr, pax);
 
-          if (result.matched) {
-            priceDisplay.textContent = `$${result.price}`;
-            paxWarning.style.display = 'none';
-            tierInfo.style.display = 'block';
-            tierInfo.textContent = `Price for ${result.tierLabel}`;
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-          } else if (result.price > 0) {
-            // Pax exceeds all tiers
-            priceDisplay.textContent = `$${result.price}`;
-            paxWarning.style.display = 'block';
-            paxWarning.textContent = `Exceeds available tiers (${result.tierLabel}). Please contact us for custom pricing.`;
-            tierInfo.style.display = 'none';
+          let total = result.price;
+          const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          const offer = getOffers().find(o => {
+             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking'));
+          });
+          
+          if (code) {
+             if (offer && offer.title) {
+                 let match = offer.discount.match(/(\\d+)%/);
+                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                 else {
+                     match = offer.discount.match(/\\$(\\d+)/);
+                     if (match) total = Math.max(0, total - parseInt(match[1]));
+                 }
+                 if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
+             } else {
+                 if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
+             }
+          } else {
+             if (offerMessage) { offerMessage.textContent = ''; }
+          }
+
+          if (result.matched || result.price > 0) {
+            priceDisplay.textContent = `$${total}`;
+            if (!result.matched) {
+              paxWarning.style.display = 'block';
+              paxWarning.textContent = `Exceeds available tiers (${result.tierLabel}). Please contact us for custom pricing.`;
+              tierInfo.style.display = 'none';
+            } else {
+              paxWarning.style.display = 'none';
+              tierInfo.style.display = 'block';
+              tierInfo.textContent = `Base price for ${result.tierLabel}`;
+            }
             submitBtn.disabled = false;
             submitBtn.style.opacity = '1';
           } else {
@@ -1892,7 +1962,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         fromSelect.addEventListener('change', updateTransferPrice);
         toSelect.addEventListener('change', updateTransferPrice);
-        paxInput.addEventListener('input', updateTransferPrice);
+        adultsInput.addEventListener('input', updateTransferPrice);
+        kidsInput.addEventListener('input', updateTransferPrice);
+        if (offerCodeInput) offerCodeInput.addEventListener('input', updateTransferPrice);
         updateTransferPrice();
 
         if (dateInput) {
@@ -1909,9 +1981,11 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (submitBtn.disabled) return;
 
-          const fromStr = fromSelect.value === 'male' ? 'Male/Airport' : 'Maafushi';
-          const toStr = toSelect.value;
-          const pax = parseInt(paxInput.value) || 1;
+          const fromStr = fromSelect.value === 'male' ? 'Male/Airport' : fromSelect.value;
+          const toStr = toSelect.value === 'male' ? 'Male/Airport' : toSelect.value;
+          const adults = parseInt(adultsInput.value) || 1;
+          const kids = parseInt(kidsInput.value) || 0;
+          const pax = adults + kids;
           const totalPrice = parseFloat(priceDisplay.textContent.replace('$', '')) || 0;
 
           const detailedTitle = `${title} (From: ${fromStr} To: ${toStr} | ${pax} Pax)`;
@@ -1928,13 +2002,14 @@ document.addEventListener('DOMContentLoaded', () => {
             bookingDate,
             paymentBasis: isOfficeUser ? 'Office Direct' : 'Payment Gateway',
             bookingType: 'Transfer',
-            adults: pax,
-            kids: 0,
+            adults: adults,
+            kids: kids,
             isPrivate: true,
             numPersons: pax,
             status: isOfficeUser ? 'Pending' : 'Confirmed',
             ratePaid: totalPrice,
             totalPrice: totalPrice,
+            offerCode: offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '',
             transferFrom: fromStr,
             transferTo: toStr,
             transferPax: pax,
@@ -1978,7 +2053,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
                 <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;" ${isPrivateCharter ? 'checked disabled' : ''}>
-                <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip (Group Only)</label>
+                <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip</label>
               </div>
 
               <div id="booking-type-container">
@@ -2051,13 +2126,29 @@ document.addEventListener('DOMContentLoaded', () => {
           const photoOpt = photoSelect ? photoSelect.options[photoSelect.selectedIndex] : null;
           const photoPrice = photoOpt ? (parseFloat(photoOpt.dataset.price) || 0) : 0;
 
+          const isGroup = isPrivate || typeSelect.value === 'Group';
+          const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
+          const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
+          const pax = adults + kids;
+
           if (isPrivate) {
-            total = privatePrice;
+            const privatePriceRaw = String(pkgObj.privatePrice || '0').trim();
+            if (privatePriceRaw.includes(':')) {
+              const tiers = privatePriceRaw.split(',').map(s => {
+                const parts = s.split(':');
+                return { pax: parseInt(parts[0]), price: parseFloat(parts[1]) };
+              }).filter(t => !isNaN(t.pax) && !isNaN(t.price)).sort((a, b) => a.pax - b.pax);
+              
+              if (tiers.length > 0) {
+                const tier = tiers.find(t => pax <= t.pax);
+                total = tier ? tier.price : tiers[tiers.length - 1].price;
+              } else {
+                total = parseFloat(privatePriceRaw) || 0;
+              }
+            } else {
+              total = parseFloat(privatePriceRaw) || 0;
+            }
           } else {
-            const isGroup = typeSelect.value === 'Group';
-            const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
-            const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
-            
             total = basePrice * adults;
             if (kids > 0) {
               const kidsAgesStr = kidsInput.parentElement.parentElement.querySelector('#booking-kids-ages').value || '';
@@ -3196,7 +3287,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let items = [];
           if (cat === 'Excursion') items = getExcursions();
-          else if (cat === 'Private Booking') items = getPrivate();
+          else if (cat === 'Private Booking') items = getPrivate().filter(p => !p.isTransfer);
+          else if (cat === 'Boat Transfer') items = getPrivate().filter(p => p.isTransfer);
           else if (cat === 'Free Diving') items = getFreeDiving();
           else if (cat === 'Resort') items = getResorts();
 
