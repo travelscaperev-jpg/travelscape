@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+  window.isBookingRestricted = function(item) {
+    if (!item || !item.bookingDisabledFrom || !item.bookingDisabledUntil) return false;
+    const now = new Date();
+    // Set time to start of day for accurate comparison
+    now.setHours(0,0,0,0);
+    const from = new Date(item.bookingDisabledFrom);
+    const to = new Date(item.bookingDisabledUntil);
+    to.setHours(23,59,59,999);
+    return now >= from && now <= to;
+  };
+
+
   // --- Logo Drag & Drop Logic (Home Page Only) ---
   const logoContainer = document.querySelector('.logo-reveal-container');
   if (logoContainer) {
@@ -1038,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>` : ''}
             <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
               ${ex.mapLink ? `<a href="${ex.mapLink}" target="_blank" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 700; text-transform: uppercase; font-size: 0.9rem;"><i class="fa-solid fa-map-location-dot" style="margin-right: 8px;"></i> Location</a>` : ''}
-              ${ex.id && ex.id.startsWith('ph') ? '' : `<button id="details-modal-book" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: rgba(56, 189, 248, 0.25) !important;">Book Now</button>`}
+              ${(ex.id && ex.id.startsWith('ph')) || window.isBookingRestricted(ex) ? '' : `<button id="details-modal-book" class="glass-btn" style="flex: 1; padding: 0.8rem; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; background: rgba(56, 189, 248, 0.25) !important;">Book Now</button>`}
             </div>
           </div>
         </div>
@@ -1073,12 +1085,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const ratioStyle = isMinimalCard ? 'height: auto; aspect-ratio: 9/16;' : (ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '');
         
         let cardBodyHtml = '';
+        const bookBtnHtml = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>`;
+        const bookBtnHtmlStd = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>`;
+
         if (isMinimalCard) {
           cardBodyHtml = `
           <div class="card-body" style="padding: 1.25rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; min-height: 80px;">
             <h3 class="card-title" style="margin: 0; font-size: 1.15rem;">${ex.title}</h3>
             ${ex.description ? `<p class="card-description" style="margin: 0; font-size: 0.9rem; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${ex.description}</p>` : ''}
-            <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>
+            ${bookBtnHtml}
           </div>`;
         } else {
           cardBodyHtml = `
@@ -1089,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <h3 class="card-title">${ex.title}</h3>
             ${ex.description ? `<p class="card-description" style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: normal;">${ex.description}</p>` : ''}
-            <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>
+            ${bookBtnHtmlStd}
           </div>`;
         }
 
@@ -1267,7 +1282,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <p class="ex-desc">${ex.description}</p>
               <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center;">
                 <button class="glass-btn layer${layerNum}-floating-details" data-id="${ex.id}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Details</button>
-                ${layerNum !== 6 ? `<button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>` : ''}
+                ${layerNum !== 6 && !window.isBookingRestricted(ex) ? `<button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>` : ''}
               </div>
             `;
             const bookBtn = detailsOverlay.querySelector(`.layer${layerNum}-floating-book`);
@@ -4326,6 +4341,130 @@ document.addEventListener('DOMContentLoaded', () => {
         targetX = Math.cos(window.scrollY * 0.003) * 0.5;
       }
     }, { passive: true });
+  }
+
+  // --- Admin Booking Restrictions Logic ---
+  if (document.getElementById('admin-add-restriction-form')) {
+    const categorySelect = document.getElementById('restriction-category');
+    const itemsSelect = document.getElementById('restriction-items');
+    const selectAllBtn = document.getElementById('restriction-select-all');
+    const form = document.getElementById('admin-add-restriction-form');
+    const listContainer = document.getElementById('admin-restrictions-list');
+
+    const getters = {
+      'packages': getPackages,
+      'excursions': getExcursions,
+      'private_bookings': getPrivate,
+      'freediving': getFreeDiving,
+      'resorts': getResorts,
+      'photography': getPhotography
+    };
+    
+    const setters = {
+      'packages': setPackages,
+      'excursions': setExcursions,
+      'private_bookings': setPrivate,
+      'freediving': setFreeDiving,
+      'resorts': setResorts,
+      'photography': setPhotography
+    };
+
+    const getItemsForCategory = (cat) => {
+      if (getters[cat]) return getters[cat]();
+      return [];
+    };
+
+    const updateItemsSelect = () => {
+      const cat = categorySelect.value;
+      itemsSelect.innerHTML = '';
+      if (!cat) return;
+      const items = getItemsForCategory(cat);
+      items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.title || item.name || item.id;
+        itemsSelect.appendChild(option);
+      });
+    };
+
+    categorySelect.addEventListener('change', updateItemsSelect);
+
+    selectAllBtn.addEventListener('click', () => {
+      for (let i = 0; i < itemsSelect.options.length; i++) {
+        itemsSelect.options[i].selected = true;
+      }
+    });
+
+    const renderRestrictionsList = () => {
+      let html = '';
+      Object.keys(getters).forEach(cat => {
+        const items = getItemsForCategory(cat);
+        items.forEach(item => {
+          if (window.isBookingRestricted(item) || (item.bookingDisabledFrom && item.bookingDisabledUntil)) {
+            html += `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.05);">
+                <div>
+                  <h4 style="color:#fff; margin:0 0 0.25rem 0;">${item.title || item.name || item.id} <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin-left:6px;">${cat}</span></h4>
+                  <p style="color:#ef4444; font-size:0.85rem; margin:0;">Blocked: ${item.bookingDisabledFrom} to ${item.bookingDisabledUntil}</p>
+                </div>
+                <button class="btn remove-restriction-btn" data-cat="${cat}" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Remove</button>
+              </div>
+            `;
+          }
+        });
+      });
+      if (!html) html = '<div style="color:#94a3b8; font-size:0.9rem;">No active restrictions.</div>';
+      listContainer.innerHTML = html;
+
+      // Attach remove events
+      listContainer.querySelectorAll('.remove-restriction-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const cat = e.target.dataset.cat;
+          const id = e.target.dataset.id;
+          const items = getItemsForCategory(cat);
+          const idx = items.findIndex(i => i.id === id);
+          if (idx !== -1) {
+            items[idx].bookingDisabledFrom = null;
+            items[idx].bookingDisabledUntil = null;
+            await setters[cat](items);
+            renderRestrictionsList();
+          }
+        });
+      });
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cat = categorySelect.value;
+      const fromDate = document.getElementById('restriction-from').value;
+      const toDate = document.getElementById('restriction-to').value;
+      
+      const selectedIds = Array.from(itemsSelect.selectedOptions).map(opt => opt.value);
+      if (selectedIds.length === 0) return alert('Please select at least one item.');
+
+      const items = getItemsForCategory(cat);
+      let updated = false;
+      items.forEach(item => {
+        if (selectedIds.includes(item.id)) {
+          item.bookingDisabledFrom = fromDate;
+          item.bookingDisabledUntil = toDate;
+          updated = true;
+        }
+      });
+
+      if (updated) {
+        await setters[cat](items);
+        alert('Restrictions applied successfully.');
+        renderRestrictionsList();
+        form.reset();
+        itemsSelect.innerHTML = '';
+      }
+    });
+
+    const restrictionsTabBtn = document.getElementById('tab-btn-restrictions');
+    if (restrictionsTabBtn) {
+      restrictionsTabBtn.addEventListener('click', renderRestrictionsList);
+    }
   }
 
 });

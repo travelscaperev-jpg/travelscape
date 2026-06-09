@@ -86,6 +86,7 @@
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
       <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
       <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span id="contact-msg-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
+      <a onclick="switchDashboardTab('restrictions')" id="tab-btn-restrictions">Booking Restrictions</a>
       <a href="#" onclick="localStorage.removeItem('admin_logged'); window.location.reload(); return false;"
         style="margin-top: 2rem; color: #ef4444;">Log Out</a>
     </aside>
@@ -1081,6 +1082,54 @@
           <div class="admin-list-card">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members</h3>
             <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 11: BOOKING RESTRICTIONS -->
+      <div id="tab-restrictions" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add Booking Restriction (Blackout Dates)</h3>
+            <form id="admin-add-restriction-form" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label for="restriction-category">Category</label>
+                <select id="restriction-category" class="form-control" style="background:#080d1a; color:#fff;" required>
+                  <option value="">Select Category...</option>
+                  <option value="packages">Packages</option>
+                  <option value="excursions">Excursions</option>
+                  <option value="private_bookings">Boat Transfers</option>
+                  <option value="freediving">Free Diving</option>
+                  <option value="resorts">Resorts</option>
+                  <option value="photography">Photography</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="restriction-items">Select Item(s)</label>
+                <select id="restriction-items" class="form-control" style="background:#080d1a; color:#fff;" multiple required>
+                  <!-- Populated dynamically -->
+                </select>
+                <small style="color: #94a3b8; display: block; margin-top: 0.25rem;">Hold Ctrl/Cmd to select multiple. Or click "Select All" below.</small>
+                <button type="button" id="restriction-select-all" class="btn" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; background: rgba(255,255,255,0.1);">Select All in Category</button>
+              </div>
+              <div class="admin-form-row">
+                <div class="form-group">
+                  <label for="restriction-from">Disable Booking From</label>
+                  <input type="date" id="restriction-from" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="restriction-to">Disable Booking Until (Inclusive)</label>
+                  <input type="date" id="restriction-to" class="form-control" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Apply Restriction</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Active Restrictions</h3>
+            <div id="admin-restrictions-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
           </div>
