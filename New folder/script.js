@@ -2744,6 +2744,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Universal Admin & Staff Panel CRUD & tab handlers ---
     function loadUniversalDashboard(role) {
+      if (window.dashboardPollInterval) clearInterval(window.dashboardPollInterval);
+      if (window.dashboardContactPollInterval) clearInterval(window.dashboardContactPollInterval);
       window.dashboardRenderLists = [];
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
       const privateTableId = role === 'admin' ? 'admin-private-bookings-table' : 'staff-private-bookings-table';
@@ -3872,7 +3874,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const newBookings = latest.filter(b => !lastBookingIds.has(b.id));
           if (newBookings.length > 0) {
             newBookings.forEach(b => {
-              showSystemNotification(b);
+              // Only show local desktop notification if we don't have a Push Subscription (to avoid duplicate notifications)
+              if (!window.hasPushSubscription) showSystemNotification(b);
               showToastNotification(b);
             });
           }
@@ -3882,7 +3885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
-      let pollInterval = setInterval(pollForNewBookings, 4000);
+      window.dashboardPollInterval = setInterval(pollForNewBookings, 4000);
 
       // --- Contact Messages Tab Rendering ---
       const contactMsgTable = document.getElementById('admin-contact-messages-table');
@@ -4020,22 +4023,23 @@ document.addEventListener('DOMContentLoaded', () => {
       renderContactMessages();
 
       // Poll for new contact messages
+      if (window.dashboardContactPollInterval) clearInterval(window.dashboardContactPollInterval);
       let lastContactMsgIds = new Set(getContactMessages().map(m => m.id));
       const pollForNewMessages = async () => {
         const latest = await api.get('contact_messages') || [];
-        dataCache.contactMessages = latest;
         const newMessages = latest.filter(m => !lastContactMsgIds.has(m.id));
         if (newMessages.length > 0) {
           newMessages.forEach(m => {
-            showContactSystemNotification(m);
+            if (!window.hasPushSubscription) showContactSystemNotification(m);
             showContactToastNotification(m);
             lastContactMsgIds.add(m.id);
           });
           renderContactMessages();
         }
+        dataCache.contactMessages = latest;
       };
 
-      let contactPollInterval = setInterval(pollForNewMessages, 4000);
+      window.dashboardContactPollInterval = setInterval(pollForNewMessages, 4000);
 
       // Assign dashboard refresh hooks in this active scope
       refreshAdminTablesFn = () => {
@@ -4121,6 +4125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
               }).then(subscription => {
+                window.hasPushSubscription = true;
                 fetch('/api/notifications/subscribe', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -4134,6 +4139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Auto-setup push
+    window.hasPushSubscription = false;
     setupPush();
 
     // Add button to right-side-island-menu to trigger push on mobile (only on portals)
