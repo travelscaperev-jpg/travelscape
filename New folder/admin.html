@@ -282,10 +282,7 @@
                   <label for="package-price">Standard Price ($)</label>
                   <input type="number" id="package-price" class="form-control" min="0" value="0" required>
                 </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                  <label for="package-private-price">Private Trip Price ($)</label>
-                  <input type="number" id="package-private-price" class="form-control" min="0" value="0">
-                </div>
+
               </div>
               <div class="form-group">
                 <label for="package-max-capacity">Max Capacity (Daily Limit)</label>
@@ -847,18 +844,20 @@
                 <label for="offer-category">Applied Category</label>
                 <select id="offer-category" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
                   <option value="All">All Categories</option>
+                  <option value="Packages">Packages</option>
                   <option value="Excursion">Excursion</option>
                   <option value="Private Booking">Private Booking</option>
                   <option value="Boat Transfer">Boat Transfer</option>
                   <option value="Free Diving">Free Diving</option>
                   <option value="Resort">Resort</option>
+                  <option value="Photography">Photography</option>
                 </select>
               </div>
               <div class="form-group">
                 <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
-                <select id="offer-subcategory" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
-                  <option value="">All Items</option>
+                <select id="offer-subcategory" class="form-control" multiple style="background:#080d1a; color:#fff; height:120px;">
                 </select>
+                <small style="color:#94a3b8; font-size: 0.75rem;">Hold Ctrl/Cmd to select multiple</small>
               </div>
               <div class="form-group">
                 <label for="offer-code">Promo Code</label>

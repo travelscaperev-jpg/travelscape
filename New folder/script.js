@@ -1496,10 +1496,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
+      const isPackage = getPackages().some(item => item.id === id);
       const isPrivateCharter = id.startsWith('p');
       const isResort = id.startsWith('rs');
       const resort = isResort ? (getResorts().find(item => item.id === id) || {}) : {};
-      const allPkgs = [...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPhotography()];
+      const allPkgs = [...getPackages(), ...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPhotography()];
       const pkgObj = allPkgs.find(x => x.id === id) || {};
       const isBoatTransfer = isPrivateCharter && pkgObj.isTransfer === true;
 
@@ -2037,7 +2038,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bookingModal.innerHTML = `
           <div class="modal-content-minimal" style="max-width: 460px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">${isPrivateCharter ? 'Book Private Charter' : 'Book Excursion & Service'}</h3>
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">${isPackage ? 'Book Package' : (isPrivateCharter ? 'Book Private Charter' : 'Book Excursion & Service')}</h3>
               <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
             </div>
             <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Selected: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
@@ -2052,10 +2053,12 @@ document.addEventListener('DOMContentLoaded', () => {
               
 
 
+              ${!isPackage ? `
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
                 <input type="checkbox" id="booking-private" style="width: 18px; height: 18px; cursor: pointer;" ${isPrivateCharter ? 'checked disabled' : ''}>
                 <label for="booking-private" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 600; cursor: pointer; user-select: none;">Private Trip</label>
               </div>
+              ` : ''}
 
               <div id="booking-type-container">
                 <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
@@ -2071,6 +2074,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               </div>
 
+              ${!isPackage ? `
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">
                 <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Add Professional Photography</label>
                 <select id="booking-photography" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
@@ -2078,6 +2082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   ${getPhotography().map(p => `<option value="${p.id}" data-price="${p.price}">${p.title} (+$${p.price || 0})</option>`).join('')}
                 </select>
               </div>
+              ` : ''}
 
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
               
@@ -3210,7 +3215,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('offer-category').value = Array.isArray(offer.category) ? offer.category[0] : (offer.category || 'All');
             // Trigger change to populate subcategories
             document.getElementById('offer-category').dispatchEvent(new Event('change'));
-            setTimeout(() => { document.getElementById('offer-subcategory').value = offer.subcategory || ''; }, 50);
+            setTimeout(() => {
+              const subCatSelect = document.getElementById('offer-subcategory');
+              const subCatArr = Array.isArray(offer.subcategory) ? offer.subcategory : (offer.subcategory ? [offer.subcategory] : []);
+              Array.from(subCatSelect.options).forEach(opt => {
+                opt.selected = subCatArr.includes(opt.value);
+              });
+              if(subCatArr.length === 0) subCatSelect.value = '';
+            }, 50);
             document.getElementById('offer-code').value = offer.code || '';
             document.getElementById('offer-validity').value = offer.validity || '';
             
@@ -3284,7 +3296,9 @@ document.addEventListener('DOMContentLoaded', () => {
           offerData.discount = document.getElementById('offer-discount').value;
           offerData.description = document.getElementById('offer-desc').value;
           offerData.category = document.getElementById('offer-category').value;
-          offerData.subcategory = document.getElementById('offer-subcategory').value;
+          const subCatSelect = document.getElementById('offer-subcategory');
+          offerData.subcategory = Array.from(subCatSelect.selectedOptions).filter(o => o.value !== '').map(opt => opt.value);
+          if(offerData.subcategory.length === 0) offerData.subcategory = ''; // default fallback
           offerData.code = document.getElementById('offer-code').value.toUpperCase();
           offerData.validity = document.getElementById('offer-validity').value;
 
@@ -3307,11 +3321,14 @@ document.addEventListener('DOMContentLoaded', () => {
           subcategorySelect.innerHTML = `<option value="">All Specific ${cat === 'All' ? 'Items' : cat + 's'}</option>`;
 
           let items = [];
-          if (cat === 'Excursion') items = getExcursions();
+          if (cat === 'All') items = [...getPackages(), ...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPhotography()];
+          else if (cat === 'Packages') items = getPackages();
+          else if (cat === 'Excursion') items = getExcursions();
           else if (cat === 'Private Booking') items = getPrivate().filter(p => !p.isTransfer);
           else if (cat === 'Boat Transfer') items = getPrivate().filter(p => p.isTransfer);
           else if (cat === 'Free Diving') items = getFreeDiving();
           else if (cat === 'Resort') items = getResorts();
+          else if (cat === 'Photography') items = getPhotography();
 
           items.forEach(item => {
             const opt = document.createElement('option');
