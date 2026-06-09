@@ -1087,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${getOfferBadgeHTML(offerCategory, true)}
             </div>
             <h3 class="card-title">${ex.title}</h3>
-            <p class="card-description">${ex.description}</p>
+            ${ex.description ? `<p class="card-description" style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: normal;">${ex.description}</p>` : ''}
             <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>
           </div>`;
         }
@@ -1499,8 +1499,8 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       const isPackage = getPackages().some(item => item.id === id);
-      const isPrivateCharter = id.startsWith('p');
-      const isResort = id.startsWith('rs');
+      const isPrivateCharter = getPrivate().some(item => item.id === id);
+      const isResort = getResorts().some(item => item.id === id);
       const resort = isResort ? (getResorts().find(item => item.id === id) || {}) : {};
       const allPkgs = [...getPackages(), ...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPhotography()];
       const pkgObj = allPkgs.find(x => x.id === id) || {};
@@ -3205,6 +3205,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prefix === 'ex' || prefix === 'fd') {
               itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
               itemData.privatePrice = parseFloat(document.getElementById(`${prefix}-private-price`).value) || 0;
+            } else if (prefix === 'package') {
+              itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
             }
             if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
             if (prefix === 'resort') {
