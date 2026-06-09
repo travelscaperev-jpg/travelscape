@@ -3159,9 +3159,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               }
 
-              if (prefix === 'ex' || prefix === 'fd') {
+              if (prefix === 'ex' || prefix === 'fd' || prefix === 'package') {
                 const priceEl = document.getElementById(`${prefix}-price`); if (priceEl) priceEl.value = item.price || 0;
-                const privatePriceEl = document.getElementById(`${prefix}-private-price`); if (privatePriceEl) privatePriceEl.value = item.privatePrice || 0;
+              }
+              if (prefix === 'ex' || prefix === 'fd') {
+                const privatePriceEl = document.getElementById(`${prefix}-private-price`); if (privatePriceEl) privatePriceEl.value = item.privatePrice || '';
               }
               const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
               const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
@@ -3234,7 +3236,8 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.maxCapacity = maxCapacity;
             if (prefix === 'ex' || prefix === 'fd') {
               itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
-              itemData.privatePrice = parseFloat(document.getElementById(`${prefix}-private-price`).value) || 0;
+              const privVal = document.getElementById(`${prefix}-private-price`).value.trim();
+              itemData.privatePrice = privVal ? privVal : 0;
             } else if (prefix === 'package') {
               itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
             }
