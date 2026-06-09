@@ -1850,9 +1850,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Destination Island</label>
                   <select id="transfer-to" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    <option value="male">Airport / Male</option>
-                    <option value="maafushi">Maafushi</option>
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : ''}
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="" disabled selected>No destinations available</option>'}
                   </select>
                 </div>
                 
