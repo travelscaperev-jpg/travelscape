@@ -119,43 +119,7 @@
 
   <!-- Booking Modal -->
   <div id="booking-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
-    <div style="background:#121824; border: 1px solid rgba(255,255,255,0.08); padding:2rem; border-radius:var(--radius); width:90%; max-width:450px; box-shadow: 0 10px 35px rgba(0,0,0,0.5);">
-      <h3 style="color:#fff; margin-bottom:1.5rem; font-size:1.4rem;">Book Package</h3>
-      <h4 style="color:#94a3b8; margin-bottom:1rem; font-weight:500;">Package: <span id="booking-excursion-title" style="color:#38bdf8; font-weight:700;"></span></h4>
-      <form id="booking-form">
-        <input type="hidden" id="booking-excursion-id">
-        <div style="margin-bottom:1rem;">
-          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Your Name</label>
-          <input type="text" id="booking-name" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-        </div>
-        <div style="margin-bottom:1rem;">
-          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Email Address</label>
-          <input type="email" id="booking-email" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-        </div>
-        <div style="margin-bottom:1rem;">
-          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Preferred Date</label>
-          <input type="date" id="booking-date" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-        </div>
-        <div style="margin-bottom:1rem;">
-          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Payment Basis</label>
-          <select id="booking-payment" required style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-          </select>
-        </div>
-        <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
-          <input type="checkbox" id="booking-private" style="width:18px; height:18px; cursor:pointer;">
-          <label for="booking-private" style="color:#94a3b8; font-size:0.95rem; cursor:pointer; user-select:none;">Private Trip (Group Booking)</label>
-        </div>
-        <div id="booking-persons-group" style="margin-bottom:1.5rem; display:none;">
-          <label style="display:block; color:#94a3b8; margin-bottom:0.3rem; font-size:0.9rem;">Number of Persons</label>
-          <input type="number" id="booking-persons" min="1" value="1" style="width:100%; padding:0.75rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem;">Confirm Booking</button>
-        <button type="button" id="close-modal" style="width:100%; margin-top:0.5rem; background:transparent; border:none; color:#94a3b8; cursor:pointer; padding:0.5rem 0;">Cancel</button>
-      </form>
-    </div>
+    <!-- Dynamically populated by script.js openBookingModal() -->
   </div>
 
   <script src="script.js"></script>
