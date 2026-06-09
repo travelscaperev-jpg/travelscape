@@ -711,6 +711,7 @@ nav {
   color: #94a3b8;
   line-height: 1.6;
   margin-bottom: 1.25rem;
+  white-space: pre-wrap;
 }
 
 .card .book-btn {
@@ -2790,7 +2791,7 @@ body.minimal-body {
 /* Override dynamically injected JS grid elements to fit dark parallax */
 .grid-display {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 2rem;
   margin-bottom: 4rem;
 }
@@ -2970,6 +2971,7 @@ body.minimal-body {
   line-height: 1.6;
   margin-bottom: 2rem;
   color: #cbd5e1;
+  white-space: pre-wrap;
 }
 
 /* Floating Book Now Button */

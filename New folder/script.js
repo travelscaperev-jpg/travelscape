@@ -1011,8 +1011,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div>
               <span class="duration-badge" style="display: inline-block; background: rgba(6, 182, 212, 0.08); color: #06b6d4; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(6, 182, 212, 0.15); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${ex.duration}</span>
-              <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0;">${ex.description}</p>
-              ${ex.fullDescription ? `<p style="color: #94a3b8; line-height: 1.6; font-size: 0.95rem; margin: 0;">${ex.fullDescription}</p>` : ''}
+              <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0; white-space: pre-wrap;">${ex.description}</p>
+              ${ex.fullDescription ? `<p style="color: #94a3b8; line-height: 1.6; font-size: 0.95rem; margin: 0; white-space: pre-wrap;">${ex.fullDescription}</p>` : ''}
             </div>
             ${ex.highlights ? `<div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;"><h4 style="color: #fff; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700;">Highlights</h4><ul style="margin: 0; padding-left: 1.25rem; color: #cbd5e1; list-style-type: disc; font-size: 0.9rem; line-height: 1.6;">${ex.highlights.split(',').map(h => `<li>${h.trim()}</li>`).join('')}</ul></div>` : ''}
             ${isResort ? `
@@ -1076,6 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
           cardBodyHtml = `
           <div class="card-body" style="padding: 1.25rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; min-height: 80px;">
             <h3 class="card-title" style="margin: 0; font-size: 1.15rem;">${ex.title}</h3>
+            ${ex.description ? `<p class="card-description" style="margin: 0; font-size: 0.9rem; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${ex.description}</p>` : ''}
             <button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>
           </div>`;
         } else {
@@ -1116,6 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Store reference for background refresh
     renderCardGridFn = renderCardGrid;
 
+    renderCardGrid('packages-grid', getPackages(), 'Book Now', 'Package', 'packages');
     renderCardGrid('excursions-grid', getExcursions(), 'Book Now', 'Excursion', 'excursion');
     renderCardGrid('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
     renderCardGrid('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
@@ -1508,31 +1510,36 @@ document.addEventListener('DOMContentLoaded', () => {
         bookingModal.innerHTML = `
           <div class="modal-content-minimal" style="max-width: 480px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">Book Resort Pass</h3>
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">Book Resort Visit</h3>
               <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
             </div>
-            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Selected: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
+            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Resort: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
             <form id="booking-form-dynamic" style="display: flex; flex-direction: column; gap: 1rem;">
               <input type="hidden" id="booking-excursion-id" value="${id}">
               <input type="hidden" id="booking-excursion-title" value="${title}">
               
-              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Full Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Booking</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Visit</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
 
-
-              <!-- Resort dynamic configuration options -->
+              <!-- Resort-specific options -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <h5 style="color: #38bdf8; margin: 0; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Pass Package Settings</h5>
+                <h5 style="color: #38bdf8; margin: 0; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Resort Visit Options</h5>
                 
                 <div>
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Select Package</label>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Visit Type</label>
                   <select id="resort-package-type" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    ${resort.hasDayVisit && (resort.dayVisitType === 'half_day' || resort.dayVisitType === 'both') ? '<option value="half_day">Half Day Pass</option>' : ''}
-                    ${resort.hasDayVisit && (resort.dayVisitType === 'full_day' || resort.dayVisitType === 'both') ? '<option value="full_day">Full Day Pass</option>' : ''}
+                    ${resort.hasDayVisit ? '<option value="day_visit">Day Visit</option>' : ''}
                     ${resort.hasStayNight ? '<option value="stay_night">Night Stay</option>' : ''}
+                  </select>
+                </div>
+
+                <div id="resort-day-duration-container" style="display: none;">
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Day Duration</label>
+                  <select id="resort-day-duration" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
+                    ${resort.dayVisitType === 'half_day' || resort.dayVisitType === 'both' ? '<option value="half_day">Half Day</option>' : ''}
+                    ${resort.dayVisitType === 'full_day' || resort.dayVisitType === 'both' ? '<option value="full_day">Full Day</option>' : ''}
                   </select>
                 </div>
 
@@ -1543,22 +1550,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <!-- Additional Services and Group settings -->
+              <!-- Guest count -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <div id="booking-type-container">
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Booking Type</label>
-                  <select id="booking-type" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    <option value="Individual">Individual Booking</option>
-                    <option value="Group">Group Booking</option>
-                  </select>
+                <h5 style="color: #38bdf8; margin: 0; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Guests</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">No. of Adults</label><input type="number" id="booking-adults" min="1" value="1" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">No. of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
                 </div>
+                <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              </div>
 
-                <div id="booking-group-details" style="display: none; flex-direction: column; gap: 1rem;">
-                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Adults</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-                  <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-                  <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
-                </div>
-
+              <!-- Offer code & price -->
+              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
                 <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                   <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
@@ -1575,28 +1578,39 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBtn.addEventListener('click', closeBookingModal);
 
         const packageTypeSelect = bookingModal.querySelector('#resort-package-type');
+        const dayDurationContainer = bookingModal.querySelector('#resort-day-duration-container');
+        const dayDurationSelect = bookingModal.querySelector('#resort-day-duration');
         const tierSelect = bookingModal.querySelector('#resort-package-tier');
-        const photoSelect = bookingModal.querySelector('#booking-photography');
-
-        const typeContainer = bookingModal.querySelector('#booking-type-container');
-        const typeSelect = bookingModal.querySelector('#booking-type');
-        const groupDetails = bookingModal.querySelector('#booking-group-details');
         const adultsInput = bookingModal.querySelector('#booking-adults');
         const kidsInput = bookingModal.querySelector('#booking-kids');
         const kidsAgesGroup = bookingModal.querySelector('#booking-kids-ages-group');
         const priceDisplay = bookingModal.querySelector('#booking-price-display');
 
+        // Show/hide day duration based on visit type
+        const updateVisitTypeUI = () => {
+          const visitType = packageTypeSelect ? packageTypeSelect.value : '';
+          if (visitType === 'day_visit') {
+            dayDurationContainer.style.display = 'block';
+          } else {
+            dayDurationContainer.style.display = 'none';
+          }
+          updateTierOptions();
+        };
+
         const updateTierOptions = () => {
-          const packageType = packageTypeSelect ? packageTypeSelect.value : '';
+          const visitType = packageTypeSelect ? packageTypeSelect.value : '';
+          const dayDuration = dayDurationSelect ? dayDurationSelect.value : '';
 
           let stdPrice, premPrice;
-          if (packageType === 'half_day') {
-            stdPrice = resort.dayHalfStd;
-            premPrice = resort.dayHalfPrem;
-          } else if (packageType === 'full_day') {
-            stdPrice = resort.dayFullStd;
-            premPrice = resort.dayFullPrem;
-          } else if (packageType === 'stay_night') {
+          if (visitType === 'day_visit') {
+            if (dayDuration === 'half_day') {
+              stdPrice = resort.dayHalfStd;
+              premPrice = resort.dayHalfPrem;
+            } else if (dayDuration === 'full_day') {
+              stdPrice = resort.dayFullStd;
+              premPrice = resort.dayFullPrem;
+            }
+          } else if (visitType === 'stay_night') {
             stdPrice = resort.stayStd;
             premPrice = resort.stayPrem;
           }
@@ -1612,12 +1626,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!tierSelect || !priceDisplay) return;
           const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
           const basePrice = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
-          const photoOpt = photoSelect ? photoSelect.options[photoSelect.selectedIndex] : null;
-          const photoPrice = photoOpt ? (parseFloat(photoOpt.dataset.price) || 0) : 0;
 
-          const isGroup = typeSelect.value === 'Group';
-          const adults = isGroup ? (parseInt(adultsInput.value) || 1) : 1;
-          const kids = isGroup ? (parseInt(kidsInput.value) || 0) : 0;
+          const adults = parseInt(adultsInput.value) || 1;
+          const kids = parseInt(kidsInput.value) || 0;
 
           let total = basePrice * adults;
           if (kids > 0) {
@@ -1638,7 +1649,8 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           }
-          total += photoPrice;
+
+          // Apply offer code
           const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
           const offerMessage = bookingModal.querySelector('#booking-offer-message');
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
@@ -1666,15 +1678,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (packageTypeSelect) {
-          packageTypeSelect.addEventListener('change', updateTierOptions);
+          packageTypeSelect.addEventListener('change', updateVisitTypeUI);
+        }
+        if (dayDurationSelect) {
+          dayDurationSelect.addEventListener('change', updateTierOptions);
         }
         tierSelect.addEventListener('change', updateTotalPrice);
-        if (photoSelect) photoSelect.addEventListener('change', updateTotalPrice);
-
-        typeSelect.addEventListener('change', (e) => {
-          groupDetails.style.display = e.target.value === 'Group' ? 'flex' : 'none';
-          updateTotalPrice();
-        });
 
         kidsInput.addEventListener('input', (e) => {
           kidsAgesGroup.style.display = (parseInt(e.target.value) || 0) > 0 ? 'block' : 'none';
@@ -1692,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dateInputRS) dateInputRS.addEventListener('input', checkSlotsAvailability);
 
         // Init options and prices
-        updateTierOptions();
+        updateVisitTypeUI();
 
         const form = bookingModal.querySelector('#booking-form-dynamic');
         form.addEventListener('submit', async (e) => {
@@ -1702,12 +1711,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const emailId = form.querySelector('#booking-email').value;
           const bookingDate = form.querySelector('#booking-date').value;
 
-          const bookingType = typeSelect.value;
-          const isGroup = bookingType === 'Group';
-          const adults = isGroup ? (parseInt(form.querySelector('#booking-adults').value) || 1) : 1;
-          const kids = isGroup ? (parseInt(form.querySelector('#booking-kids').value) || 0) : 0;
-          const kidsAges = isGroup ? form.querySelector('#booking-kids-ages').value : '';
-          const photographyId = photoSelect ? photoSelect.value : '';
+          const adults = parseInt(form.querySelector('#booking-adults').value) || 1;
+          const kids = parseInt(form.querySelector('#booking-kids').value) || 0;
+          const kidsAges = form.querySelector('#booking-kids-ages').value || '';
 
           // Slots availability double check
           const allPackages = [
@@ -1724,22 +1730,25 @@ document.addEventListener('DOMContentLoaded', () => {
               .filter(b => b.excursionId === id && b.bookingDate === bookingDate)
               .reduce((sum, b) => sum + (parseInt(b.numPersons) || 1), 0);
             const remaining = maxCap - alreadyBooked;
-            const requested = isGroup ? (adults + kids) : 1;
+            const requested = adults + kids;
             if (remaining <= 0 || requested > remaining) {
               alert(`Booking failed: Exceeded maximum daily capacity. Only ${remaining} slot(s) left on this date.`);
               return;
             }
           }
 
-          const packageType = packageTypeSelect ? packageTypeSelect.value : '';
+          const visitType = packageTypeSelect ? packageTypeSelect.value : '';
+          const dayDuration = dayDurationSelect ? dayDurationSelect.value : '';
           const selectedTier = tierSelect.value;
           const selectedOpt = tierSelect.options[tierSelect.selectedIndex];
           const ratePaid = selectedOpt ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
 
           let packageLabel = '';
-          if (packageType === 'half_day') packageLabel = 'Half Day Pass';
-          else if (packageType === 'full_day') packageLabel = 'Full Day Pass';
-          else if (packageType === 'stay_night') packageLabel = 'Night Stay';
+          if (visitType === 'day_visit') {
+            packageLabel = dayDuration === 'half_day' ? 'Day Visit - Half Day' : 'Day Visit - Full Day';
+          } else if (visitType === 'stay_night') {
+            packageLabel = 'Night Stay';
+          }
 
           const detailedTitle = `${title} (${packageLabel} - ${selectedTier})`;
 
@@ -1756,13 +1765,13 @@ document.addEventListener('DOMContentLoaded', () => {
             customerContact: contactNumber,
             bookingDate,
             paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway',
-            bookingType,
+            bookingType: 'Group',
             adults,
             kids,
             kidsAges,
             isPrivate: false,
-            photographyId: photographyId,
-            numPersons: isGroup ? (adults + kids) : 1,
+            photographyId: '',
+            numPersons: adults + kids,
             status: isOfficeUser ? 'Pending' : 'Confirmed',
             ratePaid: ratePaid,
             totalPrice: totalPrice,
@@ -3002,9 +3011,12 @@ document.addEventListener('DOMContentLoaded', () => {
             itemData.title = title; itemData.image = image; itemData.video = video; itemData.description = description; itemData.fullDescription = fullDescription; itemData.duration = duration; itemData.highlights = highlights; itemData.subImages = subImages; itemData.subImg1 = subImg1; itemData.subImg2 = subImg2;
             const videoRatioEl = document.getElementById(`${prefix}-video-ratio`);
             itemData.videoRatio = videoRatioEl ? videoRatioEl.value : '16:9';
-            const kidAgeHalf = parseInt(document.getElementById(`${prefix}-kid-half`).value) || 0;
-            const kidAgeFree = parseInt(document.getElementById(`${prefix}-kid-free`).value) || 0;
-            const maxCapacity = parseInt(document.getElementById(`${prefix}-max-capacity`).value) || 20;
+            const kidHalfEl = document.getElementById(`${prefix}-kid-half`);
+            const kidAgeHalf = kidHalfEl ? (parseInt(kidHalfEl.value) || 0) : 0;
+            const kidFreeEl = document.getElementById(`${prefix}-kid-free`);
+            const kidAgeFree = kidFreeEl ? (parseInt(kidFreeEl.value) || 0) : 0;
+            const maxCapEl = document.getElementById(`${prefix}-max-capacity`);
+            const maxCapacity = maxCapEl ? (parseInt(maxCapEl.value) || 20) : 20;
             itemData.kidAgeHalf = kidAgeHalf;
             itemData.kidAgeFree = kidAgeFree;
             itemData.maxCapacity = maxCapacity;
