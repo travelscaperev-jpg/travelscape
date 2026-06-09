@@ -2803,6 +2803,12 @@ body.minimal-body {
   backdrop-filter: blur(10px) !important;
 }
 
+#gallery-grid .video-card {
+  max-width: 320px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 .grid-display .card:hover {
   border-color: #38bdf8 !important;
 }

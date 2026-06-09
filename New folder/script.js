@@ -844,6 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!b) return;
 
       const allItems = [
+        ...getPackages(),
         ...getExcursions(),
         ...getPrivate(),
         ...getFreeDiving(),
@@ -1312,8 +1313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupParallaxLayer(5, 'RESORTS', getResorts(), 'Resort');
     setupParallaxLayer(6, 'PROFESSIONAL PHOTOGRAPHY', getPhotography(), 'Photography');
 
-    // Request native OS notification permission on load
-    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    // Request native OS notification permission on load ONLY if logged in
+    const isOfficeUserForNotification = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+    if (isOfficeUserForNotification && typeof Notification !== 'undefined' && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
 
@@ -1617,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let html = '';
           if (stdPrice) html += `<option value="Standard" data-price="${stdPrice}">Standard ($${stdPrice})</option>`;
-          if (premPrice) html += `<option value="Premium" data-price="${premPrice}">Premium ($${premPrice})</option>`;
+          if (premPrice && parseFloat(premPrice) > 0) html += `<option value="Premium" data-price="${premPrice}">Premium ($${premPrice})</option>`;
           tierSelect.innerHTML = html || '<option value="Standard" data-price="0">N/A ($0)</option>';
           updateTotalPrice();
         };
@@ -1842,7 +1844,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   <select id="transfer-from" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                     <option value="male">Airport / Male</option>
                     <option value="maafushi">Maafushi</option>
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : ''}
                   </select>
                 </div>
 
@@ -2272,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Add Professional Photography</label>
                 <select id="booking-photography" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                   <option value="" data-price="0">None</option>
-                  ${getPhotography().map(p => `<option value="${p.id}" data-price="${p.price}">${p.title} (+$${p.price || 0})</option>`).join('')}
+                  ${getPhotography().map(p => `<option value="${p.id}" data-price="${p.price}">${p.title}</option>`).join('')}
                 </select>
               </div>
 
