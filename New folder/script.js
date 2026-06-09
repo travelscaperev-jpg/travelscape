@@ -1320,7 +1320,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const showSystemNotification = (booking) => {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      const isLoggedForNotification = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+      if (isLoggedForNotification && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification("New Booking Received! 🌊", {
           body: `${booking.customerName} booked ${booking.excursionTitle} for ${booking.bookingDate}.`,
           icon: "1.png"
@@ -1354,7 +1355,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Contact Message Notification Functions ---
     const showContactSystemNotification = (msg) => {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      const isLoggedForNotification = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+      if (isLoggedForNotification && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification("New Contact Message! ✉️", {
           body: `${msg.name} (${msg.email}): ${msg.subject || 'No subject'}`,
           icon: "1.png"
