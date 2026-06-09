@@ -1322,10 +1322,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const showSystemNotification = (booking) => {
       const isLoggedForNotification = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
       if (isLoggedForNotification && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification("New Booking Received! 🌊", {
+        const title = "New Booking Received! 🌊";
+        const options = {
           body: `${booking.customerName} booked ${booking.excursionTitle} for ${booking.bookingDate}.`,
           icon: "1.png"
-        });
+        };
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
+        } else {
+          new Notification(title, options);
+        }
       }
     };
 
@@ -1357,10 +1363,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const showContactSystemNotification = (msg) => {
       const isLoggedForNotification = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
       if (isLoggedForNotification && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification("New Contact Message! ✉️", {
+        const title = "New Contact Message! ✉️";
+        const options = {
           body: `${msg.name} (${msg.email}): ${msg.subject || 'No subject'}`,
           icon: "1.png"
-        });
+        };
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
+        } else {
+          new Notification(title, options);
+        }
       }
     };
 
@@ -4092,7 +4104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.serviceWorker.register('/sw.js').then(swReg => {
           Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
-              const publicVapidKey = 'BH0r9wEhp1WMlLapNhkqQXwSXXutqK7nD3l0JccbMytELzU9qu5nqc2a6v0bU3LVpXwUZgIYR26M0yQ1CLWF54A';
+              const publicVapidKey = 'BAzHNiDXQx-4SaWhW-R4k-NDUtYMQ7gEVgB1nUeunMJtRMdxD5k45406fXo7R5lfeQrkyFgFhimXE7W6D6V2wwg';
               
               function urlBase64ToUint8Array(base64String) {
                 const padding = '='.repeat((4 - base64String.length % 4) % 4);

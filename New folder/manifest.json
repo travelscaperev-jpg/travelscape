@@ -1,0 +1,21 @@
+{
+  "name": "Travelscape Maldives",
+  "short_name": "Travelscape",
+  "description": "Travelscape Maldives Booking Portal",
+  "start_url": "/admin.html",
+  "display": "standalone",
+  "background_color": "#080d1a",
+  "theme_color": "#38bdf8",
+  "icons": [
+    {
+      "src": "1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
