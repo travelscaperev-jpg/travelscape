@@ -1887,7 +1887,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Departing From</label>
                   <select id="transfer-from" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="" disabled selected>No locations available</option>'}
+                    <option value="${pkgObj.hub1Name || 'Airport / Male'}">${pkgObj.hub1Name || 'Airport / Male'}</option>
+                    <option value="${pkgObj.hub2Name || 'Maafushi'}">${pkgObj.hub2Name || 'Maafushi'}</option>
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : ''}
                   </select>
                 </div>
 
@@ -1963,6 +1965,12 @@ document.addEventListener('DOMContentLoaded', () => {
               if (isHub2 && (conn === 'both' || conn === 'hub2')) return true;
               return false;
             });
+            if (isHub1 && !toOptions.some(i => i.name === h2Name || /maafushi/i.test(i.name))) {
+              toOptions.push({ name: h2Name });
+            }
+            if (isHub2 && !toOptions.some(i => i.name === h1Name || /airport|male/i.test(i.name))) {
+              toOptions.push({ name: h1Name });
+            }
           } else {
             const islandConf = islands.find(i => i.name === fromValue);
             if (islandConf) {
