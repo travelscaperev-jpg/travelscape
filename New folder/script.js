@@ -508,6 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try { const db = localDb.read(); db.crew = data; localDb.write(db); } catch(e) {}
     await api.post('crew', data);
   };
+  const getStaffAccounts = () => dataCache.staffAccounts || [];
+  const setStaffAccounts = async (data) => {
+    dataCache.staffAccounts = data;
+    try { const db = localDb.read(); db.staff_accounts = data; localDb.write(db); } catch(e) {}
+    await api.post('staff_accounts', data);
+  };
 
   const getOfferBadgeHTML = (category, isCard = false) => {
     const offers = getOffers();
@@ -545,12 +551,13 @@ document.addEventListener('DOMContentLoaded', () => {
       googleReview: cachedDb.google_review || '',
       contactMessages: cachedDb.contact_messages || [],
       instagramConfig: cachedDb.instagram_config || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew: cachedDb.crew || []
+      crew: cachedDb.crew || [],
+      staffAccounts: cachedDb.staff_accounts || []
     };
   };
 
   // Build dataCache from API results
-  const applyDataFromAPI = ([packages, excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offers, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew]) => {
+  const applyDataFromAPI = ([packages, excursions, privateBookings, freediving, resorts, photography, bookings, testimonials, reels, gallery, offers, heroVideoData, heroVideosData, googleReviewData, contactMessages, instagramConfig, crew, staffAccounts]) => {
     dataCache = {
       packages:      packages      || [],
       excursions:    excursions    || [],
@@ -568,7 +575,8 @@ document.addEventListener('DOMContentLoaded', () => {
       googleReview:  (googleReviewData && googleReviewData.url) || '',
       contactMessages: contactMessages || [],
       instagramConfig: instagramConfig || { accessToken: '', postCount: 4, profileUrl: 'https://instagram.com/travelscapemaldives', enabled: false, cachedPosts: [], lastFetched: null },
-      crew:          crew          || []
+      crew:          crew          || [],
+      staffAccounts: staffAccounts || []
     };
     try {
       const db = localDb.read();
@@ -589,6 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db.contact_messages = dataCache.contactMessages;
       db.instagram_config = dataCache.instagramConfig;
       db.crew = dataCache.crew;
+      db.staff_accounts = dataCache.staffAccounts;
       localDb.write(db);
     } catch(e) {
       console.warn('Failed to sync API data to localStorage:', e);
@@ -614,10 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
       api.get('google-review'),
       api.get('contact_messages'),
       api.get('instagram_config'),
-      api.get('crew')
+      api.get('crew'),
+      api.get('staff_accounts')
     ]);
     // Extract values (null for failed calls)
     const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
+    // Note: applyDataFromAPI signature needs updating below to match array size
     applyDataFromAPI(results);
     return dataCache;
   }
@@ -1812,8 +1823,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ratePaid: ratePaid,
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
-            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
             entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
@@ -1962,6 +1973,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 toOptions = islands.filter(i => i.name === h1Name || /airport|male/i.test(i.name));
               } else if (conn === 'hub2') {
                 toOptions = islands.filter(i => i.name === h2Name || /maafushi/i.test(i.name));
+              }
+              
+              if ((conn === 'both' || conn === 'hub1') && !toOptions.some(i => i.name === h1Name || /airport|male/i.test(i.name))) {
+                toOptions.push({ name: h1Name });
+              }
+              if ((conn === 'both' || conn === 'hub2') && !toOptions.some(i => i.name === h2Name || /maafushi/i.test(i.name))) {
+                toOptions.push({ name: h2Name });
               }
             }
           }
@@ -2126,8 +2144,8 @@ document.addEventListener('DOMContentLoaded', () => {
             transferFrom: fromStr,
             transferTo: toStr,
             transferPax: pax,
-            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
-            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
             entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
@@ -2320,8 +2338,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ratePaid: parseFloat(pkgObj.price) || 0,
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
-            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
             entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
@@ -2584,8 +2602,8 @@ document.addEventListener('DOMContentLoaded', () => {
             isPrivate: isPrivate, photographyId: photographyId, numPersons: isGroup ? (adults + kids) : 1, status: isOfficeUser ? 'Pending' : 'Confirmed',
             totalPrice: totalPrice,
             offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
-            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
-            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : 'Staff') : 'Guest',
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
             entryTime: new Date().toLocaleString(),
             deviceType: getDeviceType()
           };
@@ -2812,6 +2830,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (result && result.success) {
             staffGate.style.display = 'none';
             localStorage.setItem('staff_logged', 'true');
+            if (result.staffName) {
+              localStorage.setItem('staff_name', result.staffName);
+            }
             if (!useFallback) {
               fetchAllFromAPI().catch(() => {});
             }
@@ -2846,6 +2867,31 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.dashboardPollInterval) clearInterval(window.dashboardPollInterval);
       if (window.dashboardContactPollInterval) clearInterval(window.dashboardContactPollInterval);
       window.dashboardRenderLists = [];
+
+      if (role === 'staff') {
+        const permsStr = localStorage.getItem('staff_permissions');
+        if (permsStr) {
+          let perms = [];
+          try { perms = JSON.parse(permsStr); } catch(e) {}
+          if (perms.length > 0) {
+            const allTabs = ['bookings', 'packages', 'excursions', 'private', 'freediving', 'resorts', 'photography', 'offers', 'testimonials', 'media', 'crew', 'contact-messages'];
+            let firstPermitted = null;
+            allTabs.forEach(tab => {
+              const btn = document.getElementById(`tab-btn-${tab}`);
+              const sec = document.getElementById(`tab-${tab}`);
+              if (!perms.includes(tab)) {
+                if (btn) btn.style.display = 'none';
+              } else {
+                if (btn) btn.style.display = 'block';
+                if (!firstPermitted) firstPermitted = tab;
+              }
+            });
+            if (firstPermitted && typeof switchDashboardTab === 'function') {
+              setTimeout(() => switchDashboardTab(firstPermitted), 50);
+            }
+          }
+        }
+      }
       const tableId = role === 'admin' ? 'admin-bookings-table' : 'staff-bookings-table';
       const privateTableId = role === 'admin' ? 'admin-private-bookings-table' : 'staff-private-bookings-table';
       const bookingsTable = document.getElementById(tableId);
@@ -2958,6 +3004,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
             <td style="padding: 1rem 0; color: ${b.status === 'Confirmed' ? '#10b981' : '#f59e0b'};">${b.status}</td>
             <td style="padding: 1rem 0;">
+              ${b.bookedBy ? `<div style="font-size:0.8rem; font-weight:600; color:#38bdf8;">Created: ${b.bookedBy}</div>` : '<div style="font-size:0.8rem; color:#94a3b8;">Created: Guest</div>'}
+              ${b.editedBy ? `<div style="font-size:0.8rem; color:#a855f7; margin-top:4px;">Edited: ${b.editedBy}</div>` : ''}
+            </td>
+            <td style="padding: 1rem 0;">
               ${b.status === 'Pending' && role === 'admin' ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
               <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
               ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>` : ''}
@@ -2981,7 +3031,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; await api.put('bookings/' + found.id, found); try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); } }); });
+        document.querySelectorAll('.approve-btn').forEach(btn => { btn.addEventListener('click', async (e) => { const list = getBookings(); const found = list.find(item => item.id === e.target.dataset.id); if (found) { found.status = 'Confirmed'; found.editedBy = localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff'; await api.put('bookings/' + found.id, found); try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); } }); });
         document.querySelectorAll('.print-booking-btn').forEach(btn => { btn.addEventListener('click', (e) => printIndividualBooking(e.target.dataset.id)); });
         document.querySelectorAll('.delete-booking-btn').forEach(btn => { btn.addEventListener('click', async (e) => { if (!confirm('Are you sure you want to cancel this booking?')) return; const id = e.target.dataset.id; await api.del('bookings/' + id); const list = getBookings().filter(item => item.id !== id); dataCache.bookings = list; try { const db = localDb.read(); db.bookings = list; localDb.write(db); } catch(err) {} renderBookings(); }); });
       };
@@ -3536,6 +3586,127 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCrewList();
       if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
       window.dashboardRenderLists.push(renderCrewList);
+
+      // --- Staff Accounts Management Tab ---
+      const staffAccListContainer = document.getElementById('admin-staff-acc-list');
+      const staffAccForm = document.getElementById('admin-add-staff-acc-form');
+
+      const renderStaffAccList = () => {
+        if (!staffAccListContainer) return;
+        const list = getStaffAccounts();
+        staffAccListContainer.innerHTML = list.map(item => {
+          if (!item) return '';
+          return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:1rem; border-radius:var(--radius); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.05);">
+              <div>
+                <h4 style="color:#fff;">${item.name}</h4>
+                <p style="color:#38bdf8; font-size:0.9rem;">Password: ••••••••</p>
+                <p style="color:#10b981; font-size:0.8rem; margin-top:4px;">Access: ${item.permissions && item.permissions.length > 0 ? item.permissions.join(', ') : 'None'}</p>
+              </div>
+              <div>
+                <button class="btn staff-acc-edit-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#3b82f6; color:#fff; font-size:0.85rem; margin-right:5px;">Edit</button>
+                <button class="btn staff-acc-delete-btn" data-id="${item.id}" style="padding:0.4rem 0.8rem; background:#ef4444; color:#fff; font-size:0.85rem;">Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        staffAccListContainer.querySelectorAll('.staff-acc-delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            if (!confirm('Are you sure you want to delete this staff account?')) return;
+            const items = getStaffAccounts().filter(x => x.id !== e.target.dataset.id);
+            await setStaffAccounts(items);
+            renderStaffAccList();
+          });
+        });
+
+        staffAccListContainer.querySelectorAll('.staff-acc-edit-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const item = getStaffAccounts().find(x => x.id === e.target.dataset.id);
+            if (!item) return;
+            document.getElementById('staff-acc-id').value = item.id;
+            document.getElementById('staff-acc-name').value = item.name || '';
+            document.getElementById('staff-acc-password').value = item.password || '';
+            document.querySelectorAll('.staff-perm-checkbox').forEach(cb => {
+              cb.checked = (item.permissions || []).includes(cb.value);
+            });
+            const permAllCheckbox = document.getElementById('staff-perm-all');
+            if (permAllCheckbox) permAllCheckbox.checked = false;
+            document.getElementById('staff-acc-form-title').textContent = 'Edit Staff Account';
+            document.getElementById('staff-acc-submit-btn').textContent = 'Save Changes';
+            document.getElementById('staff-acc-cancel-btn').style.display = 'block';
+          });
+        });
+      };
+
+      const resetStaffAccForm = () => {
+        if (staffAccForm) staffAccForm.reset();
+        document.getElementById('staff-acc-id').value = '';
+        document.getElementById('staff-acc-form-title').textContent = 'Add New Staff Account';
+        document.getElementById('staff-acc-submit-btn').textContent = 'Create Staff Account';
+        document.getElementById('staff-acc-cancel-btn').style.display = 'none';
+        document.querySelectorAll('.staff-perm-checkbox').forEach(cb => cb.checked = false);
+        const permAllCheckbox = document.getElementById('staff-perm-all');
+        if (permAllCheckbox) permAllCheckbox.checked = false;
+      };
+
+      const staffAccCancelBtn = document.getElementById('staff-acc-cancel-btn');
+      if (staffAccCancelBtn) staffAccCancelBtn.addEventListener('click', resetStaffAccForm);
+
+      if (staffAccForm) {
+        const permAllCheckbox = document.getElementById('staff-perm-all');
+        if (permAllCheckbox) {
+          permAllCheckbox.addEventListener('change', (e) => {
+            document.querySelectorAll('.staff-perm-checkbox').forEach(cb => {
+              cb.checked = e.target.checked;
+            });
+          });
+        }
+
+        staffAccForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const submitBtn = document.getElementById('staff-acc-submit-btn');
+          const origBtnText = submitBtn ? submitBtn.textContent : '';
+          if (submitBtn) {
+            submitBtn.textContent = 'Saving...';
+            submitBtn.disabled = true;
+          }
+
+          try {
+            const idVal = document.getElementById('staff-acc-id').value;
+            const list = [...getStaffAccounts()];
+            const name = document.getElementById('staff-acc-name').value.trim();
+            const password = document.getElementById('staff-acc-password').value.trim();
+            
+            const itemData = idVal ? list.find(x => x.id === idVal) : { id: Date.now().toString() };
+            itemData.name = name;
+            itemData.password = password;
+            itemData.permissions = Array.from(document.querySelectorAll('.staff-perm-checkbox'))
+              .filter(cb => cb.checked)
+              .map(cb => cb.value);
+
+            if (!idVal) {
+              list.push(itemData);
+            }
+            await setStaffAccounts(list);
+            resetStaffAccForm();
+            renderStaffAccList();
+            alert('Staff account saved successfully!');
+          } catch (error) {
+            console.error(error);
+            alert('Failed to save staff account: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.textContent = origBtnText;
+              submitBtn.disabled = false;
+            }
+          }
+        };
+      }
+
+      renderStaffAccList();
+      if (!window.dashboardRenderLists) window.dashboardRenderLists = [];
+      window.dashboardRenderLists.push(renderStaffAccList);
 
       // --- Seasonal Offers Tab ---
       // --- Seasonal Offers Tab ---

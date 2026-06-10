@@ -217,16 +217,28 @@ app.post('/api/auth/login', async (req, res) => {
     const adminPass = process.env.ADMIN_PASSWORD;
     const staffPass = process.env.STAFF_PASSWORD;
 
-    if (!adminPass || !staffPass) {
-      return res.status(500).json({ success: false, message: 'Authentication passwords are not configured on the server. Please set ADMIN_PASSWORD and STAFF_PASSWORD in Render environment variables.' });
+    if (!adminPass) {
+      return res.status(500).json({ success: false, message: 'Admin password is not configured on the server.' });
     }
 
     if (role === 'admin' && password === adminPass) {
       return res.json({ success: true, role: 'admin' });
     }
-    if (role === 'staff' && password === staffPass) {
-      return res.json({ success: true, role: 'staff' });
+    
+    if (role === 'staff') {
+      const staffList = await getCacheValue('staff_accounts', []);
+      const staff = staffList.find(s => s.password === password);
+      
+      if (staff) {
+        return res.json({ success: true, role: 'staff', staffName: staff.name, staffPermissions: staff.permissions || [] });
+      }
+      
+      // Fallback to legacy STAFF_PASSWORD in .env for backwards compatibility
+      if (staffPass && password === staffPass) {
+        return res.json({ success: true, role: 'staff', staffName: 'Legacy Staff' });
+      }
     }
+    
     return res.status(401).json({ success: false, message: 'Incorrect password' });
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -345,6 +357,7 @@ registerCollectionRoutes('gallery',          'gallery');
 registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 registerCollectionRoutes('crew',             'crew');
+registerCollectionRoutes('staff_accounts',   'staff_accounts');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -684,6 +697,7 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('google_review',    'https://google.com'),
       seedKeyIfEmpty('offer',            defaultOffer),
       seedKeyIfEmpty('crew',             defaultCrew),
+      seedKeyIfEmpty('staff_accounts',   []),
     ];
     await Promise.all(promises);
     console.log('✅ Database checks and rich content seeding finished.');

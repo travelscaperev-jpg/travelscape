@@ -85,6 +85,7 @@
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
       <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
+      <a onclick="switchDashboardTab('staff-accounts')" id="tab-btn-staff-accounts">Manage Staff Accounts</a>
       <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span
           id="contact-msg-badge"
           style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
@@ -195,6 +196,7 @@
                   <th style="padding: 1rem 0;">Preferred Date</th>
                   <th style="padding: 1rem 0;">Payment Basis</th>
                   <th style="padding: 1rem 0;">Status</th>
+                  <th style="padding: 1rem 0;">Handled By</th>
                   <th style="padding: 1rem 0;">Actions</th>
                 </tr>
               </thead>
@@ -216,6 +218,7 @@
                   <th style="padding: 1rem 0;">Preferred Date</th>
                   <th style="padding: 1rem 0;">Payment Basis</th>
                   <th style="padding: 1rem 0;">Status</th>
+                  <th style="padding: 1rem 0;">Handled By</th>
                   <th style="padding: 1rem 0;">Actions</th>
                 </tr>
               </thead>
@@ -1173,6 +1176,57 @@
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members
             </h3>
             <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 11: MANAGE STAFF ACCOUNTS -->
+      <div id="tab-staff-accounts" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="staff-acc-form-title">
+              Add New Staff Account</h3>
+            <form id="admin-add-staff-acc-form" style="margin-top: 1rem;">
+              <input type="hidden" id="staff-acc-id">
+              <div class="form-group">
+                <label for="staff-acc-name">Staff Name</label>
+                <input type="text" id="staff-acc-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="staff-acc-password">Password</label>
+                <input type="password" id="staff-acc-password" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label style="margin-bottom: 0.5rem;">Permissions / Access Levels</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.85rem; color: #cbd5e1;">
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="bookings"> Bookings</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="packages"> Packages</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="excursions"> Excursions</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="private"> Boat Transfers</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="freediving"> Free Diving</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="resorts"> Resorts</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="photography"> Photography</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="offers"> Special Offers</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="testimonials"> Testimonials</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="media"> Media Assets</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="crew"> Manage Crew</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="contact-messages"> Contact Msgs</label>
+                  <label style="grid-column: span 2; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.5rem;"><input type="checkbox" id="staff-perm-all"> <strong>Select All</strong></label>
+                </div>
+              </div>
+              <button type="submit" id="staff-acc-submit-btn" class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%;">Create Staff Account</button>
+              <button type="button" id="staff-acc-cancel-btn" class="btn"
+                style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel
+                Edit</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Staff Accounts
+            </h3>
+            <div id="admin-staff-acc-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
               <!-- Injected by script.js -->
             </div>
           </div>
