@@ -1786,6 +1786,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const priceDisp = document.getElementById('booking-price-display');
           const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
 
+          if (totalPrice === 0) {
+            alert("this booking is not available please contact us");
+            return;
+          }
+
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
             id: Date.now().toString(),
@@ -1871,15 +1876,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Departing From</label>
                   <select id="transfer-from" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    <option value="male">Airport / Male</option>
-                    <option value="maafushi">Maafushi</option>
+                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="" disabled selected>No locations available</option>'}
                   </select>
                 </div>
 
                 <div>
                   <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Destination Island</label>
                   <select id="transfer-to" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
-                    ${(pkgObj.transferIslands && pkgObj.transferIslands.length > 0) ? pkgObj.transferIslands.map(island => `<option value="${island.name}">${island.name}</option>`).join('') : '<option value="" disabled selected>No destinations available</option>'}
                   </select>
                 </div>
                 
@@ -1929,6 +1932,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = bookingModal.querySelector('#transfer-submit-btn');
         const dateInput = bookingModal.querySelector('#booking-date');
 
+        const updateToOptions = () => {
+          const fromValue = fromSelect.value;
+          const isFromHub = /airport|male|maafushi/i.test(fromValue);
+          const islands = pkgObj.transferIslands || [];
+          let toOptions = [];
+          
+          if (isFromHub) {
+            toOptions = islands.filter(i => i.name !== fromValue);
+          } else {
+            toOptions = islands.filter(i => /airport|male|maafushi/i.test(i.name) && i.name !== fromValue);
+          }
+          
+          if (toOptions.length > 0) {
+            toSelect.innerHTML = toOptions.map(island => `<option value="${island.name}">${island.name}</option>`).join('');
+          } else {
+            toSelect.innerHTML = '<option value="" disabled selected>No destinations available</option>';
+          }
+          updateTransferPrice();
+        };
+
         const updateTransferPrice = () => {
           const from = fromSelect.value;
           const to = toSelect.value;
@@ -1936,11 +1959,24 @@ document.addEventListener('DOMContentLoaded', () => {
           const kids = parseInt(kidsInput.value) || 0;
           const pax = adults + kids;
 
-          let islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
-          let origin = from;
-          if (!islandConfig) {
+          let islandConfig = null;
+          let hubName = '';
+          const isFromHub = /airport|male|maafushi/i.test(from);
+          const isToHub = /airport|male|maafushi/i.test(to);
+          
+          if (isFromHub && !isToHub) {
+             islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
+             hubName = from;
+          } else if (!isFromHub && isToHub) {
              islandConfig = (pkgObj.transferIslands || []).find(i => i.name === from);
-             origin = to;
+             hubName = to;
+          } else {
+             islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
+             hubName = from;
+             if (!islandConfig) {
+                 islandConfig = (pkgObj.transferIslands || []).find(i => i.name === from);
+                 hubName = to;
+             }
           }
 
           if (!islandConfig) {
@@ -1950,7 +1986,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const tierStr = (origin === 'male' || origin === 'Airport / Male') ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
+          const isMaleHub = /airport|male/i.test(hubName);
+          const tierStr = isMaleHub ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
           const result = lookupTierPrice(tierStr, pax);
 
           let total = result.price;
@@ -1999,12 +2036,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
-        fromSelect.addEventListener('change', updateTransferPrice);
+        fromSelect.addEventListener('change', updateToOptions);
         toSelect.addEventListener('change', updateTransferPrice);
         adultsInput.addEventListener('input', updateTransferPrice);
         kidsInput.addEventListener('input', updateTransferPrice);
         if (offerCodeInput) offerCodeInput.addEventListener('input', updateTransferPrice);
-        updateTransferPrice();
+        
+        // Initialize dynamic options
+        updateToOptions();
 
         if (dateInput) {
           dateInput.addEventListener('change', checkSlotsAvailability);
@@ -2026,6 +2065,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const kids = parseInt(kidsInput.value) || 0;
           const pax = adults + kids;
           const totalPrice = parseFloat(priceDisplay.textContent.replace('$', '')) || 0;
+
+          if (totalPrice === 0) {
+            alert("this booking is not available please contact us");
+            return;
+          }
 
           const detailedTitle = `${title} (From: ${fromStr} To: ${toStr} | ${pax} Pax)`;
           
@@ -2219,6 +2263,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const priceDisp = document.getElementById('booking-price-display');
           const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
+
+          if (totalPrice === 0) {
+            alert("this booking is not available please contact us");
+            return;
+          }
 
           const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
           const newBooking = {
@@ -2494,6 +2543,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const priceDisp = document.getElementById('booking-price-display');
           const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
           
+          if (totalPrice === 0) {
+            alert("this booking is not available please contact us");
+            return;
+          }
+
           const newBooking = {
             id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
             customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType, adults, kids, kidsAges,
