@@ -2035,15 +2035,22 @@ document.addEventListener('DOMContentLoaded', () => {
              }
           }
 
-          if (!islandConfig) {
+          if (!islandConfig && !(isFromHub && isToHub)) {
             priceDisplay.textContent = '$0';
             paxWarning.style.display = 'none';
             tierInfo.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
             return;
           }
 
-          const isHub1 = hubName === h1Name || /airport|male/i.test(hubName);
-          const tierStr = isHub1 ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
+          let tierStr = '';
+          if (isFromHub && isToHub) {
+              tierStr = pkgObj.hubPricing || '';
+          } else {
+              const isHub1 = hubName === h1Name || /airport|male/i.test(hubName);
+              tierStr = isHub1 ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
+          }
           const result = lookupTierPrice(tierStr, pax);
 
           let total = result.price;
@@ -3316,8 +3323,10 @@ document.addEventListener('DOMContentLoaded', () => {
               if (prefix === 'private') {
                 const h1El = document.getElementById('private-hub1-name');
                 const h2El = document.getElementById('private-hub2-name');
+                const hubPriceEl = document.getElementById('private-hub-pricing');
                 if (h1El) h1El.value = item.hub1Name || 'Airport / Male';
                 if (h2El) h2El.value = item.hub2Name || 'Maafushi';
+                if (hubPriceEl) hubPriceEl.value = item.hubPricing || '';
                 
                 const islandsContainer = document.getElementById('private-islands-container');
                 if (islandsContainer) {
@@ -3439,6 +3448,7 @@ document.addEventListener('DOMContentLoaded', () => {
               itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
               itemData.hub1Name = document.getElementById('private-hub1-name') ? document.getElementById('private-hub1-name').value.trim() : 'Airport / Male';
               itemData.hub2Name = document.getElementById('private-hub2-name') ? document.getElementById('private-hub2-name').value.trim() : 'Maafushi';
+              itemData.hubPricing = document.getElementById('private-hub-pricing') ? document.getElementById('private-hub-pricing').value.trim() : '';
               itemData.transferIslands = [];
               const islandsContainer = document.getElementById('private-islands-container');
               if (islandsContainer) {
