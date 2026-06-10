@@ -37,19 +37,7 @@
   </script>
 
   <style>
-    /* Hide admin specific buttons from staff */
-    .edit-btn, .delete-btn,
-    .crew-edit-btn, .crew-delete-btn,
-    .staff-acc-edit-btn, .staff-acc-delete-btn,
-    .edit-offer-btn, .delete-offer-btn,
-    .edit-test-btn, .delete-test-btn,
-    .delete-hero-vid-btn,
-    .delete-reel-btn,
-    .delete-gallery-btn,
-    .delete-booking-btn,
-    .delete-msg {
-      display: none !important;
-    }
+    /* Staff buttons are now visible, permissions are enforced by server/tabs */
   </style>
 </head>
 
@@ -261,8 +249,8 @@
 
       <!-- TAB 1.5: PACKAGES -->
       <div id="tab-packages" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
               id="package-form-title">Add New Package</h3>
             <form id="admin-add-package-form" style="margin-top: 1rem;">
@@ -361,8 +349,8 @@
 
       <!-- TAB 2: EXCURSIONS -->
       <div id="tab-excursions" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="ex-form-title">Add
               New Excursion</h3>
             <form id="admin-add-excursion-form" style="margin-top: 1rem;">
@@ -462,8 +450,8 @@
 
       <!-- TAB 3: BOAT TRANSFERS -->
       <div id="tab-private" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
               id="private-form-title">Add New Boat Transfer</h3>
             <form id="admin-add-private-form" style="margin-top: 1rem;">
@@ -578,8 +566,8 @@
 
       <!-- TAB 4: FREE DIVING -->
       <div id="tab-freediving" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="fd-form-title">Add
               New Free Diving Option</h3>
             <form id="admin-add-fd-form" style="margin-top: 1rem;">
@@ -677,8 +665,8 @@
 
       <!-- TAB 5: RESORTS -->
       <div id="tab-resorts" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
               id="resort-form-title">Add New Resort Deal</h3>
             <form id="admin-add-resort-form" style="margin-top: 1rem;">
@@ -831,8 +819,8 @@
 
       <!-- TAB 5.5: PHOTOGRAPHY -->
       <div id="tab-photography" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
               id="photography-form-title">Add New Photography Package</h3>
             <form id="admin-add-photography-form" style="margin-top: 1rem;">
@@ -923,8 +911,8 @@
 
       <!-- TAB 6: SPECIAL OFFERS -->
       <div id="tab-offers" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="offer-form-title">
               Add New Special Offer</h3>
             <form id="admin-offer-form" style="margin-top: 1rem;">
@@ -1007,8 +995,8 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add New Testimony</h3>
             <form id="admin-add-testimony-form" style="margin-top: 1rem;">
               <div class="form-group">
@@ -1170,8 +1158,8 @@
 
       <!-- TAB 10: MANAGE CREW -->
       <div id="tab-crew" class="tab-content-section">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 3rem;">
-          <div class="admin-form" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="crew-form-title">
               Add New Crew Member</h3>
             <form id="admin-add-crew-form" style="margin-top: 1rem;">
