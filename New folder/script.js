@@ -1934,14 +1934,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updateToOptions = () => {
           const fromValue = fromSelect.value;
-          const isFromHub = /airport|male|maafushi/i.test(fromValue);
+          const h1Name = pkgObj.hub1Name || 'Airport / Male';
+          const h2Name = pkgObj.hub2Name || 'Maafushi';
+          
+          const isHub1 = fromValue === h1Name || /airport|male/i.test(fromValue);
+          const isHub2 = fromValue === h2Name || /maafushi/i.test(fromValue);
+          const isFromHub = isHub1 || isHub2;
+          
           const islands = pkgObj.transferIslands || [];
           let toOptions = [];
           
           if (isFromHub) {
-            toOptions = islands.filter(i => i.name !== fromValue);
+            toOptions = islands.filter(i => {
+              if (i.name === fromValue) return false;
+              const conn = i.connectionType || 'both';
+              if (isHub1 && (conn === 'both' || conn === 'hub1')) return true;
+              if (isHub2 && (conn === 'both' || conn === 'hub2')) return true;
+              return false;
+            });
           } else {
-            toOptions = islands.filter(i => /airport|male|maafushi/i.test(i.name) && i.name !== fromValue);
+            const islandConf = islands.find(i => i.name === fromValue);
+            if (islandConf) {
+              const conn = islandConf.connectionType || 'both';
+              if (conn === 'both') {
+                toOptions = islands.filter(i => i.name === h1Name || i.name === h2Name || /airport|male|maafushi/i.test(i.name));
+              } else if (conn === 'hub1') {
+                toOptions = islands.filter(i => i.name === h1Name || /airport|male/i.test(i.name));
+              } else if (conn === 'hub2') {
+                toOptions = islands.filter(i => i.name === h2Name || /maafushi/i.test(i.name));
+              }
+            }
           }
           
           if (toOptions.length > 0) {
@@ -1959,10 +1981,18 @@ document.addEventListener('DOMContentLoaded', () => {
           const kids = parseInt(kidsInput.value) || 0;
           const pax = adults + kids;
 
+          const h1Name = pkgObj.hub1Name || 'Airport / Male';
+          const h2Name = pkgObj.hub2Name || 'Maafushi';
+
           let islandConfig = null;
           let hubName = '';
-          const isFromHub = /airport|male|maafushi/i.test(from);
-          const isToHub = /airport|male|maafushi/i.test(to);
+          const isFromHub1 = from === h1Name || /airport|male/i.test(from);
+          const isFromHub2 = from === h2Name || /maafushi/i.test(from);
+          const isToHub1 = to === h1Name || /airport|male/i.test(to);
+          const isToHub2 = to === h2Name || /maafushi/i.test(to);
+          
+          const isFromHub = isFromHub1 || isFromHub2;
+          const isToHub = isToHub1 || isToHub2;
           
           if (isFromHub && !isToHub) {
              islandConfig = (pkgObj.transferIslands || []).find(i => i.name === to);
@@ -1986,8 +2016,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const isMaleHub = /airport|male/i.test(hubName);
-          const tierStr = isMaleHub ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
+          const isHub1 = hubName === h1Name || /airport|male/i.test(hubName);
+          const tierStr = isHub1 ? (islandConfig.malePricing || '') : (islandConfig.maafushiPricing || '');
           const result = lookupTierPrice(tierStr, pax);
 
           let total = result.price;
@@ -3137,11 +3167,41 @@ document.addEventListener('DOMContentLoaded', () => {
               div.innerHTML = `
                 <button type="button" class="btn remove-island-btn" style="position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; color: #fff; padding: 0.2rem 0.5rem; font-size: 0.7rem;">&times;</button>
                 <div style="margin-bottom: 0.5rem;"><label style="font-size:0.75rem;">Island Name</label><input type="text" class="form-control island-name" required placeholder="e.g. Maafushi"></div>
-                <div style="margin-bottom: 0.5rem;"><label style="font-size:0.75rem;">From Male — Pricing Tiers (people:price)</label><input type="text" class="form-control male-pricing" required placeholder="e.g. 4:250, 6:320, 10:450"></div>
-                <div><label style="font-size:0.75rem;">From Maafushi — Pricing Tiers (people:price)</label><input type="text" class="form-control maafushi-pricing" required placeholder="e.g. 4:200, 6:280, 10:400"></div>
+                <div style="margin-bottom: 0.5rem;">
+                  <label style="font-size:0.75rem;">Connected To</label>
+                  <select class="form-control island-connection" style="background:#080d1a; color:#fff; height:38px;">
+                    <option value="both">Both Hubs</option>
+                    <option value="hub1">Hub 1 Only</option>
+                    <option value="hub2">Hub 2 Only</option>
+                  </select>
+                </div>
+                <div style="margin-bottom: 0.5rem;" class="hub1-pricing-container"><label style="font-size:0.75rem;" class="hub1-label">Hub 1 Pricing Tiers (people:price)</label><input type="text" class="form-control male-pricing" placeholder="e.g. 4:250, 6:320, 10:450"></div>
+                <div class="hub2-pricing-container"><label style="font-size:0.75rem;" class="hub2-label">Hub 2 Pricing Tiers (people:price)</label><input type="text" class="form-control maafushi-pricing" placeholder="e.g. 4:200, 6:280, 10:400"></div>
               `;
+              
+              const updateLabelsAndVisibility = () => {
+                const conn = div.querySelector('.island-connection').value;
+                const h1Container = div.querySelector('.hub1-pricing-container');
+                const h2Container = div.querySelector('.hub2-pricing-container');
+                h1Container.style.display = (conn === 'both' || conn === 'hub1') ? 'block' : 'none';
+                h2Container.style.display = (conn === 'both' || conn === 'hub2') ? 'block' : 'none';
+                
+                const h1Name = document.getElementById('private-hub1-name') ? document.getElementById('private-hub1-name').value : 'Hub 1';
+                const h2Name = document.getElementById('private-hub2-name') ? document.getElementById('private-hub2-name').value : 'Hub 2';
+                div.querySelector('.hub1-label').textContent = `From ${h1Name || 'Hub 1'} — Pricing Tiers`;
+                div.querySelector('.hub2-label').textContent = `From ${h2Name || 'Hub 2'} — Pricing Tiers`;
+              };
+              
+              div.querySelector('.island-connection').addEventListener('change', updateLabelsAndVisibility);
+              
+              const h1Input = document.getElementById('private-hub1-name');
+              const h2Input = document.getElementById('private-hub2-name');
+              if (h1Input) h1Input.addEventListener('input', updateLabelsAndVisibility);
+              if (h2Input) h2Input.addEventListener('input', updateLabelsAndVisibility);
+
               div.querySelector('.remove-island-btn').addEventListener('click', () => div.remove());
               islandsContainer.appendChild(div);
+              updateLabelsAndVisibility();
             });
           }
         }
@@ -3196,6 +3256,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const priceEl = document.getElementById('photography-price'); if (priceEl) priceEl.value = item.price || 0;
               }
               if (prefix === 'private') {
+                const h1El = document.getElementById('private-hub1-name');
+                const h2El = document.getElementById('private-hub2-name');
+                if (h1El) h1El.value = item.hub1Name || 'Airport / Male';
+                if (h2El) h2El.value = item.hub2Name || 'Maafushi';
+                
                 const islandsContainer = document.getElementById('private-islands-container');
                 if (islandsContainer) {
                   islandsContainer.innerHTML = '';
@@ -3208,6 +3273,11 @@ document.addEventListener('DOMContentLoaded', () => {
                       lastRow.querySelector('.island-name').value = island.name;
                       lastRow.querySelector('.male-pricing').value = island.malePricing || '';
                       lastRow.querySelector('.maafushi-pricing').value = island.maafushiPricing || '';
+                      const connEl = lastRow.querySelector('.island-connection');
+                      if (connEl) {
+                        connEl.value = island.connectionType || 'both';
+                        connEl.dispatchEvent(new Event('change'));
+                      }
                     }
                   });
                 }
@@ -3309,12 +3379,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (prefix === 'private') {
               itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
+              itemData.hub1Name = document.getElementById('private-hub1-name') ? document.getElementById('private-hub1-name').value.trim() : 'Airport / Male';
+              itemData.hub2Name = document.getElementById('private-hub2-name') ? document.getElementById('private-hub2-name').value.trim() : 'Maafushi';
               itemData.transferIslands = [];
               const islandsContainer = document.getElementById('private-islands-container');
               if (islandsContainer) {
                 islandsContainer.querySelectorAll('.island-row').forEach(row => {
                   itemData.transferIslands.push({
-                    name: row.querySelector('.island-name').value,
+                    name: row.querySelector('.island-name').value.trim(),
+                    connectionType: row.querySelector('.island-connection') ? row.querySelector('.island-connection').value : 'both',
                     malePricing: row.querySelector('.male-pricing').value.trim(),
                     maafushiPricing: row.querySelector('.maafushi-pricing').value.trim()
                   });

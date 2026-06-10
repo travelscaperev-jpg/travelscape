@@ -85,7 +85,9 @@
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
       <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
-      <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span id="contact-msg-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
+      <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span
+          id="contact-msg-badge"
+          style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
       <a onclick="switchDashboardTab('restrictions')" id="tab-btn-restrictions">Booking Restrictions</a>
       <a href="#" onclick="localStorage.removeItem('admin_logged'); window.location.reload(); return false;"
         style="margin-top: 2rem; color: #ef4444;">Log Out</a>
@@ -100,11 +102,13 @@
         <div class="stat-grid">
           <div class="stat-card" style="border-left-color: #38bdf8;">
             <p>Total Bookings</p>
-            <div class="stat-value" id="admin-stat-total-bookings" style="color: #38bdf8; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">0</div>
+            <div class="stat-value" id="admin-stat-total-bookings"
+              style="color: #38bdf8; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">0</div>
           </div>
           <div class="stat-card" style="border-left-color: #10b981;">
             <p>Total Revenue</p>
-            <div class="stat-value" id="admin-stat-total-amount" style="color: #10b981; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">$0</div>
+            <div class="stat-value" id="admin-stat-total-amount"
+              style="color: #10b981; font-size: 1.8rem; margin-top: 0.5rem; font-weight: 800;">$0</div>
           </div>
         </div>
 
@@ -123,12 +127,14 @@
           <div
             style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
             <div style="flex: 1.5; min-width: 200px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Search Booking</label>
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Search
+                Booking</label>
               <input type="text" id="filter-search" placeholder="Search ID, Name, Contact, Email..."
                 style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit; outline:none;">
             </div>
             <div style="flex: 1; min-width: 150px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Package Type</label>
+              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Package
+                Type</label>
               <select id="filter-package-type"
                 style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
                 <option value="">All Package Types</option>
@@ -171,11 +177,13 @@
               <button id="print-filtered-list" class="btn btn-primary"
                 style="padding:0.5rem 1rem; font-size:0.85rem;">Print List</button>
               <button id="add-direct-booking-admin" class="btn"
-                style="padding:0.5rem 1rem; font-size:0.85rem; background:#10b981; color:#fff; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-plus"></i> Add Booking</button>
+                style="padding:0.5rem 1rem; font-size:0.85rem; background:#10b981; color:#fff; display: inline-flex; align-items: center; gap: 6px;"><i
+                  class="fa-solid fa-plus"></i> Add Booking</button>
             </div>
           </div>
 
-          <h3 style="color: #38bdf8; font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem;">Standard Bookings</h3>
+          <h3 style="color: #38bdf8; font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem;">Standard Bookings
+          </h3>
           <div style="overflow-x: auto; margin-bottom: 2rem;">
             <table style="width: 100%; text-align: left; border-collapse: collapse;">
               <thead>
@@ -223,7 +231,8 @@
       <div id="tab-packages" class="tab-content-section">
         <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
           <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="package-form-title">Add New Package</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
+              id="package-form-title">Add New Package</h3>
             <form id="admin-add-package-form" style="margin-top: 1rem;">
               <input type="hidden" id="package-id">
               <div class="form-group">
@@ -232,25 +241,30 @@
               </div>
               <div class="form-group">
                 <label for="package-highlights">Highlights (Comma separated)</label>
-                <input type="text" id="package-highlights" class="form-control" placeholder="e.g. Island Hopping, Sandbank">
+                <input type="text" id="package-highlights" class="form-control"
+                  placeholder="e.g. Island Hopping, Sandbank">
               </div>
               <div class="form-group">
                 <label for="package-duration">Duration</label>
-                <input type="text" id="package-duration" class="form-control" placeholder="e.g. 3 Days, 2 Nights" required>
+                <input type="text" id="package-duration" class="form-control" placeholder="e.g. 3 Days, 2 Nights"
+                  required>
               </div>
               <div class="form-group">
                 <label for="package-image">Cover Image (URL or Upload file below)</label>
                 <input type="url" id="package-image" class="form-control" placeholder="URL">
-                <input type="file" id="package-image-file" class="form-control" accept="image/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <input type="file" id="package-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <div class="form-group">
                 <label for="package-video">Video (URL/Local Path or Upload file below)</label>
                 <input type="text" id="package-video" class="form-control" placeholder="URL or path e.g. back.mp4">
-                <input type="file" id="package-video-file" class="form-control" accept="video/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <input type="file" id="package-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <div class="form-group">
                 <label for="package-video-ratio">Video Aspect Ratio</label>
-                <select id="package-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <select id="package-video-ratio" class="form-control"
+                  style="background:#080d1a; color:#fff; height:42px;">
                   <option value="16:9">Widescreen (16:9)</option>
                   <option value="9:16">Portrait (9:16)</option>
                 </select>
@@ -261,12 +275,16 @@
               </div>
               <div class="form-group">
                 <label for="package-full-desc">Full Description</label>
-                <textarea id="package-full-desc" rows="4" class="form-control" placeholder="Detailed description..."></textarea>
+                <textarea id="package-full-desc" rows="4" class="form-control"
+                  placeholder="Detailed description..."></textarea>
               </div>
               <div class="form-group">
-                <label for="package-sub-images">Other Images / Photos (Upload multiple files below or comma-separated URLs)</label>
-                <input type="text" id="package-sub-images" class="form-control" placeholder="Comma-separated image URLs">
-                <input type="file" id="package-sub-images-file" class="form-control" accept="image/*" multiple style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <label for="package-sub-images">Other Images / Photos (Upload multiple files below or comma-separated
+                  URLs)</label>
+                <input type="text" id="package-sub-images" class="form-control"
+                  placeholder="Comma-separated image URLs">
+                <input type="file" id="package-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
 
               <div class="admin-form-row" style="margin-bottom: 1rem;">
@@ -290,12 +308,18 @@
                 <label for="package-max-capacity">Max Capacity (Daily Limit)</label>
                 <input type="number" id="package-max-capacity" class="form-control" min="1" value="20" required>
               </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="package-submit-btn">Add Package</button>
-              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="package-cancel-btn">Cancel Edit</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="package-submit-btn">Add Package</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="package-cancel-btn">Cancel Edit</button>
             </form>
           </div>
-          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Current Packages</h3>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Current Packages</h3>
             <div id="admin-packages-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
@@ -438,7 +462,8 @@
               </div>
               <div class="form-group">
                 <label for="private-video-ratio">Video Aspect Ratio</label>
-                <select id="private-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <select id="private-video-ratio" class="form-control"
+                  style="background:#080d1a; color:#fff; height:42px;">
                   <option value="16:9">Widescreen (16:9)</option>
                   <option value="9:16">Portrait (9:16)</option>
                 </select>
@@ -461,14 +486,33 @@
                   style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <!-- BOAT TRANSFER SETTINGS -->
-              <h4 style="color:#38bdf8; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.25rem;">Boat Transfer Settings</h4>
-              <div style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                <div id="private-transfer-details" style="display: flex; margin-top: 0.5rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; flex-direction: column; gap: 1rem;">
+              <h4
+                style="color:#38bdf8; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.25rem;">
+                Boat Transfer Settings</h4>
+              <div
+                style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div id="private-transfer-details"
+                  style="display: flex; margin-top: 0.5rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; flex-direction: column; gap: 1rem;">
+
+                  <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="flex: 1;">
+                      <label style="font-size:0.8rem; color:#94a3b8;">Hub 1 Name</label>
+                      <input type="text" id="private-hub1-name" class="form-control" value="Airport / Male" placeholder="e.g. Airport / Male">
+                    </div>
+                    <div style="flex: 1;">
+                      <label style="font-size:0.8rem; color:#94a3b8;">Hub 2 Name</label>
+                      <input type="text" id="private-hub2-name" class="form-control" value="Maafushi" placeholder="e.g. Maafushi">
+                    </div>
+                  </div>
 
                   <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                      <label style="font-weight: 600; color: #38bdf8; margin-bottom: 0; font-size: 0.9rem;">Destinations / Islands Pricing</label>
-                      <button type="button" id="private-add-island-btn" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #10b981; color: #fff;"><i class="fa-solid fa-plus"></i> Add Island</button>
+                    <div
+                      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <label style="font-weight: 600; color: #38bdf8; margin-bottom: 0; font-size: 0.9rem;">Destinations
+                        / Islands Pricing</label>
+                      <button type="button" id="private-add-island-btn" class="btn"
+                        style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #10b981; color: #fff;"><i
+                          class="fa-solid fa-plus"></i> Add Island</button>
                     </div>
                     <div id="private-islands-container" style="display: flex; flex-direction: column; gap: 1rem;">
                       <!-- Dynamically injected islands -->
@@ -621,7 +665,8 @@
               </div>
               <div class="form-group">
                 <label for="resort-video-ratio">Video Aspect Ratio</label>
-                <select id="resort-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <select id="resort-video-ratio" class="form-control"
+                  style="background:#080d1a; color:#fff; height:42px;">
                   <option value="16:9">Widescreen (16:9)</option>
                   <option value="9:16">Portrait (9:16)</option>
                 </select>
@@ -750,7 +795,8 @@
       <div id="tab-photography" class="tab-content-section">
         <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
           <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="photography-form-title">Add New Photography Package</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;"
+              id="photography-form-title">Add New Photography Package</h3>
             <form id="admin-add-photography-form" style="margin-top: 1rem;">
               <input type="hidden" id="photography-id">
               <div class="form-group">
@@ -759,7 +805,8 @@
               </div>
               <div class="form-group">
                 <label for="photography-highlights">Highlights (Comma separated)</label>
-                <input type="text" id="photography-highlights" class="form-control" placeholder="e.g. 20 Edited Photos, Drone Video">
+                <input type="text" id="photography-highlights" class="form-control"
+                  placeholder="e.g. 20 Edited Photos, Drone Video">
               </div>
               <div class="form-group">
                 <label for="photography-duration">Duration</label>
@@ -767,21 +814,25 @@
               </div>
               <div class="form-group">
                 <label for="photography-price">Price ($)</label>
-                <input type="text" id="photography-price" class="form-control" placeholder="e.g. 150 or 1:200, 2:250" required>
+                <input type="text" id="photography-price" class="form-control" placeholder="e.g. 150 or 1:200, 2:250"
+                  required>
               </div>
               <div class="form-group">
                 <label for="photography-image">Cover Image (URL or Upload file below)</label>
                 <input type="url" id="photography-image" class="form-control" placeholder="URL">
-                <input type="file" id="photography-image-file" class="form-control" accept="image/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <input type="file" id="photography-image-file" class="form-control" accept="image/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <div class="form-group">
                 <label for="photography-video">Video (URL/Local Path or Upload file below)</label>
                 <input type="text" id="photography-video" class="form-control" placeholder="URL or path">
-                <input type="file" id="photography-video-file" class="form-control" accept="video/*" style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <input type="file" id="photography-video-file" class="form-control" accept="video/*"
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <div class="form-group">
                 <label for="photography-video-ratio">Video Aspect Ratio</label>
-                <select id="photography-video-ratio" class="form-control" style="background:#080d1a; color:#fff; height:42px;">
+                <select id="photography-video-ratio" class="form-control"
+                  style="background:#080d1a; color:#fff; height:42px;">
                   <option value="16:9">Widescreen (16:9)</option>
                   <option value="9:16">Portrait (9:16)</option>
                 </select>
@@ -792,12 +843,16 @@
               </div>
               <div class="form-group">
                 <label for="photography-full-desc">Full Description</label>
-                <textarea id="photography-full-desc" rows="4" class="form-control" placeholder="Detailed description..."></textarea>
+                <textarea id="photography-full-desc" rows="4" class="form-control"
+                  placeholder="Detailed description..."></textarea>
               </div>
               <div class="form-group">
-                <label for="photography-sub-images">Other Images / Photos (Upload multiple files below or comma-separated URLs)</label>
-                <input type="text" id="photography-sub-images" class="form-control" placeholder="Comma-separated image URLs">
-                <input type="file" id="photography-sub-images-file" class="form-control" accept="image/*" multiple style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <label for="photography-sub-images">Other Images / Photos (Upload multiple files below or
+                  comma-separated URLs)</label>
+                <input type="text" id="photography-sub-images" class="form-control"
+                  placeholder="Comma-separated image URLs">
+                <input type="file" id="photography-sub-images-file" class="form-control" accept="image/*" multiple
+                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
               <div class="admin-form-row" style="margin-bottom: 1rem; display:none;">
                 <div class="form-group" style="margin-bottom: 0;">
@@ -810,12 +865,18 @@
               <div class="form-group" style="display:none;">
                 <input type="number" id="photography-max-capacity" class="form-control" min="1" value="20" required>
               </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="photography-submit-btn">Add Photography Package</button>
-              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="photography-cancel-btn">Cancel Edit</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="photography-submit-btn">Add Photography Package</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="photography-cancel-btn">Cancel Edit</button>
             </form>
           </div>
-          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Photography Packages</h3>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Photography Packages</h3>
             <div id="admin-photography-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
@@ -827,7 +888,8 @@
       <div id="tab-offers" class="tab-content-section">
         <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
           <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="offer-form-title">Add New Special Offer</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="offer-form-title">
+              Add New Special Offer</h3>
             <form id="admin-offer-form" style="margin-top: 1rem;">
               <input type="hidden" id="offer-id">
               <div class="form-group">
@@ -857,7 +919,8 @@
               </div>
               <div class="form-group">
                 <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
-                <select id="offer-subcategory" class="form-control" multiple style="background:#080d1a; color:#fff; height:120px;">
+                <select id="offer-subcategory" class="form-control" multiple
+                  style="background:#080d1a; color:#fff; height:120px;">
                 </select>
                 <small style="color:#94a3b8; font-size: 0.75rem;">Hold Ctrl/Cmd to select multiple</small>
               </div>
@@ -869,12 +932,18 @@
                 <label for="offer-validity">Validity Info</label>
                 <input type="text" id="offer-validity" class="form-control" required>
               </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;" id="offer-submit-btn">Publish Special Offer</button>
-              <button type="button" class="btn" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;" id="offer-cancel-btn">Cancel Edit</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
+                id="offer-submit-btn">Publish Special Offer</button>
+              <button type="button" class="btn"
+                style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; display:none; background: #374151; color: #fff;"
+                id="offer-cancel-btn">Cancel Edit</button>
             </form>
           </div>
-          <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">Manage Special Offers</h3>
+          <div
+            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+            <h3
+              style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #fff;">
+              Manage Special Offers</h3>
             <div id="admin-offers-list" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
@@ -959,14 +1028,19 @@
             <!-- Dynamic list of video paths with preview & Delete button will be injected here -->
           </div>
           <!-- Form to add new video -->
-          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
+          <div
+            style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
             <h4 style="color:#fff; margin-bottom: 1rem; font-size: 1rem;">+ Add New Video to Slider (Direct Upload)</h4>
             <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
               <div style="flex: 2; min-width: 250px;">
-                <label for="new-hero-video-file" style="display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Select Video File</label>
-                <input type="file" id="new-hero-video-file" class="form-control" accept="video/*" style="background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                <label for="new-hero-video-file"
+                  style="display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Select Video
+                  File</label>
+                <input type="file" id="new-hero-video-file" class="form-control" accept="video/*"
+                  style="background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
-              <button id="add-hero-video-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 42px;">Add Video to List</button>
+              <button id="add-hero-video-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 42px;">Add
+                Video to List</button>
             </div>
           </div>
 
@@ -1011,21 +1085,31 @@
 
       <!-- TAB 9: CONTACT MESSAGES -->
       <div id="tab-contact-messages" class="tab-content-section">
-        <div style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
-          <h3 style="margin-bottom: 1.5rem; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
-            <span><i class="fa-solid fa-envelope" style="color:#38bdf8; margin-right:8px;"></i>Contact Form Messages</span>
-            <span style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized with DB</span>
+        <div
+          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; margin-bottom: 3rem;">
+          <h3
+            style="margin-bottom: 1.5rem; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fa-solid fa-envelope" style="color:#38bdf8; margin-right:8px;"></i>Contact Form
+              Messages</span>
+            <span
+              style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized
+              with DB</span>
           </h3>
 
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <button id="mark-all-read-btn" class="btn" style="padding:0.5rem 1rem; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.85rem; border:1px solid rgba(16,185,129,0.3);"><i class="fa-solid fa-check-double" style="margin-right:5px;"></i>Mark All Read</button>
-            <button id="clear-all-messages-btn" class="btn" style="padding:0.5rem 1rem; background:rgba(239,68,68,0.15); color:#ef4444; font-size:0.85rem; border:1px solid rgba(239,68,68,0.3);"><i class="fa-solid fa-trash" style="margin-right:5px;"></i>Clear All</button>
+            <button id="mark-all-read-btn" class="btn"
+              style="padding:0.5rem 1rem; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.85rem; border:1px solid rgba(16,185,129,0.3);"><i
+                class="fa-solid fa-check-double" style="margin-right:5px;"></i>Mark All Read</button>
+            <button id="clear-all-messages-btn" class="btn"
+              style="padding:0.5rem 1rem; background:rgba(239,68,68,0.15); color:#ef4444; font-size:0.85rem; border:1px solid rgba(239,68,68,0.3);"><i
+                class="fa-solid fa-trash" style="margin-right:5px;"></i>Clear All</button>
           </div>
 
           <div style="overflow-x: auto;">
             <table style="width: 100%; text-align: left; border-collapse: collapse;">
               <thead>
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <tr
+                  style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                   <th style="padding: 1rem 0;">Sender</th>
                   <th style="padding: 1rem 0;">Subject</th>
                   <th style="padding: 1rem 0;">Message</th>
@@ -1040,7 +1124,8 @@
             </table>
           </div>
           <div id="admin-no-messages" style="display:none; text-align:center; padding:3rem 1rem; color:#64748b;">
-            <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:1rem; display:block; color:#38bdf8; opacity:0.4;"></i>
+            <i class="fa-solid fa-inbox"
+              style="font-size:2.5rem; margin-bottom:1rem; display:block; color:#38bdf8; opacity:0.4;"></i>
             No contact messages yet.
           </div>
         </div>
@@ -1050,7 +1135,8 @@
       <div id="tab-crew" class="tab-content-section">
         <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
           <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="crew-form-title">Add New Crew Member</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="crew-form-title">
+              Add New Crew Member</h3>
             <form id="admin-add-crew-form" style="margin-top: 1rem;">
               <input type="hidden" id="crew-id">
               <div class="form-group">
@@ -1067,7 +1153,8 @@
               </div>
               <div class="form-group">
                 <label for="crew-licenses">Licenses & Certifications (Comma separated)</label>
-                <input type="text" id="crew-licenses" class="form-control" placeholder="e.g. Master License, CPR Certified">
+                <input type="text" id="crew-licenses" class="form-control"
+                  placeholder="e.g. Master License, CPR Certified">
               </div>
               <div class="form-group">
                 <label for="crew-image">Profile Image (URL or Upload below)</label>
@@ -1075,12 +1162,16 @@
                 <input type="file" id="crew-image-file" class="form-control" accept="image/*"
                   style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
-              <button type="submit" id="crew-submit-btn" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Add Crew Member</button>
-              <button type="button" id="crew-cancel-btn" class="btn" style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel Edit</button>
+              <button type="submit" id="crew-submit-btn" class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%;">Add Crew Member</button>
+              <button type="button" id="crew-cancel-btn" class="btn"
+                style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel
+                Edit</button>
             </form>
           </div>
           <div class="admin-list-card">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members
+            </h3>
             <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
               <!-- Injected by script.js -->
             </div>
@@ -1092,7 +1183,8 @@
       <div id="tab-restrictions" class="tab-content-section">
         <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
           <div class="admin-form">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add Booking Restriction (Blackout Dates)</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add Booking
+              Restriction (Blackout Dates)</h3>
             <form id="admin-add-restriction-form" style="margin-top: 1rem;">
               <div class="form-group">
                 <label for="restriction-category">Category</label>
@@ -1108,11 +1200,15 @@
               </div>
               <div class="form-group">
                 <label for="restriction-items">Select Item(s)</label>
-                <select id="restriction-items" class="form-control" style="background:#080d1a; color:#fff;" multiple required>
+                <select id="restriction-items" class="form-control" style="background:#080d1a; color:#fff;" multiple
+                  required>
                   <!-- Populated dynamically -->
                 </select>
-                <small style="color: #94a3b8; display: block; margin-top: 0.25rem;">Hold Ctrl/Cmd to select multiple. Or click "Select All" below.</small>
-                <button type="button" id="restriction-select-all" class="btn" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; background: rgba(255,255,255,0.1);">Select All in Category</button>
+                <small style="color: #94a3b8; display: block; margin-top: 0.25rem;">Hold Ctrl/Cmd to select multiple. Or
+                  click "Select All" below.</small>
+                <button type="button" id="restriction-select-all" class="btn"
+                  style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; background: rgba(255,255,255,0.1);">Select
+                  All in Category</button>
               </div>
               <div class="admin-form-row">
                 <div class="form-group">
@@ -1124,12 +1220,15 @@
                   <input type="date" id="restriction-to" class="form-control" required>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Apply Restriction</button>
+              <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Apply
+                Restriction</button>
             </form>
           </div>
           <div class="admin-list-card">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Active Restrictions</h3>
-            <div id="admin-restrictions-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Active Restrictions
+            </h3>
+            <div id="admin-restrictions-list"
+              style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
           </div>
@@ -1151,7 +1250,9 @@
       if (targetBtn) targetBtn.classList.add('active');
     }
   </script>
-  <div id="booking-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;"></div>
+  <div id="booking-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
+  </div>
   <script src="script.js?v=2"></script>
 </body>
 
