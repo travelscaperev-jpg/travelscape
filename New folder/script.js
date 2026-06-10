@@ -3023,7 +3023,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${b.editedBy ? `<div style="font-size:0.8rem; color:#a855f7; margin-top:4px;">Edited: ${b.editedBy}</div>` : ''}
             </td>
             <td style="padding: 1rem 0;">
-              ${b.status === 'Pending' && role === 'admin' ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
+              ${b.status === 'Pending' && (role === 'admin' || role === 'staff') ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
               <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
               ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>` : ''}
             </td>
