@@ -229,8 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (role === 'admin' && password === db.auth.admin_password) {
         return { success: true, role: 'admin' };
       }
-      if (role === 'staff' && password === db.auth.staff_password) {
-        return { success: true, role: 'staff' };
+      if (role === 'staff') {
+        const accounts = db.staff_accounts || [];
+        const acc = accounts.find(a => a.password === password);
+        if (acc) {
+          return { success: true, role: 'staff', staffName: acc.name, permissions: acc.permissions };
+        }
+        if (password === db.auth.staff_password) {
+          return { success: true, role: 'staff' };
+        }
       }
       return { success: false, message: 'Incorrect password' };
     }
@@ -2848,6 +2855,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.staffName) {
               localStorage.setItem('staff_name', result.staffName);
             }
+            if (result.permissions || result.staffPermissions) {
+              localStorage.setItem('staff_permissions', JSON.stringify(result.permissions || result.staffPermissions));
+            } else {
+              localStorage.removeItem('staff_permissions');
+            }
             if (!useFallback) {
               fetchAllFromAPI().catch(() => {});
             }
@@ -2888,22 +2900,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (permsStr) {
           let perms = [];
           try { perms = JSON.parse(permsStr); } catch(e) {}
-          if (perms.length > 0) {
-            const allTabs = ['bookings', 'packages', 'excursions', 'private', 'freediving', 'resorts', 'photography', 'offers', 'testimonials', 'media', 'crew', 'contact-messages'];
-            let firstPermitted = null;
-            allTabs.forEach(tab => {
-              const btn = document.getElementById(`tab-btn-${tab}`);
-              const sec = document.getElementById(`tab-${tab}`);
-              if (!perms.includes(tab)) {
-                if (btn) btn.style.display = 'none';
-              } else {
-                if (btn) btn.style.display = 'block';
-                if (!firstPermitted) firstPermitted = tab;
-              }
-            });
-            if (firstPermitted && typeof switchDashboardTab === 'function') {
-              setTimeout(() => switchDashboardTab(firstPermitted), 50);
+          const allTabs = ['bookings', 'packages', 'excursions', 'private', 'freediving', 'resorts', 'photography', 'offers', 'testimonials', 'media', 'crew', 'contact-messages'];
+          let firstPermitted = null;
+          allTabs.forEach(tab => {
+            const btn = document.getElementById(`tab-btn-${tab}`);
+            const sec = document.getElementById(`tab-${tab}`);
+            if (!perms.includes(tab)) {
+              if (btn) btn.style.display = 'none';
+            } else {
+              if (btn) btn.style.display = 'block';
+              if (!firstPermitted) firstPermitted = tab;
             }
+          });
+          if (firstPermitted && typeof switchDashboardTab === 'function') {
+            setTimeout(() => switchDashboardTab(firstPermitted), 50);
+          } else if (!firstPermitted && typeof switchDashboardTab === 'function') {
+            setTimeout(() => {
+              document.querySelectorAll('.tab-content-section').forEach(el => el.classList.remove('active'));
+            }, 50);
           }
         }
       }
