@@ -662,15 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCardGridFn('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
     }
     // Re-render testimonials
-    const testimonialsGrid = document.getElementById('testimonials-grid');
-    if (testimonialsGrid) {
-      const list = getTestimonials();
-      testimonialsGrid.innerHTML = list.map(t => {
-        let stars = '';
-        for (let i = 0; i < 5; i++) { stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>'; }
-        return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
-      }).join('');
-    }
+    if (typeof renderTestimonialsFn === 'function') renderTestimonialsFn();
     // Re-render reels and gallery
     if (typeof renderReelsFn === 'function') renderReelsFn();
     if (typeof renderGalleryFn === 'function') renderGalleryFn();
@@ -684,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let renderReelsFn         = null;
   let renderGalleryFn       = null;
   let renderCrewGridFn      = null;
+  let renderTestimonialsFn  = null;
   let refreshAdminTablesFn  = null; // refreshes admin/staff dashboard after data loads
 
   // Fire a ping immediately to start waking the Render server (non-blocking)
@@ -1158,15 +1151,28 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCardGrid('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
 
     // --- Render Testimonials (Home Page) ---
-    const testimonialsGrid = document.getElementById('testimonials-grid');
-    if (testimonialsGrid) {
+    const renderTestimonials = () => {
+      const testimonialsGrid = document.getElementById('testimonials-grid');
+      if (!testimonialsGrid) return;
       const list = getTestimonials();
       testimonialsGrid.innerHTML = list.map(t => {
         let stars = '';
         for (let i = 0; i < 5; i++) { stars += i < t.rating ? '<i class="fa-solid fa-star" style="color: #fde047; margin-right: 4px;"></i>' : '<i class="fa-regular fa-star" style="color: #cbd5e1; margin-right: 4px;"></i>'; }
-        return `<div class="card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700;">- ${t.name}</h4></div></div>`;
+        return `<div class="card testimony-card" id="testimony-card-${t.id}"><div class="card-body" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; height: 100%;"><div style="margin-bottom: 1rem;">${stars}</div><p class="card-description" style="font-style: italic; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">"${t.text}"</p><h4 class="card-title" style="font-size: 1.1rem; margin-top: 1.5rem; color: #38bdf8; font-weight: 700; margin-bottom: 0;">- ${t.name}</h4></div></div>`;
       }).join('');
-    }
+
+      if (!testimonialsGrid.dataset.listenerAttached) {
+        testimonialsGrid.dataset.listenerAttached = 'true';
+        testimonialsGrid.addEventListener('click', (e) => {
+          const card = e.target.closest('.testimony-card');
+          if (card) {
+            card.classList.toggle('expanded');
+          }
+        });
+      }
+    };
+    renderTestimonialsFn = renderTestimonials;
+    renderTestimonials();
 
     // --- Render Crew Grid (Crew Page) ---
     const renderCrewGrid = () => {

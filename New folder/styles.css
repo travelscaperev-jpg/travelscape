@@ -4263,3 +4263,29 @@ nav {
   color: #fff;
   transform: translateY(-1px);
 }
+
+/* Testimony Card Styling - Equal size & Expand on click/tap */
+.testimony-card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 220px;
+  transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.3s ease, border-color 0.3s ease, max-height 0.3s ease;
+}
+
+.testimony-card .card-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.testimony-card.expanded .card-description {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
