@@ -715,7 +715,7 @@
                   <!-- Half Day Rates -->
                   <div id="resort-half-day-rates" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Half Day Rates ($):</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
                       <div>
                         <label style="font-size:0.75rem;">Standard</label>
                         <input type="number" id="resort-day-half-std" class="form-control" placeholder="Rate">
@@ -724,13 +724,17 @@
                         <label style="font-size:0.75rem;">Premium</label>
                         <input type="number" id="resort-day-half-prem" class="form-control" placeholder="Rate">
                       </div>
+                      <div>
+                        <label style="font-size:0.75rem;">Ultra Premium</label>
+                        <input type="number" id="resort-day-half-ultra" class="form-control" placeholder="Rate">
+                      </div>
                     </div>
                   </div>
 
                   <!-- Full Day Rates -->
                   <div id="resort-full-day-rates" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Full Day Rates ($):</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
                       <div>
                         <label style="font-size:0.75rem;">Standard</label>
                         <input type="number" id="resort-day-full-std" class="form-control" placeholder="Rate">
@@ -738,6 +742,10 @@
                       <div>
                         <label style="font-size:0.75rem;">Premium</label>
                         <input type="number" id="resort-day-full-prem" class="form-control" placeholder="Rate">
+                      </div>
+                      <div>
+                        <label style="font-size:0.75rem;">Ultra Premium</label>
+                        <input type="number" id="resort-day-full-ultra" class="form-control" placeholder="Rate">
                       </div>
                     </div>
                   </div>
@@ -753,7 +761,7 @@
                 <div id="resort-stay-night-details"
                   style="display: none; margin-top: 1rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; display: flex; flex-direction: column; gap: 0.75rem;">
                   <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">Stay Night Rates ($):</div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
                     <div>
                       <label style="font-size:0.75rem;">Standard</label>
                       <input type="number" id="resort-stay-std" class="form-control" placeholder="Rate">
@@ -761,6 +769,10 @@
                     <div>
                       <label style="font-size:0.75rem;">Premium</label>
                       <input type="number" id="resort-stay-prem" class="form-control" placeholder="Rate">
+                    </div>
+                    <div>
+                      <label style="font-size:0.75rem;">Ultra Premium</label>
+                      <input type="number" id="resort-stay-ultra" class="form-control" placeholder="Rate">
                     </div>
                   </div>
                 </div>

@@ -1051,12 +1051,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <h4 style="color: #38bdf8; margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 700;">Package Rates & Pricing</h4>
               <div style="display: flex; flex-direction: column; gap: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                 ${ex.hasDayVisit ? `<div><div style="font-weight:700; color:#fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; margin-bottom: 0.5rem; font-size: 0.9rem;">Day Visit Options (${ex.dayVisitType === 'both' ? 'Half & Full Day' : (ex.dayVisitType === 'half_day' ? 'Half Day' : 'Full Day')})</div>
-                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Option</th><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody>
-                ${(ex.dayVisitType === 'half_day' || ex.dayVisitType === 'both') ? `<tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding:6px 0; color:#fff; font-weight:600;">Half Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfNone || 'N/A'}</td></tr>` : ''}
-                ${(ex.dayVisitType === 'full_day' || ex.dayVisitType === 'both') ? `<tr><td style="padding:6px 0; color:#fff; font-weight:600;">Full Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullNone || 'N/A'}</td></tr>` : ''}
+                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Option</th><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">Ultra Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody>
+                ${(ex.dayVisitType === 'half_day' || ex.dayVisitType === 'both') ? `<tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding:6px 0; color:#fff; font-weight:600;">Half Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfUltra || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayHalfNone || 'N/A'}</td></tr>` : ''}
+                ${(ex.dayVisitType === 'full_day' || ex.dayVisitType === 'both') ? `<tr><td style="padding:6px 0; color:#fff; font-weight:600;">Full Day</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullUltra || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.dayFullNone || 'N/A'}</td></tr>` : ''}
                 </tbody></table></div>` : ''}
                 ${ex.hasStayNight ? `<div style="margin-top: 0.5rem;"><div style="font-weight:700; color:#fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; margin-bottom: 0.5rem; font-size: 0.9rem;">Stay Night Visit Packages</div>
-                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody><tr><td style="padding:6px 0; color:#38bdf8;">$${ex.stayStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayNone || 'N/A'}</td></tr></tbody></table></div>` : ''}
+                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="color:#94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05);"><th style="padding:4px 0;">Standard</th><th style="padding:4px 0;">Premium</th><th style="padding:4px 0;">Ultra Premium</th><th style="padding:4px 0;">No Option</th></tr></thead><tbody><tr><td style="padding:6px 0; color:#38bdf8;">$${ex.stayStd || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayPrem || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayUltra || 'N/A'}</td><td style="padding:6px 0; color:#38bdf8;">$${ex.stayNone || 'N/A'}</td></tr></tbody></table></div>` : ''}
               </div>
             </div>` : ''}
             ${!isResort ? `<div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem; margin-top: 0.5rem; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
@@ -1650,23 +1650,27 @@ document.addEventListener('DOMContentLoaded', () => {
           const visitType = packageTypeSelect ? packageTypeSelect.value : '';
           const dayDuration = dayDurationSelect ? dayDurationSelect.value : '';
 
-          let stdPrice, premPrice;
+          let stdPrice, premPrice, ultraPrice;
           if (visitType === 'day_visit') {
             if (dayDuration === 'half_day') {
               stdPrice = resort.dayHalfStd;
               premPrice = resort.dayHalfPrem;
+              ultraPrice = resort.dayHalfUltra;
             } else if (dayDuration === 'full_day') {
               stdPrice = resort.dayFullStd;
               premPrice = resort.dayFullPrem;
+              ultraPrice = resort.dayFullUltra;
             }
           } else if (visitType === 'stay_night') {
             stdPrice = resort.stayStd;
             premPrice = resort.stayPrem;
+            ultraPrice = resort.stayUltra;
           }
 
           let html = '';
           if (stdPrice) html += `<option value="Standard" data-price="${stdPrice}">Standard ($${stdPrice})</option>`;
           if (premPrice && parseFloat(premPrice) > 0) html += `<option value="Premium" data-price="${premPrice}">Premium ($${premPrice})</option>`;
+          if (ultraPrice && parseFloat(ultraPrice) > 0) html += `<option value="Ultra Premium" data-price="${ultraPrice}">Ultra Premium ($${ultraPrice})</option>`;
           tierSelect.innerHTML = html || '<option value="Standard" data-price="0">N/A ($0)</option>';
           updateTotalPrice();
         };
@@ -3326,10 +3330,10 @@ document.addEventListener('DOMContentLoaded', () => {
               if (prefix === 'resort') {
                 const hasDayVisitEl = document.getElementById('resort-has-day-visit'); if (hasDayVisitEl) { hasDayVisitEl.checked = !!item.hasDayVisit; hasDayVisitEl.dispatchEvent(new Event('change')); }
                 const dayVisitTypeEl = document.getElementById('resort-day-visit-type'); if (dayVisitTypeEl) { dayVisitTypeEl.value = item.dayVisitType || 'half_day'; dayVisitTypeEl.dispatchEvent(new Event('change')); }
-                document.getElementById('resort-day-half-std').value = item.dayHalfStd || ''; document.getElementById('resort-day-half-prem').value = item.dayHalfPrem || '';
-                document.getElementById('resort-day-full-std').value = item.dayFullStd || ''; document.getElementById('resort-day-full-prem').value = item.dayFullPrem || '';
+                document.getElementById('resort-day-half-std').value = item.dayHalfStd || ''; document.getElementById('resort-day-half-prem').value = item.dayHalfPrem || ''; document.getElementById('resort-day-half-ultra').value = item.dayHalfUltra || '';
+                document.getElementById('resort-day-full-std').value = item.dayFullStd || ''; document.getElementById('resort-day-full-prem').value = item.dayFullPrem || ''; document.getElementById('resort-day-full-ultra').value = item.dayFullUltra || '';
                 const hasStayNightEl = document.getElementById('resort-has-stay-night'); if (hasStayNightEl) { hasStayNightEl.checked = !!item.hasStayNight; hasStayNightEl.dispatchEvent(new Event('change')); }
-                document.getElementById('resort-stay-std').value = item.stayStd || ''; document.getElementById('resort-stay-prem').value = item.stayPrem || '';
+                document.getElementById('resort-stay-std').value = item.stayStd || ''; document.getElementById('resort-stay-prem').value = item.stayPrem || ''; document.getElementById('resort-stay-ultra').value = item.stayUltra || '';
               }
               if (prefix === 'photography') {
                 const priceEl = document.getElementById('photography-price'); if (priceEl) priceEl.value = item.price || 0;
@@ -3447,11 +3451,11 @@ document.addEventListener('DOMContentLoaded', () => {
               itemData.price = parseFloat(document.getElementById(`${prefix}-price`).value) || 0;
             }
             if (prefix === 'ex') { const mapLinkEl = document.getElementById('ex-map-link'); itemData.mapLink = mapLinkEl ? mapLinkEl.value : ''; }
-            if (prefix === 'resort') {
+             if (prefix === 'resort') {
               itemData.hasDayVisit = document.getElementById('resort-has-day-visit').checked; itemData.hasStayNight = document.getElementById('resort-has-stay-night').checked; itemData.dayVisitType = document.getElementById('resort-day-visit-type').value;
-              itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value;
-              itemData.dayFullStd = document.getElementById('resort-day-full-std').value; itemData.dayFullPrem = document.getElementById('resort-day-full-prem').value;
-              itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value;
+              itemData.dayHalfStd = document.getElementById('resort-day-half-std').value; itemData.dayHalfPrem = document.getElementById('resort-day-half-prem').value; itemData.dayHalfUltra = document.getElementById('resort-day-half-ultra').value;
+              itemData.dayFullStd = document.getElementById('resort-day-full-std').value; itemData.dayFullPrem = document.getElementById('resort-day-full-prem').value; itemData.dayFullUltra = document.getElementById('resort-day-full-ultra').value;
+              itemData.stayStd = document.getElementById('resort-stay-std').value; itemData.stayPrem = document.getElementById('resort-stay-prem').value; itemData.stayUltra = document.getElementById('resort-stay-ultra').value;
               const types = []; if (itemData.hasDayVisit) types.push("Day Visit"); if (itemData.hasStayNight) types.push("Stay Night"); itemData.duration = types.join(" & ") || "Resort Pass";
             }
             if (prefix === 'photography') {

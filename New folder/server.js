@@ -582,13 +582,16 @@ async function seedDatabaseIfEmpty() {
         dayVisitType: "both",
         dayHalfStd: 90,
         dayHalfPrem: 130,
+        dayHalfUltra: 160,
         dayHalfNone: 70,
         dayFullStd: 140,
         dayFullPrem: 190,
+        dayFullUltra: 220,
         dayFullNone: 110,
         hasStayNight: true,
         stayStd: 350,
         stayPrem: 490,
+        stayUltra: 590,
         stayNone: 290
       },
       {
@@ -606,6 +609,7 @@ async function seedDatabaseIfEmpty() {
         dayVisitType: "full_day",
         dayFullStd: 110,
         dayFullPrem: 160,
+        dayFullUltra: 190,
         dayFullNone: 90,
         hasStayNight: false
       }
