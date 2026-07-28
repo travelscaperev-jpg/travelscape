@@ -1297,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${getOfferBadgeHTML(offerType)}
               </div>
               <h1 class="ex-title">${ex.title}</h1>
-              <p class="ex-desc">${ex.description}</p>
+              <p class="ex-desc">${ex.description ? ex.description.split(/\r?\n/)[0] : ''}</p>
               <div style="display: flex; gap: 1rem; margin-top: 1.5rem; align-items: center;">
                 <button class="glass-btn layer${layerNum}-floating-details" data-id="${ex.id}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Details</button>
                 ${layerNum !== 6 && !window.isBookingRestricted(ex) ? `<button class="glass-btn layer${layerNum}-floating-book" data-id="${ex.id}" data-title="${ex.title}" style="padding: 0.9rem 2.2rem; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Book Now</button>` : ''}
@@ -1476,6 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openBookingModal = (id, title) => {
       if (!bookingModal) return;
+      const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
 
       const checkSlotsAvailability = () => {
         const dateInput = bookingModal.querySelector('#booking-date');
@@ -1618,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${(window.PAYMENT_LINK && !isOfficeUser) ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -1846,7 +1847,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Resort Package', total: totalPrice });
-          if (window.PAYMENT_LINK) {
+          if (window.PAYMENT_LINK && !isOfficeUser) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
         });
@@ -1936,7 +1937,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
               </div>
 
-              <button type="submit" class="btn btn-primary" id="transfer-submit-btn" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+              <button type="submit" class="btn btn-primary" id="transfer-submit-btn" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${(window.PAYMENT_LINK && !isOfficeUser) ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -2182,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Boat Transfer', total: totalPrice });
-          if (window.PAYMENT_LINK) {
+          if (window.PAYMENT_LINK && !isOfficeUser) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
         });
@@ -2227,7 +2228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${(window.PAYMENT_LINK && !isOfficeUser) ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -2376,7 +2377,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Package', total: totalPrice });
-          if (window.PAYMENT_LINK) {
+          if (window.PAYMENT_LINK && !isOfficeUser) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
         });
@@ -2433,7 +2434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                 <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
               </div>
-              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${window.PAYMENT_LINK ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${(window.PAYMENT_LINK && !isOfficeUser) ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
             </form>
           </div>
         `;
@@ -2640,7 +2641,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showSystemNotification(newBooking);
           closeBookingModal();
           showBookingConfirmationModal(newBooking, { type: 'Excursion', total: totalPrice });
-          if (window.PAYMENT_LINK) {
+          if (window.PAYMENT_LINK && !isOfficeUser) {
             window.open(window.PAYMENT_LINK, '_blank');
           }
         });
