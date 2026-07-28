@@ -2956,19 +2956,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const renderBookings = () => {
         if (!bookingsTable) return;
         let bookings = (getBookings() || []).filter(Boolean);
-
         // Update dashboard metrics widgets
         const totalBookingsEl = document.getElementById('admin-stat-total-bookings');
         const totalAmountEl = document.getElementById('admin-stat-total-amount');
+        const adminConfirmedEl = document.getElementById('admin-stat-confirmed-bookings');
+        const adminPendingEl = document.getElementById('admin-stat-pending-bookings');
         if (totalBookingsEl && totalAmountEl) {
           const totalCount = bookings.length;
           const totalSum = bookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0);
           totalBookingsEl.textContent = totalCount;
           totalAmountEl.textContent = `$${totalSum.toFixed(2)}`;
         }
+        if (adminConfirmedEl) {
+          adminConfirmedEl.textContent = bookings.filter(b => b.status === 'Confirmed').length;
+        }
+        if (adminPendingEl) {
+          adminPendingEl.textContent = bookings.filter(b => b.status === 'Pending').length;
+        }
 
         const staffTotalTripsEl = document.getElementById('staff-stat-total-trips');
         const staffTotalGuestsEl = document.getElementById('staff-stat-total-guests');
+        const staffConfirmedEl = document.getElementById('staff-stat-confirmed-trips');
+        const staffPendingEl = document.getElementById('staff-stat-pending-trips');
         if (staffTotalTripsEl || staffTotalGuestsEl) {
           const totalTrips = bookings.length;
           const totalGuests = bookings.reduce((sum, b) => {
@@ -2978,6 +2987,12 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 0);
           if (staffTotalTripsEl) staffTotalTripsEl.textContent = totalTrips;
           if (staffTotalGuestsEl) staffTotalGuestsEl.textContent = totalGuests;
+        }
+        if (staffConfirmedEl) {
+          staffConfirmedEl.textContent = bookings.filter(b => b.status === 'Confirmed').length;
+        }
+        if (staffPendingEl) {
+          staffPendingEl.textContent = bookings.filter(b => b.status === 'Pending').length;
         }
 
         const searchVal = filterSearch ? filterSearch.value.trim().toLowerCase() : '';
@@ -3014,39 +3029,62 @@ document.addEventListener('DOMContentLoaded', () => {
         const standardBookings = bookings.filter(b => !b.isPrivate);
         const privateBookingsList = bookings.filter(b => b.isPrivate);
 
-        const renderRow = (b) => `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-            <td style="padding: 1rem 0; font-family:'JetBrains Mono', monospace; color:#fde047; font-weight:700; font-size:0.9rem;">
-              #${b.id}
-            </td>
-            <td style="padding: 1rem 0;">
-              <strong style="color: #fff;">${b.customerName}</strong>
-              ${b.customerContact ? `<div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Tel: ${b.customerContact} <a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" style="color:#25D366; margin-left:8px; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></div>` : ''}
-              <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Email: <a href="mailto:${b.customerEmail}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${b.customerEmail}</a></div>
-            </td>
-            <td style="padding: 1rem 0;">${b.isPrivate ? `<span style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-right:5px; text-transform:uppercase; display:inline-block; vertical-align:middle; line-height:1.2;">Private</span>` : ''}<span style="color:#fff; font-weight:600; vertical-align:middle;">${b.excursionTitle}</span><div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Type: <span style="color:#38bdf8;">${b.bookingType || 'Individual'}</span>${b.bookingType === 'Group' ? ` (${b.adults || 1} Adults${b.kids > 0 ? `, ${b.kids} Kids, Ages: ${b.kidsAges}` : ''})` : ''}${b.bookingType === 'Transfer' ? ` (${b.adults || 1} Pax)` : ''}</div>${b.photographyId ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i>Photo Add-on: ${(getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId}</div>` : ''}</td>
-            <td style="padding: 1rem 0;">
-              <div>${b.bookingDate}</div>
-              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Entry: ${b.entryTime || 'N/A'}</div>
-            </td>
-            <td style="padding: 1rem 0;">
-              <div>${b.paymentBasis || 'Cash'}</div>
-              <div style="font-size: 0.75rem; color: #38bdf8; margin-top: 4px; font-weight: 600;">Entered By: ${b.enteredBy || b.bookedBy || 'Guest'}</div>
-              ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;">Promo: ${b.offerCode}</div>` : ''}
-              ${b.deviceType ? `<div style="font-size: 0.75rem; color: #a855f7; margin-top: 4px; font-weight: 600;"><i class="fa-solid ${b.deviceType === 'Mobile' ? 'fa-mobile-screen-button' : (b.deviceType === 'Tablet' ? 'fa-tablet-screen-button' : 'fa-laptop')}" style="margin-right: 4px;"></i>${b.deviceType}</div>` : ''}
-            </td>
-            <td style="padding: 1rem 0; color: ${b.status === 'Confirmed' ? '#10b981' : '#f59e0b'};">${b.status}</td>
-            <td style="padding: 1rem 0;">
-              ${b.bookedBy ? `<div style="font-size:0.8rem; font-weight:600; color:#38bdf8;">Created: ${b.bookedBy}</div>` : '<div style="font-size:0.8rem; color:#94a3b8;">Created: Guest</div>'}
-              ${b.editedBy ? `<div style="font-size:0.8rem; color:#a855f7; margin-top:4px;">Edited: ${b.editedBy}</div>` : ''}
-            </td>
-            <td style="padding: 1rem 0;">
-              ${b.status === 'Pending' && (role === 'admin' || role === 'staff') ? `<button class="btn approve-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#10b981; color:#fff; font-size:0.8rem; margin-right:5px;">Approve</button>` : ''}
-              <button class="btn print-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#3b82f6; color:#fff; font-size:0.8rem; margin-right:5px;">Print</button>
-              ${role === 'admin' ? `<button class="btn delete-booking-btn" data-id="${b.id}" style="padding:0.25rem 0.75rem; background:#ef4444; color:#fff; font-size:0.8rem;">Cancel</button>` : ''}
-            </td>
-          </tr>
-        `;
+        const renderRow = (b) => {
+          const photoAddon = b.photographyId ? (getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId : null;
+          return `
+            <tr>
+              <td style="font-family:'JetBrains Mono', monospace; color:#fde047; font-weight:700; font-size:0.9rem;">
+                #${b.id}
+              </td>
+              <td>
+                <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 6px;">${b.customerName}</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  ${b.customerContact ? `<a href="https://wa.me/${b.customerContact.replace(/[^0-9]/g, '')}?text=Hi,%20hope%20you%20are%20good,%20we%20are%20officially%20contacting%20for%20Travelscape%20Maldives" target="_blank" class="contact-pill-link whatsapp"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ''}
+                  <a href="mailto:${b.customerEmail}" class="contact-pill-link email"><i class="fa-solid fa-envelope"></i> Email</a>
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
+                  ${b.isPrivate ? `<span class="add-on-tag" style="background:rgba(239, 68, 68, 0.12); color:#ef4444; border-color:rgba(239, 68, 68, 0.25);">Private</span>` : ''}
+                  <span style="color:#fff; font-weight:700;">${b.excursionTitle}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                  <span class="pax-count-pill">${b.bookingType || 'Individual'}</span>
+                  ${b.bookingType === 'Group' ? `<span style="font-size:0.75rem; color:#94a3b8;">(${b.adults || 1} Ad${b.kids > 0 ? `, ${b.kids} Kd` : ''})</span>` : ''}
+                  ${b.bookingType === 'Transfer' ? `<span style="font-size:0.75rem; color:#94a3b8;">(${b.adults || 1} Pax)</span>` : ''}
+                  ${photoAddon ? `<span class="add-on-tag"><i class="fa-solid fa-camera"></i> Photo Add-on: ${photoAddon}</span>` : ''}
+                </div>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px;"><i class="fa-regular fa-calendar" style="color: #38bdf8;"></i> ${b.bookingDate}</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> Entry: ${b.entryTime || 'N/A'}</div>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-credit-card" style="color: #10b981;"></i> ${b.paymentBasis || 'Cash'}</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">By: <span style="color:#38bdf8; font-weight:600;">${b.enteredBy || b.bookedBy || 'Guest'}</span></div>
+                ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-percent"></i> Promo: ${b.offerCode}</div>` : ''}
+                ${b.deviceType ? `<div style="margin-top:4px;"><span class="device-badge-tag"><i class="fa-solid ${b.deviceType === 'Mobile' ? 'fa-mobile-screen-button' : (b.deviceType === 'Tablet' ? 'fa-tablet-screen-button' : 'fa-laptop')}"></i> ${b.deviceType}</span></div>` : ''}
+              </td>
+              <td>
+                ${b.status === 'Confirmed' 
+                  ? `<span class="status-badge status-confirmed"><i class="fa-solid fa-circle-check"></i> Confirmed</span>` 
+                  : `<span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> Pending</span>`
+                }
+              </td>
+              <td>
+                ${b.bookedBy ? `<div style="font-size:0.8rem; font-weight:600; color:#38bdf8;">Created: ${b.bookedBy}</div>` : '<div style="font-size:0.8rem; color:#94a3b8;">Created: Guest</div>'}
+                ${b.editedBy ? `<div style="font-size:0.8rem; color:#a855f7; margin-top:4px;">Edited: ${b.editedBy}</div>` : ''}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                  ${b.status === 'Pending' && (role === 'admin' || role === 'staff') ? `<button class="action-button-modern approve approve-btn" data-id="${b.id}"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
+                  <button class="action-button-modern print print-booking-btn" data-id="${b.id}"><i class="fa-solid fa-print"></i> Print</button>
+                  ${role === 'admin' ? `<button class="action-button-modern cancel delete-booking-btn" data-id="${b.id}"><i class="fa-solid fa-trash-can"></i> Cancel</button>` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        };
 
         if (bookingsTable) {
           if (standardBookings.length === 0) {

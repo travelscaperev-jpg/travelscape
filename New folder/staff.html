@@ -35,10 +35,6 @@
       document.write('<style>#staff-password-gate { display: none !important; }</style>');
     }
   </script>
-
-  <style>
-    /* Staff buttons are now visible, permissions are enforced by server/tabs */
-  </style>
 </head>
 
 <body style="background: #080d1a;">
@@ -46,7 +42,7 @@
   <!-- Password Gate Overlay -->
   <div id="staff-password-gate" class="password-gate-overlay">
     <div class="password-gate-card">
-      <h3 style="margin-top: 0;">Staff Portal</h3>
+      <h3 style="margin-top: 0;">Admin Portal</h3>
       <p>Enter the staff dashboard password to view current schedules and booking manifestations.</p>
       <div class="form-group" style="text-align: left;">
         <label for="staff-password">Password</label>
@@ -89,132 +85,141 @@
       <a onclick="switchDashboardTab('testimonials')" id="tab-btn-testimonials">Testimonials</a>
       <a onclick="switchDashboardTab('media')" id="tab-btn-media">Media Assets</a>
       <a onclick="switchDashboardTab('crew')" id="tab-btn-crew">Manage Crew</a>
+      
       <a onclick="switchDashboardTab('contact-messages')" id="tab-btn-contact-messages">Contact Messages <span
           id="contact-msg-badge"
           style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">0</span></a>
+      
       <a href="#" onclick="localStorage.removeItem('staff_logged'); window.location.reload(); return false;"
         style="margin-top: 2rem; color: #ef4444;">Log Out</a>
     </aside>
 
     <main class="main-content" style="padding-top: 2rem;">
-      <h2 style="margin-bottom: 2rem; color: #fff;">Staff Control Panel</h2>
+      <h2 style="margin-bottom: 2rem; color: #fff;">Administrator Control Panel</h2>
 
       <!-- TAB 1: OVERVIEW & BOOKINGS -->
       <div id="tab-bookings" class="tab-content-section active">
-        <!-- Metrics Stats Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem;">
-          <div
-            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <h4
-                style="margin: 0 0 0.5rem 0; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                Total Trips (Bookings)</h4>
-              <div id="staff-stat-total-trips" style="font-size: 2.25rem; font-weight: 800; color: #fff;">0</div>
+        <!-- Stats Summary -->
+        <div class="metrics-grid-4">
+          <div class="metric-card-modern metric-blue">
+            <div class="metric-info">
+              <h4>Total Trips</h4>
+              <div class="metric-value-modern" id="staff-stat-total-trips">0</div>
             </div>
-            <div style="background: rgba(56, 189, 248, 0.1); padding: 1rem; border-radius: 12px;">
-              <i class="fa-solid fa-route" style="font-size: 2rem; color: #38bdf8;"></i>
+            <div class="metric-icon-wrapper">
+              <i class="fa-solid fa-briefcase fa-xl"></i>
             </div>
           </div>
-
-          <div
-            style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <h4
-                style="margin: 0 0 0.5rem 0; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                Total Guests</h4>
-              <div id="staff-stat-total-guests" style="font-size: 2.25rem; font-weight: 800; color: #fff;">0</div>
+          <div class="metric-card-modern metric-green">
+            <div class="metric-info">
+              <h4>Total Guests</h4>
+              <div class="metric-value-modern" id="staff-stat-total-guests">$0.00</div>
             </div>
-            <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 12px;">
-              <i class="fa-solid fa-users" style="font-size: 2rem; color: #10b981;"></i>
+            <div class="metric-icon-wrapper">
+              <i class="fa-solid fa-wallet fa-xl"></i>
+            </div>
+          </div>
+          <div class="metric-card-modern metric-purple">
+            <div class="metric-info">
+              <h4>Confirmed Trips</h4>
+              <div class="metric-value-modern" id="staff-stat-confirmed-trips">0</div>
+            </div>
+            <div class="metric-icon-wrapper">
+              <i class="fa-solid fa-circle-check fa-xl"></i>
+            </div>
+          </div>
+          <div class="metric-card-modern metric-orange">
+            <div class="metric-info">
+              <h4>Pending Approvals</h4>
+              <div class="metric-value-modern" id="staff-stat-pending-trips">0</div>
+            </div>
+            <div class="metric-icon-wrapper">
+              <i class="fa-solid fa-clock fa-xl"></i>
             </div>
           </div>
         </div>
 
-        <!-- Bookings Table -->
-        <div
-          style="background: #121824; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: #cbd5e1;">
-          <h3
-            style="margin-bottom: 1.5rem; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
-            <span>Active Guest Booking Manifest</span>
-            <span
-              style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized
-              with Admin</span>
-          </h3>
-
-          <!-- Filters -->
-          <div
-            style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="flex: 1.5; min-width: 200px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Search
-                Booking</label>
-              <input type="text" id="filter-search" placeholder="Search ID, Name, Contact, Email..."
-                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit; outline:none;">
+        <!-- Filter Panel -->
+        <div class="filter-panel-card">
+          <div class="filter-grid-layout">
+            <div class="filter-item-wrapper" style="grid-column: span 1.5;">
+              <label class="filter-label-modern">Search Booking</label>
+              <div class="filter-input-container-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="filter-search" class="filter-field-modern" placeholder="Search ID, Name, Contact, Email...">
+              </div>
             </div>
-            <div style="flex: 1; min-width: 150px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Package
-                Type</label>
-              <select id="filter-package-type"
-                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-                <option value="">All Package Types</option>
-                <option value="Packages">Packages</option>
-                <option value="Excursions">Excursions</option>
-                <option value="Boat Transfers">Boat Transfers</option>
-                <option value="Free Diving">Free Diving</option>
-                <option value="Resorts">Resorts</option>
-                <option value="Photography">Photography</option>
-              </select>
+            <div class="filter-item-wrapper">
+              <label class="filter-label-modern">Package Type</label>
+              <div class="filter-input-container-icon">
+                <i class="fa-solid fa-tags"></i>
+                <select id="filter-package-type" class="filter-field-modern">
+                  <option value="">All Package Types</option>
+                  <option value="Packages">Packages</option>
+                  <option value="Excursions">Excursions</option>
+                  <option value="Boat Transfers">Boat Transfers</option>
+                  <option value="Free Diving">Free Diving</option>
+                  <option value="Resorts">Resorts</option>
+                  <option value="Photography">Photography</option>
+                </select>
+              </div>
             </div>
-            <div style="flex: 1; min-width: 200px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter
-                Excursion</label>
-              <select id="filter-excursion"
-                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-                <option value="">All Excursions</option>
-              </select>
+            <div class="filter-item-wrapper">
+              <label class="filter-label-modern">Excursion</label>
+              <div class="filter-input-container-icon">
+                <i class="fa-solid fa-umbrella-beach"></i>
+                <select id="filter-excursion" class="filter-field-modern">
+                  <option value="">All Excursions</option>
+                </select>
+              </div>
             </div>
-            <div style="flex: 1; min-width: 150px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Date</label>
-              <input type="date" id="filter-date"
-                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
+            <div class="filter-item-wrapper">
+              <label class="filter-label-modern">Filter Date</label>
+              <div class="filter-input-container-icon">
+                <i class="fa-solid fa-calendar"></i>
+                <input type="date" id="filter-date" class="filter-field-modern">
+              </div>
             </div>
-            <div style="flex: 1; min-width: 150px;">
-              <label style="display:block; color:#94a3b8; font-size:0.8rem; margin-bottom:0.3rem;">Filter Payment
-                Basis</label>
-              <select id="filter-payment"
-                style="width:100%; padding:0.5rem; background:#080d1a; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-family:inherit;">
-                <option value="">All Payments</option>
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Office Directly Payment">Office Directly Payment</option>
-              </select>
-            </div>
-            <div style="display:flex; align-items:flex-end; gap: 0.5rem;">
-              <button id="clear-filters" class="btn"
-                style="padding:0.5rem 1rem; background:rgba(255,255,255,0.1); color:#fff; font-size:0.85rem;">Clear</button>
-              <button id="print-filtered-list" class="btn btn-primary"
-                style="padding:0.5rem 1rem; font-size:0.85rem;">Print List</button>
-              <button id="add-direct-booking-staff" class="btn"
-                style="padding:0.5rem 1rem; font-size:0.85rem; background:#10b981; color:#fff; display: inline-flex; align-items: center; gap: 6px;"><i
-                  class="fa-solid fa-plus"></i> Add Booking</button>
+            <div class="filter-item-wrapper">
+              <label class="filter-label-modern">Payment Basis</label>
+              <div class="filter-input-container-icon">
+                <i class="fa-solid fa-credit-card"></i>
+                <select id="filter-payment" class="filter-field-modern">
+                  <option value="">All Payments</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Office Directly Payment">Office Directly Payment</option>
+                </select>
+              </div>
             </div>
           </div>
+          <div class="filter-actions-row">
+            <button id="clear-filters" class="btn" style="padding: 0.5rem 1.25rem; background: rgba(255,255,255,0.08); color: #fff; font-size: 0.85rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-rotate-left" style="margin-right: 4px;"></i> Clear</button>
+            <button id="print-filtered-list" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-print" style="margin-right: 4px;"></i> Print List</button>
+            <button id="add-direct-booking-staff" class="btn" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; background: #10b981; color: #fff; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;"><i class="fa-solid fa-plus"></i> Add Booking</button>
+          </div>
+        </div>
 
-          <h3 style="color: #38bdf8; font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem;">Standard Bookings
-          </h3>
-          <div style="overflow-x: auto; margin-bottom: 2rem;">
-            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+        <!-- Bookings Tables -->
+        <div class="modern-table-card">
+          <div class="modern-table-title-area">
+            <h3><i class="fa-solid fa-list-check" style="color: #38bdf8;"></i> Standard Bookings List</h3>
+            <span style="font-size: 0.8rem; font-weight: 500; background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 0.35rem 0.75rem; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.2);"><i class="fa-solid fa-cloud" style="margin-right: 4px;"></i> Synchronized with Cloud Database</span>
+          </div>
+
+          <div class="table-responsive-wrapper" style="margin-bottom: 2.5rem;">
+            <table class="dashboard-table-modern">
               <thead>
-                <tr
-                  style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <th style="padding: 1rem 0;">Booking ID</th>
-                  <th style="padding: 1rem 0;">Guest Name</th>
-                  <th style="padding: 1rem 0;">Excursion Title</th>
-                  <th style="padding: 1rem 0;">Preferred Date</th>
-                  <th style="padding: 1rem 0;">Payment Basis</th>
-                  <th style="padding: 1rem 0;">Status</th>
-                  <th style="padding: 1rem 0;">Handled By</th>
-                  <th style="padding: 1rem 0;">Actions</th>
+                <tr>
+                  <th style="width: 120px;">Booking ID</th>
+                  <th>Guest Info</th>
+                  <th>Trip / Package Detail</th>
+                  <th>Schedule Date</th>
+                  <th>Payment Detail</th>
+                  <th>Status</th>
+                  <th>Handled By</th>
+                  <th style="width: 180px; text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="staff-bookings-table">
@@ -223,20 +228,22 @@
             </table>
           </div>
 
-          <h3 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 0.5rem;">Boat Transfer Bookings</h3>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+          <div class="modern-table-title-area" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem; margin-top: 1.5rem;">
+            <h3><i class="fa-solid fa-ship" style="color: #ef4444;"></i> Boat Transfer Bookings</h3>
+          </div>
+
+          <div class="table-responsive-wrapper">
+            <table class="dashboard-table-modern">
               <thead>
-                <tr
-                  style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <th style="padding: 1rem 0;">Booking ID</th>
-                  <th style="padding: 1rem 0;">Guest Name</th>
-                  <th style="padding: 1rem 0;">Excursion Title</th>
-                  <th style="padding: 1rem 0;">Preferred Date</th>
-                  <th style="padding: 1rem 0;">Payment Basis</th>
-                  <th style="padding: 1rem 0;">Status</th>
-                  <th style="padding: 1rem 0;">Handled By</th>
-                  <th style="padding: 1rem 0;">Actions</th>
+                <tr>
+                  <th style="width: 120px;">Booking ID</th>
+                  <th>Guest Info</th>
+                  <th>Trip / Package Detail</th>
+                  <th>Schedule Date</th>
+                  <th>Payment Detail</th>
+                  <th>Status</th>
+                  <th>Handled By</th>
+                  <th style="width: 180px; text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="staff-private-bookings-table">
@@ -404,7 +411,6 @@
                   style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
 
-
               <div class="admin-form-row" style="margin-bottom: 1rem;">
                 <div class="form-group" style="margin-bottom: 0;">
                   <label for="ex-kid-half">Kid Age for Half Price</label>
@@ -514,6 +520,7 @@
                 style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                 <div id="private-transfer-details"
                   style="display: flex; margin-top: 0.5rem; padding-left: 1.5rem; border-left: 2px solid #38bdf8; flex-direction: column; gap: 1rem;">
+
                   <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                     <div style="flex: 1;">
                       <label style="font-size:0.8rem; color:#94a3b8;">Hub 1 Name</label>
@@ -794,7 +801,6 @@
                   </div>
                 </div>
               </div>
-
               <div class="admin-form-row" style="margin-bottom: 1rem;">
                 <div class="form-group" style="margin-bottom: 0;">
                   <label for="resort-kid-half">Kid Age for Half Price</label>
@@ -809,7 +815,6 @@
                 <label for="resort-max-capacity">Max Capacity (Daily Limit)</label>
                 <input type="number" id="resort-max-capacity" class="form-control" min="1" value="20" required>
               </div>
-
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
                 id="resort-submit-btn">Add Resort Card</button>
               <button type="button" class="btn"
@@ -852,7 +857,8 @@
               </div>
               <div class="form-group">
                 <label for="photography-price">Price ($)</label>
-                <input type="text" id="photography-price" class="form-control" placeholder="e.g. 150 or 1:200, 2:250" required>
+                <input type="text" id="photography-price" class="form-control" placeholder="e.g. 150 or 1:200, 2:250"
+                  required>
               </div>
               <div class="form-group">
                 <label for="photography-image">Cover Image (URL or Upload file below)</label>
@@ -956,7 +962,8 @@
               </div>
               <div class="form-group">
                 <label for="offer-subcategory">Applied Sub-Category / Specific Item</label>
-                <select id="offer-subcategory" class="form-control" multiple style="background:#080d1a; color:#fff; height:120px;">
+                <select id="offer-subcategory" class="form-control" multiple
+                  style="background:#080d1a; color:#fff; height:120px;">
                 </select>
                 <small style="color:#94a3b8; font-size: 0.75rem;">Hold Ctrl/Cmd to select multiple</small>
               </div>
@@ -1117,7 +1124,6 @@
           <button id="save-gallery-btn" class="btn btn-primary"
             style="margin-top: 1.5rem; padding: 0.75rem 1.5rem;">Save Gallery Changes</button>
         </div>
-
       </div>
 
       <!-- TAB 9: CONTACT MESSAGES -->
@@ -1130,7 +1136,7 @@
               Messages</span>
             <span
               style="font-size: 0.8rem; font-weight: normal; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px;">Synchronized
-              with Admin</span>
+              with DB</span>
           </h3>
 
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -1210,6 +1216,113 @@
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Crew Members
             </h3>
             <div id="admin-crew-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 11: MANAGE STAFF ACCOUNTS -->
+      <div id="tab-staff-accounts" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;" id="staff-acc-form-title">
+              Add New Staff Account</h3>
+            <form id="admin-add-staff-acc-form" style="margin-top: 1rem;">
+              <input type="hidden" id="staff-acc-id">
+              <div class="form-group">
+                <label for="staff-acc-name">Staff Name</label>
+                <input type="text" id="staff-acc-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="staff-acc-password">Password</label>
+                <input type="password" id="staff-acc-password" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label style="margin-bottom: 0.5rem;">Permissions / Access Levels</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.85rem; color: #cbd5e1;">
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="bookings"> Bookings</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="packages"> Packages</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="excursions"> Excursions</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="private"> Boat Transfers</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="freediving"> Free Diving</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="resorts"> Resorts</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="photography"> Photography</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="offers"> Special Offers</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="testimonials"> Testimonials</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="media"> Media Assets</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="crew"> Manage Crew</label>
+                  <label><input type="checkbox" class="staff-perm-checkbox" value="contact-messages"> Contact Msgs</label>
+                  <label style="grid-column: span 2; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.5rem;"><input type="checkbox" id="staff-perm-all"> <strong>Select All</strong></label>
+                </div>
+              </div>
+              <button type="submit" id="staff-acc-submit-btn" class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%;">Create Staff Account</button>
+              <button type="button" id="staff-acc-cancel-btn" class="btn"
+                style="margin-top: 0.5rem; width: 100%; display: none; background: rgba(255,255,255,0.1);">Cancel
+                Edit</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Current Staff Accounts
+            </h3>
+            <div id="admin-staff-acc-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 11: BOOKING RESTRICTIONS -->
+      <div id="tab-restrictions" class="tab-content-section">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-bottom: 3rem;">
+          <div class="admin-form">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Add Booking
+              Restriction (Blackout Dates)</h3>
+            <form id="admin-add-restriction-form" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label for="restriction-category">Category</label>
+                <select id="restriction-category" class="form-control" style="background:#080d1a; color:#fff;" required>
+                  <option value="">Select Category...</option>
+                  <option value="packages">Packages</option>
+                  <option value="excursions">Excursions</option>
+                  <option value="private_bookings">Boat Transfers</option>
+                  <option value="freediving">Free Diving</option>
+                  <option value="resorts">Resorts</option>
+                  <option value="photography">Photography</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="restriction-items">Select Item(s)</label>
+                <select id="restriction-items" class="form-control" style="background:#080d1a; color:#fff;" multiple
+                  required>
+                  <!-- Populated dynamically -->
+                </select>
+                <small style="color: #94a3b8; display: block; margin-top: 0.25rem;">Hold Ctrl/Cmd to select multiple. Or
+                  click "Select All" below.</small>
+                <button type="button" id="restriction-select-all" class="btn"
+                  style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; background: rgba(255,255,255,0.1);">Select
+                  All in Category</button>
+              </div>
+              <div class="admin-form-row">
+                <div class="form-group">
+                  <label for="restriction-from">Disable Booking From</label>
+                  <input type="date" id="restriction-from" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="restriction-to">Disable Booking Until (Inclusive)</label>
+                  <input type="date" id="restriction-to" class="form-control" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Apply
+                Restriction</button>
+            </form>
+          </div>
+          <div class="admin-list-card">
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Active Restrictions
+            </h3>
+            <div id="admin-restrictions-list"
+              style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
               <!-- Injected by script.js -->
             </div>
           </div>
