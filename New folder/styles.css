@@ -3452,7 +3452,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-bottom: 0 !important;
     padding: 0.5rem 0.75rem !important;
     font-size: 0.85rem !important;
-    display: inline-block !important;
+    display: inline-block;
   }
 
   .main-content {
@@ -3468,10 +3468,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 @media (max-width: 768px) {
   .split-excursions-layout {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
     gap: 2rem !important;
     min-height: auto !important;
     padding: 4rem 1.5rem 2rem 1.5rem !important;
+  }
+
+  .split-excursions-layout .excursion-details-overlay {
+    order: 1 !important;
+  }
+
+  .split-excursions-layout .view-all-wrapper {
+    order: 2 !important;
   }
 
   /* Disable sticky parallax on mobile to prevent layers crushing/overlapping */
@@ -3479,6 +3488,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative !important;
     height: auto !important;
     min-height: 100vh !important;
+    min-height: 100dvh !important;
   }
 
   .layer-2,
@@ -3565,7 +3575,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   .layer-6-slider,
   .layer-8-slider {
     margin-top: 0 !important;
-    height: 100vh !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     padding-bottom: 2rem !important;
   }
 }
