@@ -3198,6 +3198,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> Entry: ${b.entryTime || 'N/A'}</div>
               </td>
               <td>
+                <div style="font-weight: 700; color: #fde047; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-dollar-sign" style="color: #fde047;"></i> Amount: $${parseFloat(b.totalPrice || 0).toFixed(2)}</div>
                 <div style="font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-credit-card" style="color: #10b981;"></i> ${b.paymentBasis || 'Cash'}</div>
                 <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">By: <span style="color:#38bdf8; font-weight:600;">${b.enteredBy || b.bookedBy || 'Guest'}</span></div>
                 ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-percent"></i> Promo: ${b.offerCode}</div>` : ''}
