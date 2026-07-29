@@ -1667,6 +1667,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- Offer code & price -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+                ${isOfficeUser ? `
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
+                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                </div>
+                ` : ''}
                 <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                   <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                   <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
@@ -1781,6 +1787,12 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
              if (offerMessage) { offerMessage.textContent = ''; }
           }
+          
+          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
+          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
+          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
+             total = discountedPriceVal;
+          }
           priceDisplay.textContent = `$${total}`;
           checkSlotsAvailability();
         };
@@ -1804,6 +1816,8 @@ document.addEventListener('DOMContentLoaded', () => {
         adultsInput.addEventListener('input', updateTotalPrice);
         const offerCodeInputRS = bookingModal.querySelector('#booking-offer-code');
         if (offerCodeInputRS) offerCodeInputRS.addEventListener('input', updateTotalPrice);
+        const discountedPriceInputRS = bookingModal.querySelector('#booking-discounted-price');
+        if (discountedPriceInputRS) discountedPriceInputRS.addEventListener('input', updateTotalPrice);
 
         const dateInputRS = bookingModal.querySelector('#booking-date');
         if (dateInputRS) dateInputRS.addEventListener('input', checkSlotsAvailability);
@@ -1984,6 +1998,12 @@ document.addEventListener('DOMContentLoaded', () => {
                   <input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;">
                   <div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div>
                 </div>
+                ${isOfficeUser ? `
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
+                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                </div>
+                ` : ''}
                 <div>
                   <div id="transfer-pax-warning" style="color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
                   <div id="transfer-tier-info" style="color: #10b981; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
@@ -2105,12 +2125,19 @@ document.addEventListener('DOMContentLoaded', () => {
              }
           }
 
+          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
+          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
+          const hasDiscountedPrice = !isNaN(discountedPriceVal) && discountedPriceVal >= 0;
+
           if (!islandConfig && !(isFromHub && isToHub)) {
-            priceDisplay.textContent = '$0';
+            priceDisplay.textContent = hasDiscountedPrice ? `$${discountedPriceVal}` : '$0';
             paxWarning.style.display = 'none';
-            tierInfo.style.display = 'none';
-            submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.5';
+            tierInfo.style.display = hasDiscountedPrice ? 'block' : 'none';
+            if (hasDiscountedPrice) {
+              tierInfo.textContent = 'Custom/Discounted Office Price applied';
+            }
+            submitBtn.disabled = !hasDiscountedPrice;
+            submitBtn.style.opacity = hasDiscountedPrice ? '1' : '0.5';
             return;
           }
 
@@ -2146,9 +2173,17 @@ document.addEventListener('DOMContentLoaded', () => {
              if (offerMessage) { offerMessage.textContent = ''; }
           }
 
-          if (result.matched || result.price > 0) {
+          if (hasDiscountedPrice) {
+             total = discountedPriceVal;
+          }
+
+          if (hasDiscountedPrice || result.matched || result.price > 0) {
             priceDisplay.textContent = `$${total}`;
-            if (!result.matched) {
+            if (hasDiscountedPrice) {
+              paxWarning.style.display = 'none';
+              tierInfo.style.display = 'block';
+              tierInfo.textContent = 'Custom/Discounted Office Price applied';
+            } else if (!result.matched) {
               paxWarning.style.display = 'block';
               paxWarning.textContent = `Exceeds available tiers (${result.tierLabel}). Please contact us for custom pricing.`;
               tierInfo.style.display = 'none';
@@ -2174,6 +2209,8 @@ document.addEventListener('DOMContentLoaded', () => {
         adultsInput.addEventListener('input', updateTransferPrice);
         kidsInput.addEventListener('input', updateTransferPrice);
         if (offerCodeInput) offerCodeInput.addEventListener('input', updateTransferPrice);
+        const discountedPriceInputBT = bookingModal.querySelector('#booking-discounted-price');
+        if (discountedPriceInputBT) discountedPriceInputBT.addEventListener('input', updateTransferPrice);
         
         // Initialize dynamic options
         updateToOptions();
@@ -2284,6 +2321,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- Offer code & price -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+                ${isOfficeUser ? `
+                <div>
+                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
+                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+                </div>
+                ` : ''}
                 <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                   <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                   <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$${packagePrice}</span>
@@ -2355,6 +2398,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (offerMessage) { offerMessage.textContent = ''; }
           }
 
+          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
+          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
+          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
+             total = discountedPriceVal;
+          }
+
           priceDisplay.textContent = `$${total}`;
           checkSlotsAvailability();
         };
@@ -2366,6 +2415,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (kidsAgesInput) kidsAgesInput.addEventListener('input', updatePackagePrice);
         if (offerCodeInput) offerCodeInput.addEventListener('input', updatePackagePrice);
+        const discountedPriceInputPKG = bookingModal.querySelector('#booking-discounted-price');
+        if (discountedPriceInputPKG) discountedPriceInputPKG.addEventListener('input', updatePackagePrice);
         if (dateInput) dateInput.addEventListener('input', checkSlotsAvailability);
 
         updatePackagePrice();
@@ -2495,7 +2546,12 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
 
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-              
+              ${isOfficeUser ? `
+              <div>
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
+                <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+              </div>
+              ` : ''}
               <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                 <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                 <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
@@ -2605,6 +2661,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           total += photoCost;
+
+          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
+          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
+          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
+             total = discountedPriceVal;
+          }
+
           priceDisplay.textContent = `$${total}`;
         };
 
@@ -2635,6 +2698,10 @@ document.addEventListener('DOMContentLoaded', () => {
               if (offerMessageEX) { offerMessageEX.textContent = 'Invalid or not applicable code'; offerMessageEX.style.color = '#ef4444'; }
             }
           });
+        }
+        const discountedPriceInputEX = bookingModal.querySelector('#booking-discounted-price');
+        if (discountedPriceInputEX) {
+          discountedPriceInputEX.addEventListener('input', updateTotalPrice);
         }
 
         // Run sync initially for default check states
