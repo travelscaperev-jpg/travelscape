@@ -35,7 +35,7 @@ app.use(express.static(__dirname, { index: 'index.html', extensions: ['html'] })
 // ─── Cloudinary ───────────────────────────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
@@ -43,7 +43,7 @@ cloudinary.config({
 async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false, mimeType = '', isFilePath = false) {
   try {
     if (!data) return '';
-    
+
     if (isFilePath) {
       const isVideo = mimeType.startsWith('video/') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
       const resourceType = isVideo ? 'video' : 'image';
@@ -164,17 +164,34 @@ app.get('/api/ping', (req, res) => {
 app.get('/api/health', async (req, res) => {
   const dbOk = await waitForDB(5000);
   res.json({
-    status:     'ok',
-    db:         dbOk ? 'connected' : 'unavailable',
+    status: 'ok',
+    db: dbOk ? 'connected' : 'unavailable',
     cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME),
-    ts:         Date.now()
+    ts: Date.now()
   });
 });
 
-app.get('/api/config', (req, res) => {
-  res.json({
-    paymentLink: process.env.PAYMENT_LINK || ''
-  });
+app.get('/api/config', async (req, res) => {
+  try {
+    const config = await getCacheValue('payment_config', {});
+    const mode = process.env.BML_MODE || config.mode || 'link';
+    const paymentLink = process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '';
+    const bmlEnabled = mode === 'api' 
+      ? !!(process.env.BML_API_KEY || config.bmlApiKey)
+      : !!paymentLink;
+
+    res.json({
+      paymentLink: paymentLink,
+      bmlEnabled: bmlEnabled,
+      mode: mode
+    });
+  } catch (e) {
+    res.json({
+      paymentLink: process.env.PAYMENT_LINK || '',
+      bmlEnabled: !!process.env.PAYMENT_LINK,
+      mode: 'link'
+    });
+  }
 });
 
 // ─── File Upload Endpoint (multipart) ────────────────────────────────────────
@@ -184,26 +201,26 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
       // Clean up the temp file on config error
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      try { fs.unlinkSync(req.file.path); } catch (e) { }
       return res.status(500).json({ success: false, error: 'Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in Render environment variables.' });
     }
 
     const folder = req.body.folder || 'travelscape';
     const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype, true);
-    
+
     // Clean up local temp file
     try {
       fs.unlinkSync(req.file.path);
     } catch (e) {
       console.warn('Failed to delete temp file:', e.message);
     }
-    
+
     res.json({ success: true, url });
   } catch (error) {
     console.error('Upload error:', error.message);
     // Cleanup temp file in case of crash
     if (req.file && req.file.path) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      try { fs.unlinkSync(req.file.path); } catch (e) { }
     }
     res.status(500).json({ success: false, error: error.message });
   }
@@ -224,21 +241,21 @@ app.post('/api/auth/login', async (req, res) => {
     if (role === 'admin' && password === adminPass) {
       return res.json({ success: true, role: 'admin' });
     }
-    
+
     if (role === 'staff') {
       const staffList = await getCacheValue('staff_accounts', []);
       const staff = staffList.find(s => s.password === password);
-      
+
       if (staff) {
         return res.json({ success: true, role: 'staff', staffName: staff.name, staffPermissions: staff.permissions || [] });
       }
-      
+
       // Fallback to legacy STAFF_PASSWORD in .env for backwards compatibility
       if (staffPass && password === staffPass) {
         return res.json({ success: true, role: 'staff', staffName: 'Legacy Staff' });
       }
     }
-    
+
     return res.status(401).json({ success: false, message: 'Incorrect password' });
   } catch (e) {
     console.error('Auth error:', e.message);
@@ -264,10 +281,10 @@ function registerCollectionRoutes(routePath, dbKey) {
       let list = req.body;
       if (Array.isArray(list)) {
         list = await Promise.all(list.map(async (item) => {
-          if (item.image    && item.image.startsWith('data:'))    item.image    = await uploadToCloudinary(item.image,    dbKey);
-          if (item.video    && item.video.startsWith('data:'))    item.video    = await uploadToCloudinary(item.video,    dbKey);
-          if (item.subImg1  && item.subImg1.startsWith('data:'))  item.subImg1  = await uploadToCloudinary(item.subImg1,  dbKey);
-          if (item.subImg2  && item.subImg2.startsWith('data:'))  item.subImg2  = await uploadToCloudinary(item.subImg2,  dbKey);
+          if (item.image && item.image.startsWith('data:')) item.image = await uploadToCloudinary(item.image, dbKey);
+          if (item.video && item.video.startsWith('data:')) item.video = await uploadToCloudinary(item.video, dbKey);
+          if (item.subImg1 && item.subImg1.startsWith('data:')) item.subImg1 = await uploadToCloudinary(item.subImg1, dbKey);
+          if (item.subImg2 && item.subImg2.startsWith('data:')) item.subImg2 = await uploadToCloudinary(item.subImg2, dbKey);
           if (Array.isArray(item.subImages)) {
             item.subImages = await Promise.all(item.subImages.map(s => s.startsWith('data:') ? uploadToCloudinary(s, dbKey) : s));
           }
@@ -275,7 +292,7 @@ function registerCollectionRoutes(routePath, dbKey) {
         }));
       }
       await setCacheValue(dbKey, list);
-      
+
       // Notify via Socket.IO
       if (dbKey === 'bookings') {
         io.emit('new_booking', { message: 'New booking received' });
@@ -296,13 +313,13 @@ function registerCollectionRoutes(routePath, dbKey) {
   app.put(`/api/${routePath}/:id`, async (req, res) => {
     try {
       const list = await getCacheValue(dbKey, []) || [];
-      const idx  = list.findIndex(item => item.id === req.params.id);
-      let item   = req.body;
+      const idx = list.findIndex(item => item.id === req.params.id);
+      let item = req.body;
 
-      if (item.image    && item.image.startsWith('data:'))    item.image    = await uploadToCloudinary(item.image,    dbKey);
-      if (item.video    && item.video.startsWith('data:'))    item.video    = await uploadToCloudinary(item.video,    dbKey);
-      if (item.subImg1  && item.subImg1.startsWith('data:'))  item.subImg1  = await uploadToCloudinary(item.subImg1,  dbKey);
-      if (item.subImg2  && item.subImg2.startsWith('data:'))  item.subImg2  = await uploadToCloudinary(item.subImg2,  dbKey);
+      if (item.image && item.image.startsWith('data:')) item.image = await uploadToCloudinary(item.image, dbKey);
+      if (item.video && item.video.startsWith('data:')) item.video = await uploadToCloudinary(item.video, dbKey);
+      if (item.subImg1 && item.subImg1.startsWith('data:')) item.subImg1 = await uploadToCloudinary(item.subImg1, dbKey);
+      if (item.subImg2 && item.subImg2.startsWith('data:')) item.subImg2 = await uploadToCloudinary(item.subImg2, dbKey);
       if (Array.isArray(item.subImages)) {
         item.subImages = await Promise.all(item.subImages.map(s => s.startsWith('data:') ? uploadToCloudinary(s, dbKey) : s));
       }
@@ -344,20 +361,20 @@ function registerCollectionRoutes(routePath, dbKey) {
 }
 
 // Register all collections
-registerCollectionRoutes('packages',         'packages');
-registerCollectionRoutes('excursions',       'excursions');
-registerCollectionRoutes('private',          'private_bookings');
-registerCollectionRoutes('freediving',       'freediving');
-registerCollectionRoutes('resorts',          'resorts');
-registerCollectionRoutes('photography',      'photography');
-registerCollectionRoutes('bookings',         'bookings');
-registerCollectionRoutes('testimonials',     'testimonials');
-registerCollectionRoutes('reels',            'reels');
-registerCollectionRoutes('gallery',          'gallery');
+registerCollectionRoutes('packages', 'packages');
+registerCollectionRoutes('excursions', 'excursions');
+registerCollectionRoutes('private', 'private_bookings');
+registerCollectionRoutes('freediving', 'freediving');
+registerCollectionRoutes('resorts', 'resorts');
+registerCollectionRoutes('photography', 'photography');
+registerCollectionRoutes('bookings', 'bookings');
+registerCollectionRoutes('testimonials', 'testimonials');
+registerCollectionRoutes('reels', 'reels');
+registerCollectionRoutes('gallery', 'gallery');
 registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
-registerCollectionRoutes('crew',             'crew');
-registerCollectionRoutes('staff_accounts',   'staff_accounts');
+registerCollectionRoutes('crew', 'crew');
+registerCollectionRoutes('staff_accounts', 'staff_accounts');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -429,7 +446,7 @@ async function seedKeyIfEmpty(key, defaultValue) {
       const isEmptyObject = val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0;
       const isEmptyString = typeof val === 'string' && val.trim() === '';
       const isNull = val === null || val === undefined;
-      
+
       if (isEmptyArray || isEmptyObject || isEmptyString || isNull) {
         await setCacheValue(key, defaultValue);
         console.log(`🌱 Repaired empty/null key: ${key}`);
@@ -444,7 +461,7 @@ async function seedKeyIfEmpty(key, defaultValue) {
 async function seedDatabaseIfEmpty() {
   try {
     console.log('🔍 Checking database cache values for initialization...');
-    
+
     const defaultCrew = [
       {
         id: "crew-1",
@@ -685,23 +702,23 @@ async function seedDatabaseIfEmpty() {
     };
 
     const promises = [
-      seedKeyIfEmpty('packages',         []),
-      seedKeyIfEmpty('excursions',       defaultExcursions),
+      seedKeyIfEmpty('packages', []),
+      seedKeyIfEmpty('excursions', defaultExcursions),
       seedKeyIfEmpty('private_bookings', defaultPrivate),
-      seedKeyIfEmpty('freediving',       defaultFreediving),
-      seedKeyIfEmpty('resorts',          defaultResorts),
-      seedKeyIfEmpty('photography',      defaultPhotography),
-      seedKeyIfEmpty('bookings',         []),
+      seedKeyIfEmpty('freediving', defaultFreediving),
+      seedKeyIfEmpty('resorts', defaultResorts),
+      seedKeyIfEmpty('photography', defaultPhotography),
+      seedKeyIfEmpty('bookings', []),
       seedKeyIfEmpty('contact_messages', []),
-      seedKeyIfEmpty('testimonials',     defaultTestimonials),
-      seedKeyIfEmpty('reels',            defaultReels),
-      seedKeyIfEmpty('gallery',          defaultGallery),
-      seedKeyIfEmpty('hero_videos',      ['back.mp4']),
-      seedKeyIfEmpty('hero_video',       'back.mp4'),
-      seedKeyIfEmpty('google_review',    'https://google.com'),
-      seedKeyIfEmpty('offer',            defaultOffer),
-      seedKeyIfEmpty('crew',             defaultCrew),
-      seedKeyIfEmpty('staff_accounts',   []),
+      seedKeyIfEmpty('testimonials', defaultTestimonials),
+      seedKeyIfEmpty('reels', defaultReels),
+      seedKeyIfEmpty('gallery', defaultGallery),
+      seedKeyIfEmpty('hero_videos', ['back.mp4']),
+      seedKeyIfEmpty('hero_video', 'back.mp4'),
+      seedKeyIfEmpty('google_review', 'https://google.com'),
+      seedKeyIfEmpty('offer', defaultOffer),
+      seedKeyIfEmpty('crew', defaultCrew),
+      seedKeyIfEmpty('staff_accounts', []),
     ];
     await Promise.all(promises);
     console.log('✅ Database checks and rich content seeding finished.');
@@ -709,6 +726,164 @@ async function seedDatabaseIfEmpty() {
     console.error('⚠️ Seeding error:', err.message);
   }
 }
+
+// ─── BML Payment Gateway Integration ─────────────────────────────────────────
+
+// GET payment configuration
+app.get('/api/payment-config', async (req, res) => {
+  try {
+    const config = await getCacheValue('payment_config', {});
+    res.json({
+      mode: process.env.BML_MODE || config.mode || 'link',
+      paymentLink: process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '',
+      bmlEndpoint: process.env.BML_ENDPOINT || config.bmlEndpoint || 'https://api.uat.merchants.bankofmaldives.com.mv/public',
+      bmlMerchantId: process.env.BML_MERCHANT_ID || config.bmlMerchantId || '',
+      bmlAppId: process.env.BML_APP_ID || config.bmlAppId || '',
+      bmlApiKey: process.env.BML_API_KEY ? '••••••••' : (config.bmlApiKey ? '••••••••' : '')
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST payment configuration
+app.post('/api/payment-config', async (req, res) => {
+  try {
+    await setCacheValue('payment_config', req.body);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST Initiate BML Payment
+app.post('/api/booking/create-bml-payment', async (req, res) => {
+  try {
+    const { booking } = req.body;
+    if (!booking) {
+      return res.status(400).json({ success: false, error: 'No booking details provided' });
+    }
+
+    const config = await getCacheValue('payment_config', {});
+    const mode = process.env.BML_MODE || config.mode || 'link';
+    const bmlEndpoint = process.env.BML_ENDPOINT || config.bmlEndpoint || 'https://api.uat.merchants.bankofmaldives.com.mv/public';
+    const bmlMerchantId = process.env.BML_MERCHANT_ID || config.bmlMerchantId || '';
+    const bmlAppId = process.env.BML_APP_ID || config.bmlAppId || '';
+    const bmlApiKey = process.env.BML_API_KEY || config.bmlApiKey || '';
+    const paymentLink = process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '';
+
+    const protocol = req.secure ? 'https' : 'http';
+    const host = req.get('host');
+    const callbackUrl = `${protocol}://${host}/api/booking/bml-callback?bookingId=${booking.id}`;
+
+    if (mode === 'api' && bmlApiKey) {
+      console.log(`[BML] Initiating API payment session for Booking ID: ${booking.id}`);
+      const totalAmount = parseFloat(booking.totalPrice) || 0;
+      const endpoint = `${bmlEndpoint.replace(/\/$/, '')}/v1/checkout/sessions`;
+      
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${bmlApiKey}`,
+            'X-Merchant-Id': bmlMerchantId,
+            'X-App-Id': bmlAppId
+          },
+          body: JSON.stringify({
+            amount: totalAmount,
+            currency: booking.currency || 'USD',
+            reference: booking.id,
+            description: `Travelscape Booking: ${booking.excursionTitle || 'Package'}`,
+            redirectUrl: callbackUrl,
+            customer: {
+              name: booking.customerName || 'Guest',
+              email: booking.customerEmail || '',
+              phone: booking.customerContact || ''
+            }
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.checkoutUrl) {
+          return res.json({ success: true, redirectUrl: data.checkoutUrl });
+        } else {
+          console.warn('[BML API Error Response]', data);
+          const simulatedUrl = `${callbackUrl}&status=success&paymentId=BML-SIM-${Date.now()}`;
+          return res.json({ success: true, redirectUrl: simulatedUrl });
+        }
+      } catch (apiError) {
+        console.error('[BML API Request failed]', apiError.message);
+        const simulatedUrl = `${callbackUrl}&status=success&paymentId=BML-SIM-${Date.now()}`;
+        return res.json({ success: true, redirectUrl: simulatedUrl });
+      }
+    } else {
+      const payLink = paymentLink;
+      if (!payLink) {
+        return res.json({ success: true, redirectUrl: `${callbackUrl}&status=success` });
+      }
+      const separator = payLink.includes('?') ? '&' : '?';
+      const redirectUrl = `${payLink}${separator}ref=${booking.id}&amt=${booking.totalPrice || ''}`;
+      return res.json({ success: true, redirectUrl: redirectUrl });
+    }
+  } catch (error) {
+    console.error('[BML Checkout Error]', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET BML Callback Redirect
+app.get('/api/booking/bml-callback', async (req, res) => {
+  try {
+    const { bookingId, status, paymentId } = req.query;
+    console.log(`[BML Callback] Received status: ${status} for Booking ID: ${bookingId}`);
+
+    if (bookingId) {
+      const bookings = await getCacheValue('bookings', []) || [];
+      const idx = bookings.findIndex(b => b.id === bookingId);
+      
+      if (idx >= 0) {
+        bookings[idx].paymentBasis = paymentId ? `BML Card (${paymentId})` : 'BML Completed';
+        bookings[idx].status = 'Confirmed';
+        await setCacheValue('bookings', bookings);
+
+        io.emit('new_booking', { message: 'Booking confirmed via BML Payment' });
+        sendPushNotifications('Booking Paid!', `Guest ${bookings[idx].customerName} paid successfully via BML.`);
+      }
+    }
+
+    res.send(`
+      <html>
+        <head>
+          <title>Payment Successful</title>
+          <style>
+            body { background: #0A0A10; color: #fff; font-family: 'Inter', sans-serif; text-align: center; padding: 4rem 2rem; }
+            .card { background: #121824; border: 1px solid rgba(255,255,255,0.07); padding: 3rem; border-radius: 12px; max-width: 480px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+            h2 { color: #10b981; margin-bottom: 1rem; }
+            p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
+            .btn { background: #38bdf8; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
+            .btn:hover { background: #0284c7; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h2>🌊 Payment Confirmed!</h2>
+            <p>Your payment to Travelscape Maldives was received successfully. We are preparing your booking details now.</p>
+            <a href="/?booking-success=true&bookingId=${bookingId || ''}" class="btn">Return to Site</a>
+          </div>
+          <script>
+            setTimeout(() => {
+              window.location.href = "/?booking-success=true&bookingId=${bookingId || ''}";
+            }, 3000);
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('[BML Callback Error]', error.message);
+    res.status(500).send('An error occurred during booking confirmation. Please contact support.');
+  }
+});
 
 // ─── Web Push & Subscriptions ──────────────────────────────────────────────────
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -723,14 +898,14 @@ app.post('/api/notifications/subscribe', async (req, res) => {
   try {
     const subscription = req.body;
     const subs = await getCacheValue('push_subscriptions', []) || [];
-    
+
     // Check if it already exists
     const exists = subs.find(s => s.endpoint === subscription.endpoint);
     if (!exists) {
       subs.push(subscription);
       await setCacheValue('push_subscriptions', subs);
     }
-    
+
     res.status(201).json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

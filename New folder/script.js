@@ -252,9 +252,57 @@ document.addEventListener('DOMContentLoaded', () => {
     : (window.location.origin.includes('github.io') ? RENDER_SERVER_URL + '/api' : '/api');
 
   window.PAYMENT_LINK = '';
+  window.BML_ENABLED = false;
+  window.BML_MODE = 'link';
   try {
-    fetch(`${API_BASE}/config`).then(r => r.json()).then(d => { if(d.paymentLink) window.PAYMENT_LINK = d.paymentLink; }).catch(()=>{});
-  } catch(e) {}
+    fetch(`${API_BASE}/config`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.paymentLink) window.PAYMENT_LINK = d.paymentLink;
+        if (d.bmlEnabled) window.BML_ENABLED = d.bmlEnabled;
+        if (d.mode) window.BML_MODE = d.mode;
+      })
+      .catch(() => {});
+  } catch (e) {}
+
+  window.initiateBmlCheckout = async (booking) => {
+    // Show premium loader overlay during redirect
+    const loader = document.createElement('div');
+    Object.assign(loader.style, {
+      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+      background: 'rgba(10,10,16,0.9)', zIndex: '100000', display: 'flex',
+      flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Inter', sans-serif", color: '#fff'
+    });
+    loader.innerHTML = `
+      <div style="border: 4px solid rgba(56, 189, 248, 0.1); border-left-color: #38bdf8; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
+      <h3 style="margin: 0; font-weight: 600; letter-spacing: 0.5px;">Redirecting to Bank of Maldives...</h3>
+      <p style="color: #64748b; font-size: 0.9rem; margin-top: 0.5rem;">Please do not close this window</p>
+      <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      </style>
+    `;
+    document.body.appendChild(loader);
+
+    try {
+      const res = await fetch(`${API_BASE}/booking/create-bml-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking })
+      });
+      const data = await res.json();
+      if (data.success && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        loader.remove();
+        alert('Could not initiate BML payment. Please try again or contact support.');
+      }
+    } catch (err) {
+      console.error('[BML Checkout Error]', err);
+      loader.remove();
+      alert('Error connecting to payment gateway.');
+    }
+  };
 
   const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 8000 } = options;
@@ -1852,9 +1900,13 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: 'Resort Package', total: totalPrice });
-          if (window.PAYMENT_LINK && !isOfficeUser) {
-            window.open(window.PAYMENT_LINK, '_blank');
+          if (window.BML_ENABLED && !isOfficeUser) {
+            initiateBmlCheckout(newBooking);
+          } else {
+            showBookingConfirmationModal(newBooking, { type: 'Resort Package', total: totalPrice });
+            if (window.PAYMENT_LINK && !isOfficeUser) {
+              window.open(window.PAYMENT_LINK, '_blank');
+            }
           }
         });
 
@@ -2188,9 +2240,13 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: 'Boat Transfer', total: totalPrice });
-          if (window.PAYMENT_LINK && !isOfficeUser) {
-            window.open(window.PAYMENT_LINK, '_blank');
+          if (window.BML_ENABLED && !isOfficeUser) {
+            initiateBmlCheckout(newBooking);
+          } else {
+            showBookingConfirmationModal(newBooking, { type: 'Boat Transfer', total: totalPrice });
+            if (window.PAYMENT_LINK && !isOfficeUser) {
+              window.open(window.PAYMENT_LINK, '_blank');
+            }
           }
         });
 
@@ -2382,9 +2438,13 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: 'Package', total: totalPrice });
-          if (window.PAYMENT_LINK && !isOfficeUser) {
-            window.open(window.PAYMENT_LINK, '_blank');
+          if (window.BML_ENABLED && !isOfficeUser) {
+            initiateBmlCheckout(newBooking);
+          } else {
+            showBookingConfirmationModal(newBooking, { type: 'Package', total: totalPrice });
+            if (window.PAYMENT_LINK && !isOfficeUser) {
+              window.open(window.PAYMENT_LINK, '_blank');
+            }
           }
         });
 
@@ -2646,9 +2706,13 @@ document.addEventListener('DOMContentLoaded', () => {
           await setBookings(currentBookings);
           showSystemNotification(newBooking);
           closeBookingModal();
-          showBookingConfirmationModal(newBooking, { type: 'Excursion', total: totalPrice });
-          if (window.PAYMENT_LINK && !isOfficeUser) {
-            window.open(window.PAYMENT_LINK, '_blank');
+          if (window.BML_ENABLED && !isOfficeUser) {
+            initiateBmlCheckout(newBooking);
+          } else {
+            showBookingConfirmationModal(newBooking, { type: 'Excursion', total: totalPrice });
+            if (window.PAYMENT_LINK && !isOfficeUser) {
+              window.open(window.PAYMENT_LINK, '_blank');
+            }
           }
         });
       }
@@ -4847,6 +4911,78 @@ document.addEventListener('DOMContentLoaded', () => {
     if (restrictionsTabBtn) {
       restrictionsTabBtn.addEventListener('click', renderRestrictionsList);
     }
+  }
+
+  // --- Admin BML Payment Settings Logic ---
+  if (document.getElementById('admin-bml-settings-form')) {
+    const form = document.getElementById('admin-bml-settings-form');
+    const modeSelect = document.getElementById('bml-mode');
+    const groupLink = document.getElementById('bml-group-link');
+    const groupApi = document.getElementById('bml-group-api');
+
+    const toggleGroups = () => {
+      const mode = modeSelect.value;
+      groupLink.style.display = mode === 'link' ? 'block' : 'none';
+      groupApi.style.display = mode === 'api' ? 'flex' : 'none';
+    };
+
+    modeSelect.addEventListener('change', toggleGroups);
+
+    const loadSettings = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/payment-config`);
+        const config = await res.json();
+        if (config) {
+          modeSelect.value = config.mode || 'link';
+          document.getElementById('bml-payment-link').value = config.paymentLink || '';
+          document.getElementById('bml-api-endpoint').value = config.bmlEndpoint || 'https://api.uat.merchants.bankofmaldives.com.mv/public';
+          document.getElementById('bml-merchant-id').value = config.bmlMerchantId || '';
+          document.getElementById('bml-app-id').value = config.bmlAppId || '';
+          toggleGroups();
+        }
+      } catch (err) {
+        console.error('Failed to load BML settings:', err);
+      }
+    };
+
+    const tabBtn = document.getElementById('tab-btn-bml-settings');
+    if (tabBtn) {
+      tabBtn.addEventListener('click', loadSettings);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        mode: modeSelect.value,
+        paymentLink: document.getElementById('bml-payment-link').value.trim(),
+        bmlEndpoint: document.getElementById('bml-api-endpoint').value.trim(),
+        bmlMerchantId: document.getElementById('bml-merchant-id').value.trim(),
+        bmlAppId: document.getElementById('bml-app-id').value.trim(),
+        bmlApiKey: document.getElementById('bml-api-key').value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/payment-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.success) {
+          alert('BML Payment Settings saved successfully.');
+          fetch(`${API_BASE}/config`).then(r => r.json()).then(data => {
+            if (data.paymentLink) window.PAYMENT_LINK = data.paymentLink;
+            if (data.bmlEnabled) window.BML_ENABLED = data.bmlEnabled;
+            if (data.mode) window.BML_MODE = data.mode;
+          }).catch(()=>{});
+        } else {
+          alert('Error saving settings: ' + d.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save settings.');
+      }
+    });
   }
 
 });
