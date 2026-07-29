@@ -2975,7 +2975,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (permsStr) {
           let perms = [];
           try { perms = JSON.parse(permsStr); } catch(e) {}
-          const allTabs = ['bookings', 'packages', 'excursions', 'private', 'freediving', 'resorts', 'photography', 'offers', 'testimonials', 'media', 'crew', 'contact-messages'];
+          const allTabs = ['bookings', 'packages', 'excursions', 'private', 'freediving', 'resorts', 'photography', 'offers', 'testimonials', 'media', 'crew', 'contact-messages', 'restrictions', 'bml-settings'];
           let firstPermitted = null;
           allTabs.forEach(tab => {
             const btn = document.getElementById(`tab-btn-${tab}`);
