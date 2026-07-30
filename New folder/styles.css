@@ -2716,12 +2716,10 @@ body.minimal-body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(115deg,
-      transparent 0%,
-      transparent 35%,
-      rgba(2, 6, 23, 0.8) 45%,
-      #020617 55%,
-      #020617 100%);
+  background: linear-gradient(to left,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
+      transparent 100%);
   z-index: 2;
   pointer-events: none;
 }
@@ -2921,11 +2919,9 @@ body.minimal-body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(115deg,
-      #080d1a 0%,
-      #080d1a 45%,
-      rgba(8, 13, 26, 0.8) 55%,
-      transparent 65%,
+  background: linear-gradient(to right,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
       transparent 100%);
   z-index: 2;
   pointer-events: none;
@@ -2938,6 +2934,13 @@ body.minimal-body {
   margin-left: 3vw;
   color: #cbd5e1;
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  background: rgba(5, 11, 20, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.2rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .excursion-details-overlay.fade-out {
@@ -3298,7 +3301,10 @@ body.minimal-body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(115deg, #080d1a 0%, #080d1a 45%, rgba(8, 13, 26, 0.8) 55%, transparent 65%, transparent 100%);
+  background: linear-gradient(to right,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
+      transparent 100%);
   z-index: 2;
   pointer-events: none;
 }
@@ -3338,7 +3344,10 @@ body.minimal-body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(115deg, transparent 0%, transparent 35%, rgba(8, 13, 26, 0.8) 45%, #080d1a 55%, #080d1a 100%);
+  background: linear-gradient(to left,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
+      transparent 100%);
   z-index: 2;
   pointer-events: none;
 }
@@ -3378,9 +3387,55 @@ body.minimal-body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(115deg, #080d1a 0%, #080d1a 45%, rgba(8, 13, 26, 0.8) 55%, transparent 65%, transparent 100%);
+  background: linear-gradient(to right,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
+      transparent 100%);
   z-index: 2;
   pointer-events: none;
+}
+
+/* Layer 8 Slider Backgrounds */
+.layer8-bg-slides {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  -webkit-mask-image: linear-gradient(174.5deg, transparent 0%, rgba(0, 0, 0, 0.3) 20%, #000 38%);
+  mask-image: linear-gradient(174.5deg, transparent 0%, rgba(0, 0, 0, 0.3) 20%, #000 38%);
+}
+
+.layer8-bg-slides::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to left,
+      rgba(8, 13, 26, 0.65) 0%,
+      rgba(8, 13, 26, 0.2) 50%,
+      transparent 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.layer8-bg-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.layer8-bg-slide.active {
+  opacity: 1;
 }
 
 .layer6-bg-slide {
@@ -3501,7 +3556,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   .layer3-bg-slides,
-  .layer5-bg-slides {
+  .layer5-bg-slides,
+  .layer8-bg-slides {
     -webkit-mask-image: none !important;
     mask-image: none !important;
   }
@@ -3510,15 +3566,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background: var(--dark) !important;
   }
 
-  .layer-5-slider {
+  .layer-5-slider,
+  .layer-8-slider {
     background: #080d1a !important;
   }
 
   .excursion-details-overlay {
     text-align: center !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 1.5rem !important;
+    background: rgba(5, 11, 20, 0.75) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    max-width: 90% !important;
   }
 
   .excursion-details-overlay .ex-title {
