@@ -2557,7 +2557,7 @@ body.minimal-body {
 .layer-4-slider .layer-content,
 .layer-5-slider .layer-content,
 .layer-6-slider .layer-content,
-.layer-8-slider .layer-content {
+.layer-7-slider .layer-content {
   padding-top: 15vh;
 }
 
@@ -2583,7 +2583,7 @@ body.minimal-body {
   height: 100vh;
 }
 
-.layer-8-slider {
+.layer-7-slider {
   z-index: 55;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
@@ -2592,7 +2592,7 @@ body.minimal-body {
   height: 100vh;
 }
 
-.layer-7 {
+.layer-8 {
   z-index: 60;
   background: #080d1a;
   margin-top: 0;
@@ -2604,8 +2604,8 @@ body.minimal-body {
   /* the last section doesn't need to be sticky */
 }
 
-/* Ensure content in layer-7 clears the clipped top edge */
-.layer-7 .layer-content {
+/* Ensure content in layer-8 clears the clipped top edge */
+.layer-8 .layer-content {
   padding-top: 25vh;
 }
 
@@ -3390,8 +3390,8 @@ body.minimal-body {
   pointer-events: none;
 }
 
-/* Layer 8 Slider Backgrounds */
-.layer8-bg-slides {
+/* Layer 7 Slider Backgrounds */
+.layer7-bg-slides {
   position: absolute;
   top: 0;
   left: 0;
@@ -3402,7 +3402,7 @@ body.minimal-body {
   mask-image: linear-gradient(174.5deg, transparent 0%, rgba(0, 0, 0, 0.3) 20%, #000 38%);
 }
 
-.layer8-bg-slides::after {
+.layer7-bg-slides::after {
   content: '';
   position: absolute;
   top: 0;
@@ -3417,7 +3417,7 @@ body.minimal-body {
   pointer-events: none;
 }
 
-.layer8-bg-slide {
+.layer7-bg-slide {
   position: absolute;
   top: 0;
   left: 0;
@@ -3429,7 +3429,7 @@ body.minimal-body {
   transition: opacity 1.2s ease-in-out;
 }
 
-.layer8-bg-slide.active {
+.layer7-bg-slide.active {
   opacity: 1;
 }
 

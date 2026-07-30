@@ -694,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initGlobalHeroVideoFn === 'function') initGlobalHeroVideoFn();
     // Re-render parallax layers
     if (typeof setupParallaxLayerFn === 'function') {
-      setupParallaxLayerFn(8, 'PACKAGES', getPackages(), 'Package');
+      setupParallaxLayerFn(7, 'PACKAGES', getPackages(), 'Package');
       setupParallaxLayerFn(2, 'EXCURSIONS', getExcursions(), 'Excursion');
       setupParallaxLayerFn(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
       setupParallaxLayerFn(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
@@ -1371,8 +1371,8 @@ document.addEventListener('DOMContentLoaded', () => {
               if (nextIdx === currentIdx) return;
               detailsOverlay.classList.remove('fade-in'); detailsOverlay.classList.add('fade-out');
               if (bgSlides[currentIdx]) bgSlides[currentIdx].classList.remove('active');
+              if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
               setTimeout(() => {
-                if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
                 renderActiveDetails(list[nextIdx]);
                 detailsOverlay.classList.remove('fade-out'); detailsOverlay.classList.add('fade-in');
                 currentIdx = nextIdx;
@@ -1391,6 +1391,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Store reference for background refresh
     setupParallaxLayerFn = setupParallaxLayer;
 
+    setupParallaxLayer(7, 'PACKAGES', getPackages(), 'Package');
     setupParallaxLayer(2, 'EXCURSIONS', getExcursions(), 'Excursion');
     setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
     setupParallaxLayer(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
