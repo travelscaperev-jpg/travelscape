@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- API Helper ---
-  let useFallback = false;
+  let useFallback = window.location.protocol === 'file:';
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
   const RENDER_SERVER_URL = 'https://travelscape-backend-wudc.onrender.com'; 
   const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
@@ -742,14 +742,11 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshHomePageSections();
       if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
     }).catch(err => {
-      console.warn('Background API refresh failed (server may be waking up):', err.message);
-      // Retry after 35 seconds — enough time for Render cold start
-      setTimeout(() => {
-        fetchAllFromAPI().then(() => {
-          refreshHomePageSections();
-          if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
-        }).catch(e => console.warn('Retry API refresh also failed:', e.message));
-      }, 35000);
+      console.warn('Background API refresh failed, falling back to local database:', err.message);
+      useFallback = true;
+      initDataCache();
+      refreshHomePageSections();
+      if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
     });
   }
 

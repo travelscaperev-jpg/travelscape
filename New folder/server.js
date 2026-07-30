@@ -99,6 +99,7 @@ async function initDb() {
   if (!process.env.DATABASE_URL) {
     console.log('⚠️ No DATABASE_URL found. Running with local JSON database fallback.');
     isDbConnected = false;
+    seedDatabaseIfEmpty();
     return;
   }
   try {
@@ -457,18 +458,16 @@ app.post('/api/google-review', async (req, res) => {
 // Helper to seed a cache key if missing or empty
 async function seedKeyIfEmpty(key, defaultValue) {
   try {
-    const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
-    if (res.rows.length === 0) {
+    const val = await getCacheValue(key, null);
+    if (val === null) {
       await setCacheValue(key, defaultValue);
       console.log(`🌱 Seeded missing key: ${key}`);
     } else {
-      const val = JSON.parse(res.rows[0].value);
       const isEmptyArray = Array.isArray(val) && val.length === 0;
       const isEmptyObject = val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0;
       const isEmptyString = typeof val === 'string' && val.trim() === '';
-      const isNull = val === null || val === undefined;
 
-      if (isEmptyArray || isEmptyObject || isEmptyString || isNull) {
+      if (isEmptyArray || isEmptyObject || isEmptyString) {
         await setCacheValue(key, defaultValue);
         console.log(`🌱 Repaired empty/null key: ${key}`);
       }
@@ -722,6 +721,18 @@ async function seedDatabaseIfEmpty() {
       validity: "Valid until June 30, 2026"
     };
 
+    const defaultOffers = [
+      {
+        id: "offer-1",
+        title: "Summer Lagoon Special",
+        discount: "15% OFF",
+        description: "Book any Private Speedboat Charter or Resort Day Pass this week and receive an instant 15% discount + free underwater photography package.",
+        category: "All",
+        code: "LAGOON15",
+        validity: "Valid until June 30, 2026"
+      }
+    ];
+
     const promises = [
       seedKeyIfEmpty('packages', []),
       seedKeyIfEmpty('excursions', defaultExcursions),
@@ -738,6 +749,7 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('hero_video', 'back.mp4'),
       seedKeyIfEmpty('google_review', 'https://google.com'),
       seedKeyIfEmpty('offer', defaultOffer),
+      seedKeyIfEmpty('offers', defaultOffers),
       seedKeyIfEmpty('crew', defaultCrew),
       seedKeyIfEmpty('staff_accounts', []),
     ];
