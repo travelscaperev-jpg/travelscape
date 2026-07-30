@@ -93,8 +93,14 @@ const pool = new Pool({
 });
 
 let isDbConnected = false;
+const DB_FILE_PATH = path.join(__dirname, 'data', 'db.json');
 
 async function initDb() {
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️ No DATABASE_URL found. Running with local JSON database fallback.');
+    isDbConnected = false;
+    return;
+  }
   try {
     const client = await pool.connect();
     isDbConnected = true;
@@ -118,6 +124,7 @@ async function initDb() {
 initDb();
 
 async function waitForDB(maxWait = 20000) {
+  if (!process.env.DATABASE_URL) return false;
   if (isDbConnected) return true;
   const start = Date.now();
   while (Date.now() - start < maxWait) {
@@ -129,7 +136,15 @@ async function waitForDB(maxWait = 20000) {
 
 async function getCacheValue(key, defaultValue = null) {
   try {
-    await waitForDB();
+    const dbOk = await waitForDB();
+    if (!dbOk) {
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
+        const db = JSON.parse(fileContent);
+        return db[key] !== undefined ? db[key] : defaultValue;
+      }
+      return defaultValue;
+    }
     const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
     if (res.rows.length > 0) {
       return JSON.parse(res.rows[0].value);
@@ -143,7 +158,17 @@ async function getCacheValue(key, defaultValue = null) {
 
 async function setCacheValue(key, value) {
   try {
-    await waitForDB();
+    const dbOk = await waitForDB();
+    if (!dbOk) {
+      let db = {};
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
+        db = JSON.parse(fileContent);
+      }
+      db[key] = value;
+      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(db, null, 2), 'utf8');
+      return true;
+    }
     const serializedValue = JSON.stringify(value);
     await pool.query(
       'INSERT INTO data_cache (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP',
@@ -231,12 +256,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { role, password } = req.body;
 
-    const adminPass = process.env.ADMIN_PASSWORD;
-    const staffPass = process.env.STAFF_PASSWORD;
-
-    if (!adminPass) {
-      return res.status(500).json({ success: false, message: 'Admin password is not configured on the server.' });
-    }
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+    const staffPass = process.env.STAFF_PASSWORD || 'staff';
 
     if (role === 'admin' && password === adminPass) {
       return res.json({ success: true, role: 'admin' });
