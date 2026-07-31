@@ -5143,4 +5143,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // iOS/Safari Video Autoplay Enforcer on User Interaction
+  const forcePlayVideos = () => {
+    document.querySelectorAll('video').forEach(video => {
+      if (video.paused) {
+        video.play().catch(e => {
+          console.warn("Attempt to play video on interaction failed:", e);
+        });
+      }
+    });
+  };
+  ['click', 'touchstart', 'scroll', 'mousemove'].forEach(evt => {
+    window.addEventListener(evt, forcePlayVideos, { once: true, passive: true });
+  });
+
 });
