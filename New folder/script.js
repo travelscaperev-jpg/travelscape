@@ -1766,21 +1766,24 @@ document.addEventListener('DOMContentLoaded', () => {
           const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
           const offerMessage = bookingModal.querySelector('#booking-offer-message');
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
-          const offer = getOffers().find(o => {
-             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Resort'));
-          });
           if (code) {
-             if (offer && offer.title) {
-                 let match = offer.discount.match(/(\d+)%/);
-                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                 else {
-                     match = offer.discount.match(/\$(\d+)/);
-                     if (match) total = Math.max(0, total - parseInt(match[1]));
+             const matchingOffer = getOffers().find(o => o.code === code);
+             if (matchingOffer) {
+                 const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
+                 const isApplicable = appliesTo.includes('All') || appliesTo.includes('Resort') || appliesTo.includes('Resorts');
+                 if (isApplicable) {
+                     let match = matchingOffer.discount.match(/(\d+)%/);
+                     if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                     else {
+                         match = matchingOffer.discount.match(/\$(\d+)/);
+                         if (match) total = Math.max(0, total - parseInt(match[1]));
+                     }
+                     if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
+                 } else {
+                     if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
                  }
-                 if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
              } else {
-                 if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
+                 if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
              }
           } else {
              if (offerMessage) { offerMessage.textContent = ''; }
@@ -2150,22 +2153,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let total = result.price;
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
-          const offer = getOffers().find(o => {
-             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking'));
-          });
-          
           if (code) {
-             if (offer && offer.title) {
-                 let match = offer.discount.match(/(\\d+)%/);
-                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                 else {
-                     match = offer.discount.match(/\\$(\\d+)/);
-                     if (match) total = Math.max(0, total - parseInt(match[1]));
+             const matchingOffer = getOffers().find(o => o.code === code);
+             if (matchingOffer) {
+                 const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
+                 const isApplicable = appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking');
+                 if (isApplicable) {
+                     let match = matchingOffer.discount.match(/(\d+)%/);
+                     if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                     else {
+                         match = matchingOffer.discount.match(/\$(\d+)/);
+                         if (match) total = Math.max(0, total - parseInt(match[1]));
+                     }
+                     if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
+                 } else {
+                     if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
                  }
-                 if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
              } else {
-                 if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
+                 if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
              }
           } else {
              if (offerMessage) { offerMessage.textContent = ''; }
@@ -2376,21 +2381,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Apply offer code
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
-          const offer = getOffers().find(o => {
-            const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-            return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages'));
-          });
           if (code) {
-            if (offer && offer.title) {
-              let match = offer.discount.match(/(\d+)%/);
-              if (match) total = total * (1 - (parseInt(match[1]) / 100));
-              else {
-                match = offer.discount.match(/\$(\d+)/);
-                if (match) total = Math.max(0, total - parseInt(match[1]));
+            const matchingOffer = getOffers().find(o => o.code === code);
+            if (matchingOffer) {
+              const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
+              const isApplicable = appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages');
+              if (isApplicable) {
+                let match = matchingOffer.discount.match(/(\d+)%/);
+                if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                else {
+                  match = matchingOffer.discount.match(/\$(\d+)/);
+                  if (match) total = Math.max(0, total - parseInt(match[1]));
+                }
+                if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
+              } else {
+                if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
               }
-              if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
             } else {
-              if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
+              if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
             }
           } else {
             if (offerMessage) { offerMessage.textContent = ''; }
@@ -2660,6 +2668,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
           total += photoCost;
 
+          // Apply offer code
+          const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
+          const offerMessage = bookingModal.querySelector('#booking-offer-message');
+          const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          
+          let currentCat = 'Excursion';
+          if (getFreeDiving().some(item => item.id === id)) {
+            currentCat = 'Free Diving';
+          } else if (getPhotography().some(item => item.id === id)) {
+            currentCat = 'Photography';
+          }
+
+          if (code) {
+            const matchingOffer = getOffers().find(o => o.code === code);
+            if (matchingOffer) {
+              const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
+              const isApplicable = appliesTo.includes('All') || appliesTo.includes(currentCat) || (currentCat === 'Excursion' && appliesTo.includes('Excursions'));
+              if (isApplicable) {
+                let match = matchingOffer.discount.match(/(\d+)%/);
+                if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                else {
+                  match = matchingOffer.discount.match(/\$(\d+)/);
+                  if (match) total = Math.max(0, total - parseInt(match[1]));
+                }
+                if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
+              } else {
+                if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
+              }
+            } else {
+              if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
+            }
+          } else {
+            if (offerMessage) { offerMessage.textContent = ''; }
+          }
+
           const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
           const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
           if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
@@ -2680,22 +2723,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateInputEX = bookingModal.querySelector('#booking-date');
         if (dateInputEX) dateInputEX.addEventListener('input', checkSlotsAvailability);
         const offerCodeInputEX = bookingModal.querySelector('#booking-offer-code');
-        const offerMessageEX = bookingModal.querySelector('#booking-offer-message');
         if (offerCodeInputEX) {
-          offerCodeInputEX.addEventListener('input', (e) => {
-            const code = e.target.value.trim().toUpperCase();
-            if (!code) { if (offerMessageEX) offerMessageEX.textContent = ''; return; }
-            const currentCat = 'Excursion';
-            const offer = getOffers().find(o => {
-              const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-              return o.code === code && (appliesTo.includes('All') || appliesTo.includes(currentCat));
-            });
-            if (offer && offer.title) {
-              if (offerMessageEX) { offerMessageEX.textContent = `Applied: ${offer.discount}`; offerMessageEX.style.color = '#10b981'; }
-            } else {
-              if (offerMessageEX) { offerMessageEX.textContent = 'Invalid or not applicable code'; offerMessageEX.style.color = '#ef4444'; }
-            }
-          });
+          offerCodeInputEX.addEventListener('input', updateTotalPrice);
         }
         const discountedPriceInputEX = bookingModal.querySelector('#booking-discounted-price');
         if (discountedPriceInputEX) {
