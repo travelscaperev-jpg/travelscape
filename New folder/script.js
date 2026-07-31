@@ -1771,7 +1771,12 @@ document.addEventListener('DOMContentLoaded', () => {
              if (matchingOffer) {
                  const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
                  const isApplicable = appliesTo.includes('All') || appliesTo.includes('Resort') || appliesTo.includes('Resorts');
-                 if (isApplicable) {
+                 let isSubcatMatch = true;
+                 if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
+                     const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                     isSubcatMatch = subcats.includes(pkgObj.title);
+                 }
+                 if (isApplicable && isSubcatMatch) {
                      let match = matchingOffer.discount.match(/(\d+)%/);
                      if (match) total = total * (1 - (parseInt(match[1]) / 100));
                      else {
@@ -2158,7 +2163,12 @@ document.addEventListener('DOMContentLoaded', () => {
              if (matchingOffer) {
                  const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
                  const isApplicable = appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking');
-                 if (isApplicable) {
+                 let isSubcatMatch = true;
+                 if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
+                     const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                     isSubcatMatch = subcats.includes(pkgObj.title);
+                 }
+                 if (isApplicable && isSubcatMatch) {
                      let match = matchingOffer.discount.match(/(\d+)%/);
                      if (match) total = total * (1 - (parseInt(match[1]) / 100));
                      else {
@@ -2386,7 +2396,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (matchingOffer) {
               const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
               const isApplicable = appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages');
-              if (isApplicable) {
+              let isSubcatMatch = true;
+              if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
+                const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                isSubcatMatch = subcats.includes(pkgObj.title);
+              }
+              if (isApplicable && isSubcatMatch) {
                 let match = matchingOffer.discount.match(/(\d+)%/);
                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
                 else {
@@ -2685,7 +2700,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (matchingOffer) {
               const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
               const isApplicable = appliesTo.includes('All') || appliesTo.includes(currentCat) || (currentCat === 'Excursion' && appliesTo.includes('Excursions'));
-              if (isApplicable) {
+              let isSubcatMatch = true;
+              if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
+                const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                isSubcatMatch = subcats.includes(pkgObj.title);
+              }
+              if (isApplicable && isSubcatMatch) {
                 let match = matchingOffer.discount.match(/(\d+)%/);
                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
                 else {
