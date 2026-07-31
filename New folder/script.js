@@ -570,11 +570,17 @@ document.addEventListener('DOMContentLoaded', () => {
     await api.post('staff_accounts', data);
   };
 
-  const getOfferBadgeHTML = (category, isCard = false) => {
+  const getOfferBadgeHTML = (category, isCard = false, itemTitle = '') => {
     const offers = getOffers();
     const offer = offers.find(o => {
       const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-      return appliesTo.includes('All') || appliesTo.includes(category);
+      const matchesCategory = appliesTo.includes('All') || appliesTo.includes(category);
+      if (!matchesCategory) return false;
+      if (o.subcategory && o.subcategory.length > 0) {
+        const subcats = Array.isArray(o.subcategory) ? o.subcategory : [o.subcategory];
+        return itemTitle ? subcats.includes(itemTitle) : false;
+      }
+      return true;
     });
     if (offer && offer.title) {
       if (isCard) {
@@ -1145,9 +1151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const bookBtnHtmlStd = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>`;
 
         if (isMinimalCard) {
+          const badgeHtml = getOfferBadgeHTML(offerCategory, true, ex.title);
           cardBodyHtml = `
           <div class="card-body" style="padding: 1.25rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; min-height: 80px;">
             <h3 class="card-title" style="margin: 0; font-size: 1.15rem;">${ex.title}</h3>
+            ${badgeHtml ? `<div style="margin-top: -0.25rem; margin-bottom: 0.25rem;">${badgeHtml}</div>` : ''}
             ${ex.description ? `<p class="card-description" style="margin: 0; font-size: 0.9rem; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${ex.description}</p>` : ''}
             ${bookBtnHtml}
           </div>`;
@@ -1156,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card-body">
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
-              ${getOfferBadgeHTML(offerCategory, true)}
+              ${getOfferBadgeHTML(offerCategory, true, ex.title)}
             </div>
             <h3 class="card-title">${ex.title}</h3>
             ${ex.description ? `<p class="card-description" style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: normal;">${ex.description}</p>` : ''}
