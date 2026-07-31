@@ -1360,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <h2 class="ex-tag-title" style="margin-top: 6rem;">0${layerNum} // ${titlePrefix}</h2>
               <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
                 <span class="ex-duration" style="margin-bottom: 0;">${ex.duration}</span>
-                ${getOfferBadgeHTML(offerType)}
+                ${getOfferBadgeHTML(offerType, false, ex.title)}
               </div>
               <h1 class="ex-title">${ex.title}</h1>
               <p class="ex-desc">${ex.description ? ex.description.split(/\r?\n/)[0] : ''}</p>
