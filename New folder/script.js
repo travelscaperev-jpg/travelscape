@@ -1083,14 +1083,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
               </div>
             </div>
+            ${ex.video ? `
             <div>
               <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
               <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
-                  <source src="${ex.video || getHeroVideo()}">
+                  <source src="${ex.video}">
                 </video>
               </div>
             </div>
+            ` : ''}
             <div>
               <span class="duration-badge" style="display: inline-block; background: rgba(6, 182, 212, 0.08); color: #06b6d4; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(6, 182, 212, 0.15); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${ex.duration}</span>
               <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0; white-space: pre-wrap;">${ex.description}</p>
