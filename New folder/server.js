@@ -45,7 +45,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
     if (!data) return '';
 
     if (isFilePath) {
-      const isVideo = mimeType.startsWith('video/') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
+      const isVideo = mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
       const resourceType = isVideo ? 'video' : 'image';
       const result = await cloudinary.uploader.upload(data, {
         folder,
@@ -55,7 +55,9 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
       return result.secure_url;
     }
 
-    const isVideo = isBuffer ? mimeType.startsWith('video/') : (typeof data === 'string' && data.includes('video'));
+    const isVideo = isBuffer 
+      ? (mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType))
+      : (typeof data === 'string' && (data.includes('video') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data)));
     const resourceType = isVideo ? 'video' : 'image';
 
     if (isBuffer) {
@@ -232,7 +234,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     const folder = req.body.folder || 'travelscape';
-    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype, true);
+    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype + '|' + (req.file.originalname || ''), true);
 
     // Clean up local temp file
     try {
