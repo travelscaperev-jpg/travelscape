@@ -576,8 +576,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
       const matchesCategory = appliesTo.includes('All') || appliesTo.includes(category);
       if (!matchesCategory) return false;
-      if (o.subcategory && o.subcategory.length > 0) {
-        const subcats = Array.isArray(o.subcategory) ? o.subcategory : [o.subcategory];
+      let subcats = [];
+      if (o.subcategory) {
+        if (Array.isArray(o.subcategory)) {
+          subcats = o.subcategory.filter(s => s && s.trim() !== '');
+        } else if (typeof o.subcategory === 'string' && o.subcategory.trim() !== '') {
+          subcats = [o.subcategory.trim()];
+        }
+      }
+      if (subcats.length > 0) {
         return itemTitle ? subcats.includes(itemTitle) : false;
       }
       return true;
@@ -1780,8 +1787,15 @@ document.addEventListener('DOMContentLoaded', () => {
                  const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
                  const isApplicable = appliesTo.includes('All') || appliesTo.includes('Resort') || appliesTo.includes('Resorts');
                  let isSubcatMatch = true;
-                 if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
-                     const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                 let subcats = [];
+                 if (matchingOffer.subcategory) {
+                     if (Array.isArray(matchingOffer.subcategory)) {
+                         subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
+                     } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
+                         subcats = [matchingOffer.subcategory.trim()];
+                     }
+                 }
+                 if (subcats.length > 0) {
                      isSubcatMatch = subcats.includes(pkgObj.title);
                  }
                  if (isApplicable && isSubcatMatch) {
@@ -2172,8 +2186,15 @@ document.addEventListener('DOMContentLoaded', () => {
                  const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
                  const isApplicable = appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking');
                  let isSubcatMatch = true;
-                 if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
-                     const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+                 let subcats = [];
+                 if (matchingOffer.subcategory) {
+                     if (Array.isArray(matchingOffer.subcategory)) {
+                         subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
+                     } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
+                         subcats = [matchingOffer.subcategory.trim()];
+                     }
+                 }
+                 if (subcats.length > 0) {
                      isSubcatMatch = subcats.includes(pkgObj.title);
                  }
                  if (isApplicable && isSubcatMatch) {
@@ -2405,8 +2426,15 @@ document.addEventListener('DOMContentLoaded', () => {
               const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
               const isApplicable = appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages');
               let isSubcatMatch = true;
-              if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
-                const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+              let subcats = [];
+              if (matchingOffer.subcategory) {
+                if (Array.isArray(matchingOffer.subcategory)) {
+                  subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
+                } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
+                  subcats = [matchingOffer.subcategory.trim()];
+                }
+              }
+              if (subcats.length > 0) {
                 isSubcatMatch = subcats.includes(pkgObj.title);
               }
               if (isApplicable && isSubcatMatch) {
@@ -2709,8 +2737,15 @@ document.addEventListener('DOMContentLoaded', () => {
               const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
               const isApplicable = appliesTo.includes('All') || appliesTo.includes(currentCat) || (currentCat === 'Excursion' && appliesTo.includes('Excursions'));
               let isSubcatMatch = true;
-              if (matchingOffer.subcategory && matchingOffer.subcategory.length > 0) {
-                const subcats = Array.isArray(matchingOffer.subcategory) ? matchingOffer.subcategory : [matchingOffer.subcategory];
+              let subcats = [];
+              if (matchingOffer.subcategory) {
+                if (Array.isArray(matchingOffer.subcategory)) {
+                  subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
+                } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
+                  subcats = [matchingOffer.subcategory.trim()];
+                }
+              }
+              if (subcats.length > 0) {
                 isSubcatMatch = subcats.includes(pkgObj.title);
               }
               if (isApplicable && isSubcatMatch) {
