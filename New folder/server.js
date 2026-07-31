@@ -397,6 +397,7 @@ registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 registerCollectionRoutes('crew', 'crew');
 registerCollectionRoutes('staff_accounts', 'staff_accounts');
+registerCollectionRoutes('offers', 'offers');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
