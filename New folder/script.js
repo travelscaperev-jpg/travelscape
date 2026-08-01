@@ -1077,16 +1077,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-              <div style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
+              <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
-                <div style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
+                <div class="detail-media-clickable" data-src="${subImg1}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
+                <div class="detail-media-clickable" data-src="${subImg2}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
               </div>
             </div>
             ${ex.video ? `
             <div>
               <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
-              <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
+              <div class="video-card detail-media-clickable" data-src="${ex.video}" data-video="true" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
                   <source src="${ex.video}">
                 </video>
@@ -1132,6 +1132,17 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
       const bookBtn = modal.querySelector('#details-modal-book');
       if (bookBtn) bookBtn.addEventListener('click', () => { modal.remove(); openBookingModal(ex.id, ex.title); });
+
+      // Click event for detail media elements
+      modal.querySelectorAll('.detail-media-clickable').forEach(el => {
+        el.addEventListener('click', () => {
+          const src = el.dataset.src;
+          const isVideo = el.dataset.video === 'true';
+          if (src && typeof window.openFullscreenLightbox === 'function') {
+            window.openFullscreenLightbox(src, isVideo);
+          }
+        });
+      });
     };
 
     // --- Render grids helper ---
@@ -1316,14 +1327,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
           if (hasVideo) {
             return `
-              <div class="video-card ${ratioClass}" style="cursor: default;">
+              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${src}" data-video="true">
                 <video src="${src}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
               </div>
             `;
           } else {
             return `
-              <div class="video-card ${ratioClass}" style="cursor: default;">
+              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${item.image}" data-video="false">
                 <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
                 <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
               </div>
@@ -1337,6 +1348,17 @@ document.addEventListener('DOMContentLoaded', () => {
           vid.setAttribute('playsinline', 'playsinline');
           vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
           vid.play().catch(e => console.warn('Gallery video autoplay blocked:', e));
+        });
+
+        // Click event for gallery cards
+        galleryGrid.querySelectorAll('.detail-media-clickable').forEach(el => {
+          el.addEventListener('click', () => {
+            const src = el.dataset.src;
+            const isVideo = el.dataset.video === 'true';
+            if (src && typeof window.openFullscreenLightbox === 'function') {
+              window.openFullscreenLightbox(src, isVideo);
+            }
+          });
         });
       }
     };
@@ -5158,5 +5180,83 @@ document.addEventListener('DOMContentLoaded', () => {
   ['click', 'touchstart', 'scroll', 'mousemove'].forEach(evt => {
     window.addEventListener(evt, forcePlayVideos, { once: true, passive: true });
   });
+
+  // --- Fullscreen Lightbox Function ---
+  const openFullscreenLightbox = (src, isVideo) => {
+    const existing = document.getElementById('global-lightbox');
+    if (existing) existing.remove();
+
+    const lightbox = document.createElement('div');
+    lightbox.id = 'global-lightbox';
+    lightbox.className = 'lightbox-modal';
+
+    let mediaHTML = '';
+    if (isVideo) {
+      // Use controlslist to disable downloading on Chrome/Safari/Edge, and playsinline for mobile
+      mediaHTML = `<video class="lightbox-media" src="${src}" autoplay loop controls controlslist="nodownload" playsinline webkit-playsinline></video>`;
+    } else {
+      mediaHTML = `<img class="lightbox-media" src="${src}" alt="Fullscreen Image" />`;
+    }
+
+    lightbox.innerHTML = `
+      <div class="lightbox-content-container">
+        <button class="lightbox-close" aria-label="Close fullscreen view">&times;</button>
+        ${mediaHTML}
+      </div>
+    `;
+
+    document.body.appendChild(lightbox);
+
+    // Trigger transition animation
+    setTimeout(() => {
+      lightbox.classList.add('active');
+    }, 10);
+
+    const closeLightbox = () => {
+      lightbox.classList.remove('active');
+      setTimeout(() => lightbox.remove(), 300);
+    };
+
+    lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      // Close if clicking outside the media element itself
+      if (e.target === lightbox || e.target.classList.contains('lightbox-content-container')) {
+        closeLightbox();
+      }
+    });
+
+    // Close on Escape key press
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        document.removeEventListener('keydown', handleEsc);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+  };
+  window.openFullscreenLightbox = openFullscreenLightbox;
+
+  // --- Right-Click and Save Prevention ---
+  // Prevent contextmenu (right-click) on all images and videos to block downloading
+  window.addEventListener('contextmenu', (e) => {
+    if (
+      e.target.tagName === 'IMG' ||
+      e.target.tagName === 'VIDEO' ||
+      e.target.closest('.video-card') ||
+      e.target.closest('.lightbox-modal') ||
+      e.target.closest('.detail-media-clickable')
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+
+  // Prevent drag and drop of media assets
+  window.addEventListener('dragstart', (e) => {
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
 
 });
