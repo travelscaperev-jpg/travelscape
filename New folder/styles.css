@@ -2609,11 +2609,15 @@ body.minimal-body {
   position: relative;
   overflow: visible !important;
   /* the last section doesn't need to be sticky */
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* Ensure content in layer-8 clears the clipped top edge */
 .layer-8 .layer-content {
   padding-top: 25vh;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* Glass Button (Header Style) */
@@ -2836,6 +2840,8 @@ body.minimal-body {
   color: #64748b;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 2rem;
+  padding-bottom: 2rem !important;
+  margin-bottom: 0 !important;
   font-size: 0.9rem;
 }
 

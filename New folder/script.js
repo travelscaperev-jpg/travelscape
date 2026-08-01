@@ -1379,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (bgSlidesContainer && detailsOverlay) {
-          const list = listData;
+          const list = (listData || []).filter(Boolean);
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
             if (!ex) return '';
             if (idx === 0) {
@@ -4949,7 +4949,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Homepage Layer Animation System ---
   // Exclude heavy slider layers (2, 3, 4, 5, 6) from continuous transform repaints to prevent compositor crushing/lag on PC
-  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-2):not(.layer-3):not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider)');
+  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-2):not(.layer-3):not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider):not(.layer-7-slider):not(.layer-8)');
   if (parallaxLayers.length > 0) {
     let targetX = 0;
     let targetY = 0;
