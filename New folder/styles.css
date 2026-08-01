@@ -1988,8 +1988,8 @@ body.minimal-body {
 
 /* 3D Parallax Scroll Override */
 .parallax-body {
-  background: #080d1a !important;
-  /* Dark ocean background */
+  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) !important;
+  /* Premium deep ocean background */
   color: #f1f5f9 !important;
   margin: 0;
   padding: 0;

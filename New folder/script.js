@@ -837,83 +837,88 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastInjectedVideos = [];
     const initGlobalHeroVideo = () => {
       const sliderContainer = document.getElementById('hero-video-slider');
-      const videos = getHeroVideos();
+      const videos = getHeroVideos().filter(Boolean);
 
       if (sliderContainer && videos.length > 0) {
-        // Compare arrays to avoid reload delay/flash
         const isSame = lastInjectedVideos.length === videos.length && 
                        lastInjectedVideos.every((v, i) => v === videos[i]);
         if (isSame) return;
 
         lastInjectedVideos = [...videos];
         sliderContainer.style.display = 'block';
-        // Clear existing slides and rebuild via innerHTML for better Safari parsing
         let slidesHTML = '';
         videos.forEach((videoPath, index) => {
           const activeClass = index === 0 ? ' active' : '';
-          slidesHTML += `<video src="${videoPath}" class="global-hero-video-slide${activeClass}" autoplay loop muted playsinline webkit-playsinline></video>`;
+          if (index === 0) {
+            slidesHTML += `<video src="${videoPath}" class="global-hero-video-slide${activeClass}" autoplay loop muted playsinline webkit-playsinline></video>`;
+          } else {
+            slidesHTML += `<video data-src="${videoPath}" class="global-hero-video-slide${activeClass}" loop muted playsinline webkit-playsinline></video>`;
+          }
         });
         sliderContainer.innerHTML = slidesHTML;
 
-        // Force strict mobile Safari properties on newly parsed DOM nodes
         const slideElements = Array.from(sliderContainer.querySelectorAll('.global-hero-video-slide'));
-        slideElements.forEach(videoEl => {
+        slideElements.forEach((videoEl, index) => {
           videoEl.muted = true;
           videoEl.defaultMuted = true;
           videoEl.playsInline = true;
           videoEl.setAttribute('muted', 'muted');
           videoEl.setAttribute('playsinline', 'playsinline');
           videoEl.setAttribute('webkit-playsinline', 'webkit-playsinline');
-          videoEl.load();
-          const playPromise = videoEl.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(err => console.warn('Hero video play blocked:', err));
+          
+          if (index === 0) {
+            videoEl.load();
+            const playPromise = videoEl.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => console.warn('Hero video play blocked:', err));
+            }
           }
         });
 
-        // Slideshow interval
         if (videos.length > 1) {
           let currentSlideIndex = 0;
+          
+          const loadVideo = (el) => {
+            if (el && !el.src && el.dataset.src) {
+              el.src = el.dataset.src;
+              el.load();
+            }
+          };
+
+          setTimeout(() => {
+            loadVideo(slideElements[1]);
+          }, 2000);
+
           setInterval(() => {
-            slideElements[currentSlideIndex].classList.remove('active');
+            const currentEl = slideElements[currentSlideIndex];
+            currentEl.classList.remove('active');
+            
             currentSlideIndex = (currentSlideIndex + 1) % slideElements.length;
-            slideElements[currentSlideIndex].classList.add('active');
-          }, 6000); // Transitions every 6 seconds
+            const nextEl = slideElements[currentSlideIndex];
+            
+            loadVideo(nextEl);
+            nextEl.classList.add('active');
+            const playPromise = nextEl.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => console.warn('Hero video play blocked:', err));
+            }
+
+            const prefetchIdx = (currentSlideIndex + 1) % slideElements.length;
+            setTimeout(() => {
+              loadVideo(slideElements[prefetchIdx]);
+            }, 1000);
+          }, 6000);
         }
       } else {
         if (sliderContainer) {
           sliderContainer.style.display = 'none';
         }
-        // Fallback for pages with static video backgrounds
-        const activeVideo = videos[0] || getHeroVideo();
-        if (activeVideo) {
-          document.querySelectorAll('.global-hero-video').forEach(vid => {
-            vid.style.display = 'block';
-            vid.muted = true;
-            vid.defaultMuted = true;
-            vid.playsInline = true;
-            vid.setAttribute('muted', 'muted');
-            vid.setAttribute('playsinline', 'playsinline');
-            vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
-            
-            // Prefer setting src directly on video for Safari instead of <source>
-            if (vid.getAttribute('src') !== activeVideo) {
-              vid.src = activeVideo;
-              vid.querySelectorAll('source').forEach(s => s.remove());
-              vid.load();
-              const playPromise = vid.play();
-              if (playPromise !== undefined) {
-                playPromise.catch(e => console.warn('Static video autoplay blocked:', e));
-              }
-            }
-          });
-        } else {
-          document.querySelectorAll('.global-hero-video').forEach(vid => {
-            vid.style.display = 'none';
-          });
-        }
+        document.querySelectorAll('.global-hero-video').forEach(vid => {
+          vid.style.display = 'none';
+        });
       }
     };
+
     // Store reference for background refresh
     initGlobalHeroVideoFn = initGlobalHeroVideo;
     initGlobalHeroVideo();
@@ -1365,6 +1370,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGalleryFn = renderGallery;
     renderGallery();
 
+
+
     // --- Render Parallax Layer Sliders ---
     const setupParallaxLayer = (layerNum, titlePrefix, listData, offerType) => {
       const bgSlidesContainer = document.getElementById(`layer${layerNum}-bg-slides`);
@@ -1375,8 +1382,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const list = listData;
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
             if (!ex) return '';
-            const slideStyle = `background-image: url('${ex.image}');`;
-            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${slideStyle}"></div>`;
+            if (idx === 0) {
+              return `<div class="layer${layerNum}-bg-slide active" data-index="${idx}" style="background-image: url('${ex.image}');"></div>`;
+            } else {
+              return `<div class="layer${layerNum}-bg-slide" data-index="${idx}" data-src="${ex.image}"></div>`;
+            }
           }).join('');
 
           const renderActiveDetails = (ex) => {
@@ -1406,8 +1416,21 @@ document.addEventListener('DOMContentLoaded', () => {
             renderActiveDetails(list[0]);
             let currentIdx = 0;
             const bgSlides = bgSlidesContainer.querySelectorAll(`.layer${layerNum}-bg-slide`);
+            
             const changeSlide = (nextIdx) => {
               if (nextIdx === currentIdx) return;
+              
+              const nextSlide = bgSlides[nextIdx];
+              if (nextSlide && !nextSlide.style.backgroundImage && nextSlide.dataset.src) {
+                nextSlide.style.backgroundImage = `url('${nextSlide.dataset.src}')`;
+              }
+              
+              const prefetchIdx = (nextIdx + 1) % list.length;
+              const prefetchSlide = bgSlides[prefetchIdx];
+              if (prefetchSlide && !prefetchSlide.style.backgroundImage && prefetchSlide.dataset.src) {
+                prefetchSlide.style.backgroundImage = `url('${prefetchSlide.dataset.src}')`;
+              }
+
               detailsOverlay.classList.remove('fade-in'); detailsOverlay.classList.add('fade-out');
               if (bgSlides[currentIdx]) bgSlides[currentIdx].classList.remove('active');
               if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
@@ -1417,6 +1440,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentIdx = nextIdx;
               }, 500);
             };
+
+            if (list.length > 1) {
+              setTimeout(() => {
+                const secondSlide = bgSlides[1];
+                if (secondSlide && !secondSlide.style.backgroundImage && secondSlide.dataset.src) {
+                  secondSlide.style.backgroundImage = `url('${secondSlide.dataset.src}')`;
+                }
+              }, 2000);
+            }
+
             let sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500);
             window.addEventListener('blur', () => clearInterval(sliderInterval));
             window.addEventListener('focus', () => { clearInterval(sliderInterval); sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500); });

@@ -10,10 +10,8 @@
   "contact_messages": [],
   "instagram_config": {},
   "offer": {},
-  "hero_video": "back.mp4",
-  "hero_videos": [
-    "back.mp4"
-  ],
+  "hero_video": "",
+  "hero_videos": [],
   "google_review": "https://google.com",
   "packages": [],
   "photography": [],
