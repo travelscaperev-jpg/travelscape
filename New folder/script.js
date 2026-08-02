@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- API Helper ---
-  let useFallback = window.location.protocol === 'file:';
+  let useFallback = false;
   // Note: If deploying your frontend on GitHub Pages (github.io), change 'RENDER_SERVER_URL' to your Render web service backend URL.
   const RENDER_SERVER_URL = 'https://travelscape-backend-wudc.onrender.com'; 
   const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
@@ -570,24 +570,11 @@ document.addEventListener('DOMContentLoaded', () => {
     await api.post('staff_accounts', data);
   };
 
-  const getOfferBadgeHTML = (category, isCard = false, itemTitle = '') => {
+  const getOfferBadgeHTML = (category, isCard = false) => {
     const offers = getOffers();
     const offer = offers.find(o => {
       const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
-      const matchesCategory = appliesTo.includes('All') || appliesTo.includes(category);
-      if (!matchesCategory) return false;
-      let subcats = [];
-      if (o.subcategory) {
-        if (Array.isArray(o.subcategory)) {
-          subcats = o.subcategory.filter(s => s && s.trim() !== '');
-        } else if (typeof o.subcategory === 'string' && o.subcategory.trim() !== '') {
-          subcats = [o.subcategory.trim()];
-        }
-      }
-      if (subcats.length > 0) {
-        return itemTitle ? subcats.includes(itemTitle) : false;
-      }
-      return true;
+      return appliesTo.includes('All') || appliesTo.includes(category);
     });
     if (offer && offer.title) {
       if (isCard) {
@@ -707,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initGlobalHeroVideoFn === 'function') initGlobalHeroVideoFn();
     // Re-render parallax layers
     if (typeof setupParallaxLayerFn === 'function') {
-      setupParallaxLayerFn(7, 'PACKAGES', getPackages(), 'Package');
+      setupParallaxLayerFn(8, 'PACKAGES', getPackages(), 'Package');
       setupParallaxLayerFn(2, 'EXCURSIONS', getExcursions(), 'Excursion');
       setupParallaxLayerFn(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
       setupParallaxLayerFn(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
@@ -755,11 +742,14 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshHomePageSections();
       if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
     }).catch(err => {
-      console.warn('Background API refresh failed, falling back to local database:', err.message);
-      useFallback = true;
-      initDataCache();
-      refreshHomePageSections();
-      if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+      console.warn('Background API refresh failed (server may be waking up):', err.message);
+      // Retry after 35 seconds — enough time for Render cold start
+      setTimeout(() => {
+        fetchAllFromAPI().then(() => {
+          refreshHomePageSections();
+          if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+        }).catch(e => console.warn('Retry API refresh also failed:', e.message));
+      }, 35000);
     });
   }
 
@@ -837,88 +827,83 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastInjectedVideos = [];
     const initGlobalHeroVideo = () => {
       const sliderContainer = document.getElementById('hero-video-slider');
-      const videos = getHeroVideos().filter(Boolean);
+      const videos = getHeroVideos();
 
       if (sliderContainer && videos.length > 0) {
+        // Compare arrays to avoid reload delay/flash
         const isSame = lastInjectedVideos.length === videos.length && 
                        lastInjectedVideos.every((v, i) => v === videos[i]);
         if (isSame) return;
 
         lastInjectedVideos = [...videos];
         sliderContainer.style.display = 'block';
+        // Clear existing slides and rebuild via innerHTML for better Safari parsing
         let slidesHTML = '';
         videos.forEach((videoPath, index) => {
           const activeClass = index === 0 ? ' active' : '';
-          if (index === 0) {
-            slidesHTML += `<video src="${videoPath}" class="global-hero-video-slide${activeClass}" autoplay loop muted playsinline webkit-playsinline></video>`;
-          } else {
-            slidesHTML += `<video data-src="${videoPath}" class="global-hero-video-slide${activeClass}" loop muted playsinline webkit-playsinline></video>`;
-          }
+          slidesHTML += `<video src="${videoPath}" class="global-hero-video-slide${activeClass}" autoplay loop muted playsinline webkit-playsinline></video>`;
         });
         sliderContainer.innerHTML = slidesHTML;
 
+        // Force strict mobile Safari properties on newly parsed DOM nodes
         const slideElements = Array.from(sliderContainer.querySelectorAll('.global-hero-video-slide'));
-        slideElements.forEach((videoEl, index) => {
+        slideElements.forEach(videoEl => {
           videoEl.muted = true;
           videoEl.defaultMuted = true;
           videoEl.playsInline = true;
           videoEl.setAttribute('muted', 'muted');
           videoEl.setAttribute('playsinline', 'playsinline');
           videoEl.setAttribute('webkit-playsinline', 'webkit-playsinline');
-          
-          if (index === 0) {
-            videoEl.load();
-            const playPromise = videoEl.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(err => console.warn('Hero video play blocked:', err));
-            }
+          videoEl.load();
+          const playPromise = videoEl.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => console.warn('Hero video play blocked:', err));
           }
         });
 
+        // Slideshow interval
         if (videos.length > 1) {
           let currentSlideIndex = 0;
-          
-          const loadVideo = (el) => {
-            if (el && !el.src && el.dataset.src) {
-              el.src = el.dataset.src;
-              el.load();
-            }
-          };
-
-          setTimeout(() => {
-            loadVideo(slideElements[1]);
-          }, 2000);
-
           setInterval(() => {
-            const currentEl = slideElements[currentSlideIndex];
-            currentEl.classList.remove('active');
-            
+            slideElements[currentSlideIndex].classList.remove('active');
             currentSlideIndex = (currentSlideIndex + 1) % slideElements.length;
-            const nextEl = slideElements[currentSlideIndex];
-            
-            loadVideo(nextEl);
-            nextEl.classList.add('active');
-            const playPromise = nextEl.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(err => console.warn('Hero video play blocked:', err));
-            }
-
-            const prefetchIdx = (currentSlideIndex + 1) % slideElements.length;
-            setTimeout(() => {
-              loadVideo(slideElements[prefetchIdx]);
-            }, 1000);
-          }, 6000);
+            slideElements[currentSlideIndex].classList.add('active');
+          }, 6000); // Transitions every 6 seconds
         }
       } else {
         if (sliderContainer) {
           sliderContainer.style.display = 'none';
         }
-        document.querySelectorAll('.global-hero-video').forEach(vid => {
-          vid.style.display = 'none';
-        });
+        // Fallback for pages with static video backgrounds
+        const activeVideo = videos[0] || getHeroVideo();
+        if (activeVideo) {
+          document.querySelectorAll('.global-hero-video').forEach(vid => {
+            vid.style.display = 'block';
+            vid.muted = true;
+            vid.defaultMuted = true;
+            vid.playsInline = true;
+            vid.setAttribute('muted', 'muted');
+            vid.setAttribute('playsinline', 'playsinline');
+            vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+            
+            // Prefer setting src directly on video for Safari instead of <source>
+            if (vid.getAttribute('src') !== activeVideo) {
+              vid.src = activeVideo;
+              vid.querySelectorAll('source').forEach(s => s.remove());
+              vid.load();
+              const playPromise = vid.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(e => console.warn('Static video autoplay blocked:', e));
+              }
+            }
+          });
+        } else {
+          document.querySelectorAll('.global-hero-video').forEach(vid => {
+            vid.style.display = 'none';
+          });
+        }
       }
     };
-
     // Store reference for background refresh
     initGlobalHeroVideoFn = initGlobalHeroVideo;
     initGlobalHeroVideo();
@@ -1082,22 +1067,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-              <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
+              <div style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div class="detail-media-clickable" data-src="${subImg1}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
-                <div class="detail-media-clickable" data-src="${subImg2}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
+                <div style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
+                <div style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
               </div>
             </div>
-            ${ex.video ? `
             <div>
               <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1rem;">Experience Video</h4>
-              <div class="video-card detail-media-clickable" data-src="${ex.video}" data-video="true" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
+              <div class="video-card" style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: ${ex.videoRatio === '9:16' ? '9/16' : '16/9'}; ${ex.videoRatio === '9:16' ? 'max-height: 450px; max-width: 253px; margin: 0 auto;' : ''} background: #000;">
                 <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
-                  <source src="${ex.video}">
+                  <source src="${ex.video || getHeroVideo()}">
                 </video>
               </div>
             </div>
-            ` : ''}
             <div>
               <span class="duration-badge" style="display: inline-block; background: rgba(6, 182, 212, 0.08); color: #06b6d4; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(6, 182, 212, 0.15); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${ex.duration}</span>
               <p style="color: #cbd5e1; line-height: 1.7; font-size: 1rem; margin: 0 0 1rem 0; white-space: pre-wrap;">${ex.description}</p>
@@ -1137,17 +1120,6 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
       const bookBtn = modal.querySelector('#details-modal-book');
       if (bookBtn) bookBtn.addEventListener('click', () => { modal.remove(); openBookingModal(ex.id, ex.title); });
-
-      // Click event for detail media elements
-      modal.querySelectorAll('.detail-media-clickable').forEach(el => {
-        el.addEventListener('click', () => {
-          const src = el.dataset.src;
-          const isVideo = el.dataset.video === 'true';
-          if (src && typeof window.openFullscreenLightbox === 'function') {
-            window.openFullscreenLightbox(src, isVideo);
-          }
-        });
-      });
     };
 
     // --- Render grids helper ---
@@ -1176,11 +1148,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const bookBtnHtmlStd = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>`;
 
         if (isMinimalCard) {
-          const badgeHtml = getOfferBadgeHTML(offerCategory, true, ex.title);
           cardBodyHtml = `
           <div class="card-body" style="padding: 1.25rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem; min-height: 80px;">
             <h3 class="card-title" style="margin: 0; font-size: 1.15rem;">${ex.title}</h3>
-            ${badgeHtml ? `<div style="margin-top: -0.25rem; margin-bottom: 0.25rem;">${badgeHtml}</div>` : ''}
             ${ex.description ? `<p class="card-description" style="margin: 0; font-size: 0.9rem; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${ex.description}</p>` : ''}
             ${bookBtnHtml}
           </div>`;
@@ -1189,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card-body">
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span class="duration-badge" style="margin-bottom:0;">${ex.duration}</span>
-              ${getOfferBadgeHTML(offerCategory, true, ex.title)}
+              ${getOfferBadgeHTML(offerCategory, true)}
             </div>
             <h3 class="card-title">${ex.title}</h3>
             ${ex.description ? `<p class="card-description" style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: normal;">${ex.description}</p>` : ''}
@@ -1332,14 +1302,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
           if (hasVideo) {
             return `
-              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${src}" data-video="true">
+              <div class="video-card ${ratioClass}" style="cursor: default;">
                 <video src="${src}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
               </div>
             `;
           } else {
             return `
-              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${item.image}" data-video="false">
+              <div class="video-card ${ratioClass}" style="cursor: default;">
                 <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
                 <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
               </div>
@@ -1354,23 +1324,10 @@ document.addEventListener('DOMContentLoaded', () => {
           vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
           vid.play().catch(e => console.warn('Gallery video autoplay blocked:', e));
         });
-
-        // Click event for gallery cards
-        galleryGrid.querySelectorAll('.detail-media-clickable').forEach(el => {
-          el.addEventListener('click', () => {
-            const src = el.dataset.src;
-            const isVideo = el.dataset.video === 'true';
-            if (src && typeof window.openFullscreenLightbox === 'function') {
-              window.openFullscreenLightbox(src, isVideo);
-            }
-          });
-        });
       }
     };
     renderGalleryFn = renderGallery;
     renderGallery();
-
-
 
     // --- Render Parallax Layer Sliders ---
     const setupParallaxLayer = (layerNum, titlePrefix, listData, offerType) => {
@@ -1379,14 +1336,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (bgSlidesContainer && detailsOverlay) {
-          const list = (listData || []).filter(Boolean);
+          const list = listData;
           bgSlidesContainer.innerHTML = list.map((ex, idx) => {
             if (!ex) return '';
-            if (idx === 0) {
-              return `<div class="layer${layerNum}-bg-slide active" data-index="${idx}" style="background-image: url('${ex.image}');"></div>`;
-            } else {
-              return `<div class="layer${layerNum}-bg-slide" data-index="${idx}" data-src="${ex.image}"></div>`;
-            }
+            const slideStyle = `background-image: url('${ex.image}');`;
+            return `<div class="layer${layerNum}-bg-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="${slideStyle}"></div>`;
           }).join('');
 
           const renderActiveDetails = (ex) => {
@@ -1394,7 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <h2 class="ex-tag-title" style="margin-top: 6rem;">0${layerNum} // ${titlePrefix}</h2>
               <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
                 <span class="ex-duration" style="margin-bottom: 0;">${ex.duration}</span>
-                ${getOfferBadgeHTML(offerType, false, ex.title)}
+                ${getOfferBadgeHTML(offerType)}
               </div>
               <h1 class="ex-title">${ex.title}</h1>
               <p class="ex-desc">${ex.description ? ex.description.split(/\r?\n/)[0] : ''}</p>
@@ -1416,40 +1370,17 @@ document.addEventListener('DOMContentLoaded', () => {
             renderActiveDetails(list[0]);
             let currentIdx = 0;
             const bgSlides = bgSlidesContainer.querySelectorAll(`.layer${layerNum}-bg-slide`);
-            
             const changeSlide = (nextIdx) => {
               if (nextIdx === currentIdx) return;
-              
-              const nextSlide = bgSlides[nextIdx];
-              if (nextSlide && !nextSlide.style.backgroundImage && nextSlide.dataset.src) {
-                nextSlide.style.backgroundImage = `url('${nextSlide.dataset.src}')`;
-              }
-              
-              const prefetchIdx = (nextIdx + 1) % list.length;
-              const prefetchSlide = bgSlides[prefetchIdx];
-              if (prefetchSlide && !prefetchSlide.style.backgroundImage && prefetchSlide.dataset.src) {
-                prefetchSlide.style.backgroundImage = `url('${prefetchSlide.dataset.src}')`;
-              }
-
               detailsOverlay.classList.remove('fade-in'); detailsOverlay.classList.add('fade-out');
               if (bgSlides[currentIdx]) bgSlides[currentIdx].classList.remove('active');
-              if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
               setTimeout(() => {
+                if (bgSlides[nextIdx]) bgSlides[nextIdx].classList.add('active');
                 renderActiveDetails(list[nextIdx]);
                 detailsOverlay.classList.remove('fade-out'); detailsOverlay.classList.add('fade-in');
                 currentIdx = nextIdx;
               }, 500);
             };
-
-            if (list.length > 1) {
-              setTimeout(() => {
-                const secondSlide = bgSlides[1];
-                if (secondSlide && !secondSlide.style.backgroundImage && secondSlide.dataset.src) {
-                  secondSlide.style.backgroundImage = `url('${secondSlide.dataset.src}')`;
-                }
-              }, 2000);
-            }
-
             let sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500);
             window.addEventListener('blur', () => clearInterval(sliderInterval));
             window.addEventListener('focus', () => { clearInterval(sliderInterval); sliderInterval = setInterval(() => { changeSlide((currentIdx + 1) % list.length); }, 4500); });
@@ -1463,7 +1394,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Store reference for background refresh
     setupParallaxLayerFn = setupParallaxLayer;
 
-    setupParallaxLayer(7, 'PACKAGES', getPackages(), 'Package');
     setupParallaxLayer(2, 'EXCURSIONS', getExcursions(), 'Excursion');
     setupParallaxLayer(3, 'PRIVATE CHARTERS', getPrivate(), 'Private Booking');
     setupParallaxLayer(4, 'FREE DIVING', getFreeDiving(), 'Free Diving');
@@ -1737,12 +1667,6 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- Offer code & price -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-                ${isOfficeUser ? `
-                <div>
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
-                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
-                </div>
-                ` : ''}
                 <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                   <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                   <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
@@ -1838,45 +1762,24 @@ document.addEventListener('DOMContentLoaded', () => {
           const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
           const offerMessage = bookingModal.querySelector('#booking-offer-message');
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          const offer = getOffers().find(o => {
+             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Resort'));
+          });
           if (code) {
-             const matchingOffer = getOffers().find(o => o.code === code);
-             if (matchingOffer) {
-                 const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
-                 const isApplicable = appliesTo.includes('All') || appliesTo.includes('Resort') || appliesTo.includes('Resorts');
-                 let isSubcatMatch = true;
-                 let subcats = [];
-                 if (matchingOffer.subcategory) {
-                     if (Array.isArray(matchingOffer.subcategory)) {
-                         subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
-                     } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
-                         subcats = [matchingOffer.subcategory.trim()];
-                     }
+             if (offer && offer.title) {
+                 let match = offer.discount.match(/(\d+)%/);
+                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                 else {
+                     match = offer.discount.match(/\$(\d+)/);
+                     if (match) total = Math.max(0, total - parseInt(match[1]));
                  }
-                 if (subcats.length > 0) {
-                     isSubcatMatch = subcats.includes(pkgObj.title);
-                 }
-                 if (isApplicable && isSubcatMatch) {
-                     let match = matchingOffer.discount.match(/(\d+)%/);
-                     if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                     else {
-                         match = matchingOffer.discount.match(/\$(\d+)/);
-                         if (match) total = Math.max(0, total - parseInt(match[1]));
-                     }
-                     if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
-                 } else {
-                     if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
-                 }
+                 if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
              } else {
-                 if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
+                 if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
              }
           } else {
              if (offerMessage) { offerMessage.textContent = ''; }
-          }
-          
-          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
-          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
-          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
-             total = discountedPriceVal;
           }
           priceDisplay.textContent = `$${total}`;
           checkSlotsAvailability();
@@ -1901,8 +1804,6 @@ document.addEventListener('DOMContentLoaded', () => {
         adultsInput.addEventListener('input', updateTotalPrice);
         const offerCodeInputRS = bookingModal.querySelector('#booking-offer-code');
         if (offerCodeInputRS) offerCodeInputRS.addEventListener('input', updateTotalPrice);
-        const discountedPriceInputRS = bookingModal.querySelector('#booking-discounted-price');
-        if (discountedPriceInputRS) discountedPriceInputRS.addEventListener('input', updateTotalPrice);
 
         const dateInputRS = bookingModal.querySelector('#booking-date');
         if (dateInputRS) dateInputRS.addEventListener('input', checkSlotsAvailability);
@@ -2083,12 +1984,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   <input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;">
                   <div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div>
                 </div>
-                ${isOfficeUser ? `
-                <div>
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
-                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
-                </div>
-                ` : ''}
                 <div>
                   <div id="transfer-pax-warning" style="color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
                   <div id="transfer-tier-info" style="color: #10b981; font-size: 0.8rem; font-weight: 600; margin-top: 4px; display: none;"></div>
@@ -2210,19 +2105,12 @@ document.addEventListener('DOMContentLoaded', () => {
              }
           }
 
-          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
-          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
-          const hasDiscountedPrice = !isNaN(discountedPriceVal) && discountedPriceVal >= 0;
-
           if (!islandConfig && !(isFromHub && isToHub)) {
-            priceDisplay.textContent = hasDiscountedPrice ? `$${discountedPriceVal}` : '$0';
+            priceDisplay.textContent = '$0';
             paxWarning.style.display = 'none';
-            tierInfo.style.display = hasDiscountedPrice ? 'block' : 'none';
-            if (hasDiscountedPrice) {
-              tierInfo.textContent = 'Custom/Discounted Office Price applied';
-            }
-            submitBtn.disabled = !hasDiscountedPrice;
-            submitBtn.style.opacity = hasDiscountedPrice ? '1' : '0.5';
+            tierInfo.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
             return;
           }
 
@@ -2237,52 +2125,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let total = result.price;
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          const offer = getOffers().find(o => {
+             const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+             return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking'));
+          });
+          
           if (code) {
-             const matchingOffer = getOffers().find(o => o.code === code);
-             if (matchingOffer) {
-                 const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
-                 const isApplicable = appliesTo.includes('All') || appliesTo.includes('Boat Transfer') || appliesTo.includes('Private Booking');
-                 let isSubcatMatch = true;
-                 let subcats = [];
-                 if (matchingOffer.subcategory) {
-                     if (Array.isArray(matchingOffer.subcategory)) {
-                         subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
-                     } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
-                         subcats = [matchingOffer.subcategory.trim()];
-                     }
+             if (offer && offer.title) {
+                 let match = offer.discount.match(/(\\d+)%/);
+                 if (match) total = total * (1 - (parseInt(match[1]) / 100));
+                 else {
+                     match = offer.discount.match(/\\$(\\d+)/);
+                     if (match) total = Math.max(0, total - parseInt(match[1]));
                  }
-                 if (subcats.length > 0) {
-                     isSubcatMatch = subcats.includes(pkgObj.title);
-                 }
-                 if (isApplicable && isSubcatMatch) {
-                     let match = matchingOffer.discount.match(/(\d+)%/);
-                     if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                     else {
-                         match = matchingOffer.discount.match(/\$(\d+)/);
-                         if (match) total = Math.max(0, total - parseInt(match[1]));
-                     }
-                     if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
-                 } else {
-                     if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
-                 }
+                 if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
              } else {
-                 if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
+                 if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
              }
           } else {
              if (offerMessage) { offerMessage.textContent = ''; }
           }
 
-          if (hasDiscountedPrice) {
-             total = discountedPriceVal;
-          }
-
-          if (hasDiscountedPrice || result.matched || result.price > 0) {
+          if (result.matched || result.price > 0) {
             priceDisplay.textContent = `$${total}`;
-            if (hasDiscountedPrice) {
-              paxWarning.style.display = 'none';
-              tierInfo.style.display = 'block';
-              tierInfo.textContent = 'Custom/Discounted Office Price applied';
-            } else if (!result.matched) {
+            if (!result.matched) {
               paxWarning.style.display = 'block';
               paxWarning.textContent = `Exceeds available tiers (${result.tierLabel}). Please contact us for custom pricing.`;
               tierInfo.style.display = 'none';
@@ -2308,8 +2174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         adultsInput.addEventListener('input', updateTransferPrice);
         kidsInput.addEventListener('input', updateTransferPrice);
         if (offerCodeInput) offerCodeInput.addEventListener('input', updateTransferPrice);
-        const discountedPriceInputBT = bookingModal.querySelector('#booking-discounted-price');
-        if (discountedPriceInputBT) discountedPriceInputBT.addEventListener('input', updateTransferPrice);
         
         // Initialize dynamic options
         updateToOptions();
@@ -2420,12 +2284,6 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- Offer code & price -->
               <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-                ${isOfficeUser ? `
-                <div>
-                  <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
-                  <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
-                </div>
-                ` : ''}
                 <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                   <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                   <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$${packagePrice}</span>
@@ -2477,45 +2335,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Apply offer code
           const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          const offer = getOffers().find(o => {
+            const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+            return o.code === code && (appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages'));
+          });
           if (code) {
-            const matchingOffer = getOffers().find(o => o.code === code);
-            if (matchingOffer) {
-              const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
-              const isApplicable = appliesTo.includes('All') || appliesTo.includes('Package') || appliesTo.includes('Packages');
-              let isSubcatMatch = true;
-              let subcats = [];
-              if (matchingOffer.subcategory) {
-                if (Array.isArray(matchingOffer.subcategory)) {
-                  subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
-                } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
-                  subcats = [matchingOffer.subcategory.trim()];
-                }
+            if (offer && offer.title) {
+              let match = offer.discount.match(/(\d+)%/);
+              if (match) total = total * (1 - (parseInt(match[1]) / 100));
+              else {
+                match = offer.discount.match(/\$(\d+)/);
+                if (match) total = Math.max(0, total - parseInt(match[1]));
               }
-              if (subcats.length > 0) {
-                isSubcatMatch = subcats.includes(pkgObj.title);
-              }
-              if (isApplicable && isSubcatMatch) {
-                let match = matchingOffer.discount.match(/(\d+)%/);
-                if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                else {
-                  match = matchingOffer.discount.match(/\$(\d+)/);
-                  if (match) total = Math.max(0, total - parseInt(match[1]));
-                }
-                if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
-              } else {
-                if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
-              }
+              if (offerMessage) { offerMessage.textContent = `Applied: ${offer.discount}`; offerMessage.style.color = '#10b981'; }
             } else {
-              if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
+              if (offerMessage) { offerMessage.textContent = 'Invalid or not applicable code'; offerMessage.style.color = '#ef4444'; }
             }
           } else {
             if (offerMessage) { offerMessage.textContent = ''; }
-          }
-
-          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
-          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
-          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
-             total = discountedPriceVal;
           }
 
           priceDisplay.textContent = `$${total}`;
@@ -2529,8 +2366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (kidsAgesInput) kidsAgesInput.addEventListener('input', updatePackagePrice);
         if (offerCodeInput) offerCodeInput.addEventListener('input', updatePackagePrice);
-        const discountedPriceInputPKG = bookingModal.querySelector('#booking-discounted-price');
-        if (discountedPriceInputPKG) discountedPriceInputPKG.addEventListener('input', updatePackagePrice);
         if (dateInput) dateInput.addEventListener('input', checkSlotsAvailability);
 
         updatePackagePrice();
@@ -2660,12 +2495,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
 
               <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
-              ${isOfficeUser ? `
-              <div>
-                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
-                <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
-              </div>
-              ` : ''}
+              
               <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                 <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
                 <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
@@ -2775,60 +2605,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           total += photoCost;
-
-          // Apply offer code
-          const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
-          const offerMessage = bookingModal.querySelector('#booking-offer-message');
-          const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
-          
-          let currentCat = 'Excursion';
-          if (getFreeDiving().some(item => item.id === id)) {
-            currentCat = 'Free Diving';
-          } else if (getPhotography().some(item => item.id === id)) {
-            currentCat = 'Photography';
-          }
-
-          if (code) {
-            const matchingOffer = getOffers().find(o => o.code === code);
-            if (matchingOffer) {
-              const appliesTo = matchingOffer.category ? (Array.isArray(matchingOffer.category) ? matchingOffer.category : [matchingOffer.category]) : ['All'];
-              const isApplicable = appliesTo.includes('All') || appliesTo.includes(currentCat) || (currentCat === 'Excursion' && appliesTo.includes('Excursions'));
-              let isSubcatMatch = true;
-              let subcats = [];
-              if (matchingOffer.subcategory) {
-                if (Array.isArray(matchingOffer.subcategory)) {
-                  subcats = matchingOffer.subcategory.filter(s => s && s.trim() !== '');
-                } else if (typeof matchingOffer.subcategory === 'string' && matchingOffer.subcategory.trim() !== '') {
-                  subcats = [matchingOffer.subcategory.trim()];
-                }
-              }
-              if (subcats.length > 0) {
-                isSubcatMatch = subcats.includes(pkgObj.title);
-              }
-              if (isApplicable && isSubcatMatch) {
-                let match = matchingOffer.discount.match(/(\d+)%/);
-                if (match) total = total * (1 - (parseInt(match[1]) / 100));
-                else {
-                  match = matchingOffer.discount.match(/\$(\d+)/);
-                  if (match) total = Math.max(0, total - parseInt(match[1]));
-                }
-                if (offerMessage) { offerMessage.textContent = `Applied: ${matchingOffer.discount}`; offerMessage.style.color = '#10b981'; }
-              } else {
-                if (offerMessage) { offerMessage.textContent = 'This code not applicable for this booking'; offerMessage.style.color = '#ef4444'; }
-              }
-            } else {
-              if (offerMessage) { offerMessage.textContent = 'Invalid promo code'; offerMessage.style.color = '#ef4444'; }
-            }
-          } else {
-            if (offerMessage) { offerMessage.textContent = ''; }
-          }
-
-          const discountedPriceInput = bookingModal.querySelector('#booking-discounted-price');
-          const discountedPriceVal = discountedPriceInput ? parseFloat(discountedPriceInput.value) : NaN;
-          if (!isNaN(discountedPriceVal) && discountedPriceVal >= 0) {
-             total = discountedPriceVal;
-          }
-
           priceDisplay.textContent = `$${total}`;
         };
 
@@ -2843,12 +2619,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateInputEX = bookingModal.querySelector('#booking-date');
         if (dateInputEX) dateInputEX.addEventListener('input', checkSlotsAvailability);
         const offerCodeInputEX = bookingModal.querySelector('#booking-offer-code');
+        const offerMessageEX = bookingModal.querySelector('#booking-offer-message');
         if (offerCodeInputEX) {
-          offerCodeInputEX.addEventListener('input', updateTotalPrice);
-        }
-        const discountedPriceInputEX = bookingModal.querySelector('#booking-discounted-price');
-        if (discountedPriceInputEX) {
-          discountedPriceInputEX.addEventListener('input', updateTotalPrice);
+          offerCodeInputEX.addEventListener('input', (e) => {
+            const code = e.target.value.trim().toUpperCase();
+            if (!code) { if (offerMessageEX) offerMessageEX.textContent = ''; return; }
+            const currentCat = 'Excursion';
+            const offer = getOffers().find(o => {
+              const appliesTo = o.category ? (Array.isArray(o.category) ? o.category : [o.category]) : ['All'];
+              return o.code === code && (appliesTo.includes('All') || appliesTo.includes(currentCat));
+            });
+            if (offer && offer.title) {
+              if (offerMessageEX) { offerMessageEX.textContent = `Applied: ${offer.discount}`; offerMessageEX.style.color = '#10b981'; }
+            } else {
+              if (offerMessageEX) { offerMessageEX.textContent = 'Invalid or not applicable code'; offerMessageEX.style.color = '#ef4444'; }
+            }
+          });
         }
 
         // Run sync initially for default check states
@@ -3345,7 +3131,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> Entry: ${b.entryTime || 'N/A'}</div>
               </td>
               <td>
-                <div style="font-weight: 700; color: #fde047; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-dollar-sign" style="color: #fde047;"></i> Amount: $${parseFloat(b.totalPrice || 0).toFixed(2)}</div>
                 <div style="font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-credit-card" style="color: #10b981;"></i> ${b.paymentBasis || 'Cash'}</div>
                 <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">By: <span style="color:#38bdf8; font-weight:600;">${b.enteredBy || b.bookedBy || 'Guest'}</span></div>
                 ${b.offerCode ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-percent"></i> Promo: ${b.offerCode}</div>` : ''}
@@ -4949,7 +4734,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Homepage Layer Animation System ---
   // Exclude heavy slider layers (2, 3, 4, 5, 6) from continuous transform repaints to prevent compositor crushing/lag on PC
-  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-2):not(.layer-3):not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider):not(.layer-7-slider):not(.layer-8)');
+  const parallaxLayers = document.querySelectorAll('.parallax-layer:not(.layer-2):not(.layer-3):not(.layer-4-slider):not(.layer-5-slider):not(.layer-6-slider)');
   if (parallaxLayers.length > 0) {
     let targetX = 0;
     let targetY = 0;
@@ -5199,97 +4984,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // iOS/Safari Video Autoplay Enforcer on User Interaction
-  const forcePlayVideos = () => {
-    document.querySelectorAll('video').forEach(video => {
-      if (video.paused) {
-        video.play().catch(e => {
-          console.warn("Attempt to play video on interaction failed:", e);
-        });
-      }
-    });
-  };
-  ['click', 'touchstart', 'scroll', 'mousemove'].forEach(evt => {
-    window.addEventListener(evt, forcePlayVideos, { once: true, passive: true });
-  });
-
-  // --- Fullscreen Lightbox Function ---
-  const openFullscreenLightbox = (src, isVideo) => {
-    const existing = document.getElementById('global-lightbox');
-    if (existing) existing.remove();
-
-    const lightbox = document.createElement('div');
-    lightbox.id = 'global-lightbox';
-    lightbox.className = 'lightbox-modal';
-
-    let mediaHTML = '';
-    if (isVideo) {
-      // Use controlslist to disable downloading on Chrome/Safari/Edge, and playsinline for mobile
-      mediaHTML = `<video class="lightbox-media" src="${src}" autoplay loop controls controlslist="nodownload" playsinline webkit-playsinline></video>`;
-    } else {
-      mediaHTML = `<img class="lightbox-media" src="${src}" alt="Fullscreen Image" />`;
-    }
-
-    lightbox.innerHTML = `
-      <div class="lightbox-content-container">
-        <button class="lightbox-close" aria-label="Close fullscreen view">&times;</button>
-        ${mediaHTML}
-      </div>
-    `;
-
-    document.body.appendChild(lightbox);
-
-    // Trigger transition animation
-    setTimeout(() => {
-      lightbox.classList.add('active');
-    }, 10);
-
-    const closeLightbox = () => {
-      lightbox.classList.remove('active');
-      setTimeout(() => lightbox.remove(), 300);
-    };
-
-    lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', (e) => {
-      // Close if clicking outside the media element itself
-      if (e.target === lightbox || e.target.classList.contains('lightbox-content-container')) {
-        closeLightbox();
-      }
-    });
-
-    // Close on Escape key press
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') {
-        closeLightbox();
-        document.removeEventListener('keydown', handleEsc);
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-  };
-  window.openFullscreenLightbox = openFullscreenLightbox;
-
-  // --- Right-Click and Save Prevention ---
-  // Prevent contextmenu (right-click) on all images and videos to block downloading
-  window.addEventListener('contextmenu', (e) => {
-    if (
-      e.target.tagName === 'IMG' ||
-      e.target.tagName === 'VIDEO' ||
-      e.target.closest('.video-card') ||
-      e.target.closest('.lightbox-modal') ||
-      e.target.closest('.detail-media-clickable')
-    ) {
-      e.preventDefault();
-      return false;
-    }
-  }, true);
-
-  // Prevent drag and drop of media assets
-  window.addEventListener('dragstart', (e) => {
-    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
-      e.preventDefault();
-      return false;
-    }
-  }, true);
 
 });

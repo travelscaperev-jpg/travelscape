@@ -45,7 +45,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
     if (!data) return '';
 
     if (isFilePath) {
-      const isVideo = mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
+      const isVideo = mimeType.startsWith('video/') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
       const resourceType = isVideo ? 'video' : 'image';
       const result = await cloudinary.uploader.upload(data, {
         folder,
@@ -55,9 +55,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
       return result.secure_url;
     }
 
-    const isVideo = isBuffer 
-      ? (mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType))
-      : (typeof data === 'string' && (data.includes('video') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data)));
+    const isVideo = isBuffer ? mimeType.startsWith('video/') : (typeof data === 'string' && data.includes('video'));
     const resourceType = isVideo ? 'video' : 'image';
 
     if (isBuffer) {
@@ -95,15 +93,8 @@ const pool = new Pool({
 });
 
 let isDbConnected = false;
-const DB_FILE_PATH = path.join(__dirname, 'data', 'db.json');
 
 async function initDb() {
-  if (!process.env.DATABASE_URL) {
-    console.log('⚠️ No DATABASE_URL found. Running with local JSON database fallback.');
-    isDbConnected = false;
-    seedDatabaseIfEmpty();
-    return;
-  }
   try {
     const client = await pool.connect();
     isDbConnected = true;
@@ -127,7 +118,6 @@ async function initDb() {
 initDb();
 
 async function waitForDB(maxWait = 20000) {
-  if (!process.env.DATABASE_URL) return false;
   if (isDbConnected) return true;
   const start = Date.now();
   while (Date.now() - start < maxWait) {
@@ -139,15 +129,7 @@ async function waitForDB(maxWait = 20000) {
 
 async function getCacheValue(key, defaultValue = null) {
   try {
-    const dbOk = await waitForDB();
-    if (!dbOk) {
-      if (fs.existsSync(DB_FILE_PATH)) {
-        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
-        const db = JSON.parse(fileContent);
-        return db[key] !== undefined ? db[key] : defaultValue;
-      }
-      return defaultValue;
-    }
+    await waitForDB();
     const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
     if (res.rows.length > 0) {
       return JSON.parse(res.rows[0].value);
@@ -161,17 +143,7 @@ async function getCacheValue(key, defaultValue = null) {
 
 async function setCacheValue(key, value) {
   try {
-    const dbOk = await waitForDB();
-    if (!dbOk) {
-      let db = {};
-      if (fs.existsSync(DB_FILE_PATH)) {
-        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
-        db = JSON.parse(fileContent);
-      }
-      db[key] = value;
-      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(db, null, 2), 'utf8');
-      return true;
-    }
+    await waitForDB();
     const serializedValue = JSON.stringify(value);
     await pool.query(
       'INSERT INTO data_cache (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP',
@@ -234,7 +206,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     const folder = req.body.folder || 'travelscape';
-    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype + '|' + (req.file.originalname || ''), true);
+    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype, true);
 
     // Clean up local temp file
     try {
@@ -259,8 +231,12 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { role, password } = req.body;
 
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
-    const staffPass = process.env.STAFF_PASSWORD || 'staff';
+    const adminPass = process.env.ADMIN_PASSWORD;
+    const staffPass = process.env.STAFF_PASSWORD;
+
+    if (!adminPass) {
+      return res.status(500).json({ success: false, message: 'Admin password is not configured on the server.' });
+    }
 
     if (role === 'admin' && password === adminPass) {
       return res.json({ success: true, role: 'admin' });
@@ -399,7 +375,6 @@ registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 registerCollectionRoutes('crew', 'crew');
 registerCollectionRoutes('staff_accounts', 'staff_accounts');
-registerCollectionRoutes('offers', 'offers');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -461,16 +436,18 @@ app.post('/api/google-review', async (req, res) => {
 // Helper to seed a cache key if missing or empty
 async function seedKeyIfEmpty(key, defaultValue) {
   try {
-    const val = await getCacheValue(key, null);
-    if (val === null) {
+    const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
+    if (res.rows.length === 0) {
       await setCacheValue(key, defaultValue);
       console.log(`🌱 Seeded missing key: ${key}`);
     } else {
+      const val = JSON.parse(res.rows[0].value);
       const isEmptyArray = Array.isArray(val) && val.length === 0;
       const isEmptyObject = val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0;
       const isEmptyString = typeof val === 'string' && val.trim() === '';
+      const isNull = val === null || val === undefined;
 
-      if (isEmptyArray || isEmptyObject || isEmptyString) {
+      if (isEmptyArray || isEmptyObject || isEmptyString || isNull) {
         await setCacheValue(key, defaultValue);
         console.log(`🌱 Repaired empty/null key: ${key}`);
       }
@@ -724,18 +701,6 @@ async function seedDatabaseIfEmpty() {
       validity: "Valid until June 30, 2026"
     };
 
-    const defaultOffers = [
-      {
-        id: "offer-1",
-        title: "Summer Lagoon Special",
-        discount: "15% OFF",
-        description: "Book any Private Speedboat Charter or Resort Day Pass this week and receive an instant 15% discount + free underwater photography package.",
-        category: "All",
-        code: "LAGOON15",
-        validity: "Valid until June 30, 2026"
-      }
-    ];
-
     const promises = [
       seedKeyIfEmpty('packages', []),
       seedKeyIfEmpty('excursions', defaultExcursions),
@@ -748,11 +713,10 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('testimonials', defaultTestimonials),
       seedKeyIfEmpty('reels', defaultReels),
       seedKeyIfEmpty('gallery', defaultGallery),
-      seedKeyIfEmpty('hero_videos', []),
-      seedKeyIfEmpty('hero_video', ''),
+      seedKeyIfEmpty('hero_videos', ['back.mp4']),
+      seedKeyIfEmpty('hero_video', 'back.mp4'),
       seedKeyIfEmpty('google_review', 'https://google.com'),
       seedKeyIfEmpty('offer', defaultOffer),
-      seedKeyIfEmpty('offers', defaultOffers),
       seedKeyIfEmpty('crew', defaultCrew),
       seedKeyIfEmpty('staff_accounts', []),
     ];
