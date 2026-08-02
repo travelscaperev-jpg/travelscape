@@ -45,7 +45,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
     if (!data) return '';
 
     if (isFilePath) {
-      const isVideo = mimeType.startsWith('video/') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
+      const isVideo = mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data);
       const resourceType = isVideo ? 'video' : 'image';
       const result = await cloudinary.uploader.upload(data, {
         folder,
@@ -55,7 +55,9 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
       return result.secure_url;
     }
 
-    const isVideo = isBuffer ? mimeType.startsWith('video/') : (typeof data === 'string' && data.includes('video'));
+    const isVideo = isBuffer 
+      ? (mimeType.startsWith('video/') || /video/i.test(mimeType) || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(mimeType))
+      : (typeof data === 'string' && (data.includes('video') || /\.(mp4|mov|webm|ogv|3gp|m4v|quicktime)$/i.test(data)));
     const resourceType = isVideo ? 'video' : 'image';
 
     if (isBuffer) {
@@ -93,8 +95,15 @@ const pool = new Pool({
 });
 
 let isDbConnected = false;
+const DB_FILE_PATH = path.join(__dirname, 'data', 'db.json');
 
 async function initDb() {
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️ No DATABASE_URL found. Running with local JSON database fallback.');
+    isDbConnected = false;
+    seedDatabaseIfEmpty();
+    return;
+  }
   try {
     const client = await pool.connect();
     isDbConnected = true;
@@ -118,6 +127,7 @@ async function initDb() {
 initDb();
 
 async function waitForDB(maxWait = 20000) {
+  if (!process.env.DATABASE_URL) return false;
   if (isDbConnected) return true;
   const start = Date.now();
   while (Date.now() - start < maxWait) {
@@ -129,7 +139,15 @@ async function waitForDB(maxWait = 20000) {
 
 async function getCacheValue(key, defaultValue = null) {
   try {
-    await waitForDB();
+    const dbOk = await waitForDB();
+    if (!dbOk) {
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
+        const db = JSON.parse(fileContent);
+        return db[key] !== undefined ? db[key] : defaultValue;
+      }
+      return defaultValue;
+    }
     const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
     if (res.rows.length > 0) {
       return JSON.parse(res.rows[0].value);
@@ -143,7 +161,17 @@ async function getCacheValue(key, defaultValue = null) {
 
 async function setCacheValue(key, value) {
   try {
-    await waitForDB();
+    const dbOk = await waitForDB();
+    if (!dbOk) {
+      let db = {};
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf8');
+        db = JSON.parse(fileContent);
+      }
+      db[key] = value;
+      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(db, null, 2), 'utf8');
+      return true;
+    }
     const serializedValue = JSON.stringify(value);
     await pool.query(
       'INSERT INTO data_cache (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP',
@@ -199,14 +227,24 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, error: 'No file provided' });
 
+    const folder = req.body.folder || 'travelscape';
+
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      // Clean up the temp file on config error
+      // Fallback to local storage
+      const uploadsDir = path.join(__dirname, 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const fileExt = path.extname(req.file.originalname) || (req.file.mimetype.startsWith('video/') ? '.mp4' : '.jpg');
+      const filename = `${folder}-${Date.now()}${fileExt}`;
+      const destPath = path.join(uploadsDir, filename);
+      fs.copyFileSync(req.file.path, destPath);
       try { fs.unlinkSync(req.file.path); } catch (e) { }
-      return res.status(500).json({ success: false, error: 'Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in Render environment variables.' });
+      const localUrl = `/uploads/${filename}`;
+      return res.json({ success: true, url: localUrl });
     }
 
-    const folder = req.body.folder || 'travelscape';
-    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype, true);
+    const url = await uploadToCloudinary(req.file.path, folder, false, req.file.mimetype + '|' + (req.file.originalname || ''), true);
 
     // Clean up local temp file
     try {
@@ -231,12 +269,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { role, password } = req.body;
 
-    const adminPass = process.env.ADMIN_PASSWORD;
-    const staffPass = process.env.STAFF_PASSWORD;
-
-    if (!adminPass) {
-      return res.status(500).json({ success: false, message: 'Admin password is not configured on the server.' });
-    }
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+    const staffPass = process.env.STAFF_PASSWORD || 'staff';
 
     if (role === 'admin' && password === adminPass) {
       return res.json({ success: true, role: 'admin' });
@@ -375,6 +409,7 @@ registerCollectionRoutes('contact_messages', 'contact_messages');
 registerCollectionRoutes('instagram_config', 'instagram_config');
 registerCollectionRoutes('crew', 'crew');
 registerCollectionRoutes('staff_accounts', 'staff_accounts');
+registerCollectionRoutes('offers', 'offers');
 
 // ─── Singular Value Endpoints ─────────────────────────────────────────────────
 
@@ -436,18 +471,16 @@ app.post('/api/google-review', async (req, res) => {
 // Helper to seed a cache key if missing or empty
 async function seedKeyIfEmpty(key, defaultValue) {
   try {
-    const res = await pool.query('SELECT value FROM data_cache WHERE key = $1', [key]);
-    if (res.rows.length === 0) {
+    const val = await getCacheValue(key, null);
+    if (val === null) {
       await setCacheValue(key, defaultValue);
       console.log(`🌱 Seeded missing key: ${key}`);
     } else {
-      const val = JSON.parse(res.rows[0].value);
       const isEmptyArray = Array.isArray(val) && val.length === 0;
       const isEmptyObject = val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0;
       const isEmptyString = typeof val === 'string' && val.trim() === '';
-      const isNull = val === null || val === undefined;
 
-      if (isEmptyArray || isEmptyObject || isEmptyString || isNull) {
+      if (isEmptyArray || isEmptyObject || isEmptyString) {
         await setCacheValue(key, defaultValue);
         console.log(`🌱 Repaired empty/null key: ${key}`);
       }
@@ -469,7 +502,7 @@ async function seedDatabaseIfEmpty() {
         role: "Senior Boat Captain / Skipper",
         bio: "Ibrahim has navigated Maldivian waters for over 15 years. He specializes in spotting migrating mantas and dolphin pods.",
         licenses: "Maldivian Coast Guard Master License, First Aid CPR",
-        image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"
+        image: ""
       },
       {
         id: "crew-2",
@@ -478,7 +511,7 @@ async function seedDatabaseIfEmpty() {
         bio: "Aisha holds a master's in marine ecology and educates guests on reef preservation.",
         experience: "6 Years",
         licenses: "PADI Certified Instructor, Reef Conservation Specialist",
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
+        image: ""
       },
       {
         id: "crew-3",
@@ -486,7 +519,7 @@ async function seedDatabaseIfEmpty() {
         role: "Local Excursion Coordinator",
         bio: "A native of Maafushi, Hassan loves guiding sandbank picnics and showing guests Maldivian culture on local island walks.",
         licenses: "Local Guide License, Water Rescue Certified",
-        image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80"
+        image: ""
       }
     ];
 
@@ -497,7 +530,7 @@ async function seedDatabaseIfEmpty() {
         duration: "Full Day (6 Hours)",
         description: "Dive into the keyhole shipwreck of Vaavu Atoll, swim alongside gentle nurse sharks, and walk on a pristine sandbank.",
         highlights: "Vaavu Keyhole Shipwreck, Nurse Shark swimming, buffet lunch on sandbank, dolphin watching",
-        image: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 20,
@@ -509,7 +542,7 @@ async function seedDatabaseIfEmpty() {
         duration: "3 Hours",
         description: "An unforgettable encounter with the majestic manta rays of the Maldives. Snorkel in current channels where mantas feed.",
         highlights: "Snorkeling with Manta Rays, vibrant coral reef drift, underwater photography tips",
-        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 15,
@@ -521,7 +554,7 @@ async function seedDatabaseIfEmpty() {
         duration: "2 Hours",
         description: "Sail out as the sun sets over the Indian Ocean to watch wild spinner dolphins jumping and playing in the waves.",
         highlights: "Spinner dolphins spotting, golden hour photo ops, complimentary sunset drinks on deck",
-        image: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 25,
@@ -536,7 +569,7 @@ async function seedDatabaseIfEmpty() {
         duration: "Flexible (4 to 8 Hours)",
         description: "Rent our premium speedboat with a dedicated captain and guide. Customize your own itinerary to sandbanks, reefs, or local islands.",
         highlights: "100% customizable itinerary, private captain & crew, snorkeling gear & towels included",
-        image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 8,
@@ -548,7 +581,7 @@ async function seedDatabaseIfEmpty() {
         duration: "4 Hours",
         description: "Surprise your partner with a private sandbank excursion. Features a setup with cushions, carpets, fruit platter, and a sunset dinner.",
         highlights: "Exclusive sandbank access, romantic table setup, professional photography, gourmet dinner",
-        image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 2,
@@ -563,7 +596,7 @@ async function seedDatabaseIfEmpty() {
         duration: "3 Days",
         description: "Learn the fundamentals of breath-holding, equalization, breathing techniques, and safety procedures down to 20 meters.",
         highlights: "AIDA certification, breathing & relaxation workshops, open water diving, safety training",
-        image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 4,
@@ -575,7 +608,7 @@ async function seedDatabaseIfEmpty() {
         duration: "2 Hours",
         description: "For certified freedivers looking to practice depth, technique, and buddy safety under the direct supervision of an instructor.",
         highlights: "Constant weight coaching, safety diver support, dive computer analysis, deep buoy setups",
-        image: "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 6,
@@ -590,7 +623,7 @@ async function seedDatabaseIfEmpty() {
         duration: "Day Pass (9am - 6pm)",
         description: "Spend a luxury day on a 5-star overwater villa resort. Day pass includes buffet lunch, unlimited premium beverages, and access to pool/beach.",
         highlights: "All-inclusive buffet & drinks, access to overwater resort pools, pristine reef snorkeling",
-        image: "https://images.unsplash.com/photo-1540206351-d6465b3ac5c1?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 12,
@@ -617,7 +650,7 @@ async function seedDatabaseIfEmpty() {
         duration: "Day Pass (10am - 7pm)",
         description: "Experience the adults-only playground of Centara Ras Fushi. Pass includes lunch, open bar, and non-motorized water sports.",
         highlights: "Adults-only beach club, open bar with tropical cocktails, catamaran and paddleboard usage",
-        image: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         maxCapacity: 15,
@@ -639,7 +672,7 @@ async function seedDatabaseIfEmpty() {
         duration: "1 Hour",
         description: "Professional aerial and underwater photography capturing your best moments.",
         highlights: "15 edited photos, 1 minute cinematic drone video",
-        image: "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         price: 150
@@ -650,7 +683,7 @@ async function seedDatabaseIfEmpty() {
         duration: "2-3 Hours",
         description: "A complete cinematic storytelling experience of your Maldivian adventure.",
         highlights: "30 edited photos, 3 minute 4K cinematic video, drone and underwater shots",
-        image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80",
+        image: "",
         video: "",
         videoRatio: "16:9",
         price: 300
@@ -679,17 +712,17 @@ async function seedDatabaseIfEmpty() {
     ];
 
     const defaultReels = [
-      { id: "r-1", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80" },
-      { id: "r-2", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
-      { id: "r-3", image: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80" },
-      { id: "r-4", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80" }
+      { id: "r-1", image: "" },
+      { id: "r-2", image: "" },
+      { id: "r-3", image: "" },
+      { id: "r-4", image: "" }
     ];
 
     const defaultGallery = [
-      { id: "g-1", title: "Lagoon Explorer", image: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80", video: "", aspectRatio: "16:9" },
-      { id: "g-2", title: "Manta Ray Encounter", image: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=800&q=80", video: "", aspectRatio: "9:16" },
-      { id: "g-3", title: "Tropical Sandbank", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80", video: "", aspectRatio: "16:9" },
-      { id: "g-4", title: "Freediver Descent", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80", video: "", aspectRatio: "9:16" }
+      { id: "g-1", title: "Lagoon Explorer", image: "", video: "", aspectRatio: "16:9" },
+      { id: "g-2", title: "Manta Ray Encounter", image: "", video: "", aspectRatio: "9:16" },
+      { id: "g-3", title: "Tropical Sandbank", image: "", video: "", aspectRatio: "16:9" },
+      { id: "g-4", title: "Freediver Descent", image: "", video: "", aspectRatio: "9:16" }
     ];
 
     const defaultOffer = {
@@ -700,6 +733,18 @@ async function seedDatabaseIfEmpty() {
       code: "LAGOON15",
       validity: "Valid until June 30, 2026"
     };
+
+    const defaultOffers = [
+      {
+        id: "offer-1",
+        title: "Summer Lagoon Special",
+        discount: "15% OFF",
+        description: "Book any Private Speedboat Charter or Resort Day Pass this week and receive an instant 15% discount + free underwater photography package.",
+        category: "All",
+        code: "LAGOON15",
+        validity: "Valid until June 30, 2026"
+      }
+    ];
 
     const promises = [
       seedKeyIfEmpty('packages', []),
@@ -713,10 +758,11 @@ async function seedDatabaseIfEmpty() {
       seedKeyIfEmpty('testimonials', defaultTestimonials),
       seedKeyIfEmpty('reels', defaultReels),
       seedKeyIfEmpty('gallery', defaultGallery),
-      seedKeyIfEmpty('hero_videos', ['back.mp4']),
-      seedKeyIfEmpty('hero_video', 'back.mp4'),
+      seedKeyIfEmpty('hero_videos', []),
+      seedKeyIfEmpty('hero_video', ''),
       seedKeyIfEmpty('google_review', 'https://google.com'),
       seedKeyIfEmpty('offer', defaultOffer),
+      seedKeyIfEmpty('offers', defaultOffers),
       seedKeyIfEmpty('crew', defaultCrew),
       seedKeyIfEmpty('staff_accounts', []),
     ];

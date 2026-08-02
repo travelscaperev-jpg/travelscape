@@ -689,19 +689,21 @@
                 <input type="file" id="resort-image-file" class="form-control" accept="image/*"
                   style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
               </div>
-              <div class="form-group">
-                <label for="resort-video">Video (URL/Local Path or Upload file below)</label>
-                <input type="text" id="resort-video" class="form-control" placeholder="URL or path">
-                <input type="file" id="resort-video-file" class="form-control" accept="video/*"
-                  style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
-              </div>
-              <div class="form-group">
-                <label for="resort-video-ratio">Video Aspect Ratio</label>
-                <select id="resort-video-ratio" class="form-control"
-                  style="background:#080d1a; color:#fff; height:42px;">
-                  <option value="16:9">Widescreen (16:9)</option>
-                  <option value="9:16">Portrait (9:16)</option>
-                </select>
+              <div style="display: none;">
+                <div class="form-group">
+                  <label for="resort-video">Video (URL/Local Path or Upload file below)</label>
+                  <input type="text" id="resort-video" class="form-control" placeholder="URL or path">
+                  <input type="file" id="resort-video-file" class="form-control" accept="video/*"
+                    style="margin-top: 0.5rem; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">
+                </div>
+                <div class="form-group">
+                  <label for="resort-video-ratio">Video Aspect Ratio</label>
+                  <select id="resort-video-ratio" class="form-control"
+                    style="background:#080d1a; color:#fff; height:42px;">
+                    <option value="16:9">Widescreen (16:9)</option>
+                    <option value="9:16">Portrait (9:16)</option>
+                  </select>
+                </div>
               </div>
               <div class="form-group">
                 <label for="resort-desc">Description</label>
@@ -973,8 +975,8 @@
                 <input type="text" id="offer-code" class="form-control">
               </div>
               <div class="form-group">
-                <label for="offer-validity">Validity Info</label>
-                <input type="text" id="offer-validity" class="form-control" required>
+                <label for="offer-validity">Valid Till</label>
+                <input type="date" id="offer-validity" class="form-control" required>
               </div>
               <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;"
                 id="offer-submit-btn">Publish Special Offer</button>
@@ -1348,7 +1350,7 @@
   <div id="booking-modal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
   </div>
-  <script src="script.js?v=2"></script>
+  <script src="script.js?v=3"></script>
 </body>
 
 </html>
