@@ -1080,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isResort = (ex.id && ex.id.startsWith('rs')) || ex.hasOwnProperty('hasDayVisit') || ex.hasOwnProperty('hasStayNight');
 
       let mediaLayoutHtml = '';
-      if (subImg1 && subImg2) {
+      if (!isResort && subImg1 && subImg2) {
         mediaLayoutHtml = `
           <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
             <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
-      } else if (subImg1 || subImg2) {
+      } else if (!isResort && (subImg1 || subImg2)) {
         const singleSub = subImg1 || subImg2;
         mediaLayoutHtml = `
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -1184,10 +1184,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ex) return '';
         
         const isMinimalCard = (idPrefix === 'excursion' || idPrefix === 'freediving');
+        const hasVid = ex.video && isMediaVideo(ex.video);
         
-        let mediaHtml = `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        let mediaHtml = '';
+        if (hasVid) {
+          mediaHtml = `<video src="${ex.video}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>`;
+        } else {
+          mediaHtml = `<div style="width: 100%; height: 100%; background: url('${ex.image}') center/cover;"></div>`;
+        }
 
-        const ratioStyle = isMinimalCard ? 'height: auto; aspect-ratio: 9/16;' : (ex.videoRatio === '9:16' ? 'height: auto; aspect-ratio: 9/16; max-height: 380px;' : '');
+        const ratioStyle = isMinimalCard ? 'height: auto; aspect-ratio: 9/16;' : 'height: 220px; aspect-ratio: 16/9;';
         
         let cardBodyHtml = '';
         const bookBtnHtml = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>`;
@@ -1224,6 +1230,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       }).join('');
 
+      grid.querySelectorAll('video').forEach(vid => {
+        vid.muted = true;
+        vid.playsInline = true;
+        vid.setAttribute('muted', 'muted');
+        vid.setAttribute('playsinline', 'playsinline');
+        vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+        vid.play().catch(e => console.warn('Card video autoplay blocked:', e));
+      });
+
       grid.querySelectorAll('.book-btn').forEach(btn => {
         btn.addEventListener('click', (e) => { e.stopPropagation(); openBookingModal(e.target.dataset.id, e.target.dataset.title); });
       });
@@ -1234,10 +1249,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const ex = list.find(item => item.id === id);
           if (!ex) return;
 
-          // Open image in full screen lightbox if clicking the cover photo image area
+          // Open image/video in full screen lightbox if clicking the cover photo image/video area
           if (e.target.closest('.card-img')) {
-            if (ex.image && typeof window.openFullscreenLightbox === 'function') {
-              window.openFullscreenLightbox(ex.image, false);
+            const hasVideo = ex.video && isMediaVideo(ex.video);
+            const mediaSrc = hasVideo ? ex.video : ex.image;
+            if (mediaSrc && typeof window.openFullscreenLightbox === 'function') {
+              window.openFullscreenLightbox(mediaSrc, hasVideo);
               return;
             }
           }
@@ -1351,29 +1368,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Render Gallery Videos (Gallery Page) ---
     const renderGallery = () => {
       const galleryGrid = document.getElementById('gallery-grid');
-      if (galleryGrid) {
-        const list = getGallery();
+      const galleryVideosGrid = document.getElementById('gallery-videos-grid');
+      const galleryPhotosGrid = document.getElementById('gallery-photos-grid');
+
+      const list = getGallery();
+
+      // Separate videos and photos
+      const videosList = list.filter(item => {
+        const isVideoURL = isMediaVideo(item.image);
+        return isMediaVideo(item.video) || isVideoURL;
+      });
+
+      const photosList = list.filter(item => {
+        const isVideoURL = isMediaVideo(item.image);
+        return !(isMediaVideo(item.video) || isVideoURL);
+      });
+
+      // Helper to generate card HTML
+      const renderCardHtml = (item, isVideo) => {
+        const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
+        if (isVideo) {
+          const src = item.video || item.image;
+          return `
+            <div class="video-card ${ratioClass} detail-media-clickable" data-src="${src}" data-video="true">
+              <video src="${src}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="video-card ${ratioClass} detail-media-clickable" data-src="${item.image}" data-video="false">
+              <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
+              <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
+            </div>
+          `;
+        }
+      };
+
+      if (galleryVideosGrid && galleryPhotosGrid) {
+        galleryVideosGrid.innerHTML = videosList.map(item => renderCardHtml(item, true)).join('');
+        galleryPhotosGrid.innerHTML = photosList.map(item => renderCardHtml(item, false)).join('');
+
+        // Apply video controls/autoplay
+        galleryVideosGrid.querySelectorAll('video').forEach(vid => {
+          vid.muted = true;
+          vid.playsInline = true;
+          vid.setAttribute('muted', 'muted');
+          vid.setAttribute('playsinline', 'playsinline');
+          vid.setAttribute('webkit-playsinline', 'webkit-playsinline');
+          vid.play().catch(e => console.warn('Gallery video autoplay blocked:', e));
+        });
+
+        // Click events
+        galleryVideosGrid.querySelectorAll('.detail-media-clickable').forEach(el => {
+          el.addEventListener('click', () => {
+            const src = el.dataset.src;
+            const isVid = el.dataset.video === 'true';
+            if (src && typeof window.openFullscreenLightbox === 'function') {
+              window.openFullscreenLightbox(src, isVid);
+            }
+          });
+        });
+
+        galleryPhotosGrid.querySelectorAll('.detail-media-clickable').forEach(el => {
+          el.addEventListener('click', () => {
+            const src = el.dataset.src;
+            const isVid = el.dataset.video === 'true';
+            if (src && typeof window.openFullscreenLightbox === 'function') {
+              window.openFullscreenLightbox(src, isVid);
+            }
+          });
+        });
+      } else if (galleryGrid) {
         galleryGrid.innerHTML = list.map(item => {
           const isVideoURL = isMediaVideo(item.image);
           const hasVideo = isMediaVideo(item.video) || isVideoURL;
-          const src = item.video || item.image;
-          const ratioClass = item.aspectRatio === '9:16' ? 'ratio-9-16' : '';
-          if (hasVideo) {
-            return `
-              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${src}" data-video="true">
-                <video src="${src}" autoplay loop muted playsinline webkit-playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
-              </div>
-            `;
-          } else {
-            return `
-              <div class="video-card ${ratioClass} detail-media-clickable" data-src="${item.image}" data-video="false">
-                <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
-                <div style="position: absolute; bottom: 10px; left: 15px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 4;">${item.title}</div>
-              </div>
-            `;
-          }
+          return renderCardHtml(item, hasVideo);
         }).join('');
+
         galleryGrid.querySelectorAll('video').forEach(vid => {
           vid.muted = true;
           vid.playsInline = true;
@@ -1383,7 +1455,6 @@ document.addEventListener('DOMContentLoaded', () => {
           vid.play().catch(e => console.warn('Gallery video autoplay blocked:', e));
         });
 
-        // Click event for gallery cards
         galleryGrid.querySelectorAll('.detail-media-clickable').forEach(el => {
           el.addEventListener('click', () => {
             const src = el.dataset.src;

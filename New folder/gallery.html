@@ -4,7 +4,7 @@
   <link rel="icon" type="image/png" href="1.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Gallery | Travelscape Maldives</title>
+  <title>Gallery | Travelscape Maldives</title>
   <link rel="stylesheet" href="styles.css?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Architects+Daughter&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -53,7 +53,7 @@
     <section class="parallax-layer layer-1 intro-layer subpage-hero">
       <div class="layer-content align-left" style="position: relative; z-index: 2;">
         <p class="tag">01 // GALLERY</p>
-        <h1 class="giant-title">Video Gallery</h1>
+        <h1 class="giant-title">Gallery</h1>
         <p class="desc">
           Watch our stunning experiences. Browse our gallery to see the fun and hospitality Travelscape Maldives brings to every adventure, completely free of any hidden charges.
         </p>
@@ -64,7 +64,19 @@
     <section class="parallax-layer layer-4">
       <div class="layer-content full-width">
 
-        <div class="grid-display" id="gallery-grid">
+        <!-- Videos Section -->
+        <div class="gallery-section-header" style="margin-top: 2.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 0.5rem;">
+          <h2 class="gallery-section-title" style="color: #fff; font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-video" style="color: #38bdf8;"></i> Videos</h2>
+        </div>
+        <div class="grid-display" id="gallery-videos-grid" style="margin-bottom: 4rem;">
+          <!-- Dynamically populated by script.js -->
+        </div>
+
+        <!-- Photos Section -->
+        <div class="gallery-section-header" style="margin-top: 2.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 0.5rem;">
+          <h2 class="gallery-section-title" style="color: #fff; font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-image" style="color: #38bdf8;"></i> Photos</h2>
+        </div>
+        <div class="grid-display" id="gallery-photos-grid">
           <!-- Dynamically populated by script.js -->
         </div>
 
