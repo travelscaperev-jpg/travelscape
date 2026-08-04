@@ -28,12 +28,22 @@
   padding: 0;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   font-family: var(--font-family);
   background: radial-gradient(circle at 50% 0%, #112a52 0%, #050b14 60%, #010204 100%);
   background-attachment: fixed;
   color: #e2e8f0;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2000,6 +2010,9 @@ body.minimal-body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
   font-family: var(--font-family);
 }
 
@@ -2505,6 +2518,8 @@ body.minimal-body {
 .parallax-scroll-container {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   /* Ensures there's enough height to scroll through */
 }
 
