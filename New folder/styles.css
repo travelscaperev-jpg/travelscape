@@ -2038,6 +2038,11 @@ body.minimal-body {
   height: 100vh;
   z-index: -100;
   overflow: hidden;
+  background-color: transparent;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .global-hero-video-slide {
@@ -2050,6 +2055,11 @@ body.minimal-body {
   opacity: 0;
   transition: opacity 1.5s ease-in-out;
   z-index: 1;
+  background-color: transparent;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .global-hero-video-slide.active {
