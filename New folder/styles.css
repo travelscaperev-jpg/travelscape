@@ -2025,7 +2025,7 @@ body.minimal-body {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: -100;
+  z-index: -1;
   opacity: 0.5;
   /* Slightly faded so text is readable */
 }
@@ -2037,7 +2037,7 @@ body.minimal-body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -100;
+  z-index: -1;
   overflow: hidden;
   background-color: #050b14;
   -webkit-transform: translate3d(0, 0, 0);
