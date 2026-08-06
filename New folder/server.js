@@ -475,15 +475,6 @@ async function seedKeyIfEmpty(key, defaultValue) {
     if (val === null) {
       await setCacheValue(key, defaultValue);
       console.log(`🌱 Seeded missing key: ${key}`);
-    } else {
-      const isEmptyArray = Array.isArray(val) && val.length === 0;
-      const isEmptyObject = val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0;
-      const isEmptyString = typeof val === 'string' && val.trim() === '';
-
-      if (isEmptyArray || isEmptyObject || isEmptyString) {
-        await setCacheValue(key, defaultValue);
-        console.log(`🌱 Repaired empty/null key: ${key}`);
-      }
     }
   } catch (err) {
     console.error(`⚠️ Error seeding key ${key}:`, err.message);
