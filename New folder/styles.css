@@ -2568,14 +2568,14 @@ body.minimal-body {
   /* Slanted gradient matching the polygon angle for fusion */
   background: linear-gradient(174.5deg, transparent 0%, rgba(2, 6, 23, 0.5) 20%, #020617 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
-  margin-top: -10vh;
+  margin-top: -1px;
   /* creates the slide-over effect */
 }
 
 .layer-4-slider {
   z-index: 30;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
-  margin-top: -10vh;
+  margin-top: -1px;
   overflow: hidden;
   height: 100vh;
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
@@ -2584,7 +2584,7 @@ body.minimal-body {
 .layer-4 {
   z-index: 30;
   background: #080d1a;
-  margin-top: -10vh;
+  margin-top: -1px;
   min-height: 100vh;
   height: auto;
   position: relative;
@@ -2609,7 +2609,7 @@ body.minimal-body {
   z-index: 40;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
-  margin-top: -10vh;
+  margin-top: -1px;
   overflow: hidden;
   height: 100vh;
 }
@@ -2618,7 +2618,7 @@ body.minimal-body {
   z-index: 50;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
-  margin-top: -10vh;
+  margin-top: -1px;
   overflow: hidden;
   height: 100vh;
 }
@@ -2627,7 +2627,7 @@ body.minimal-body {
   z-index: 55;
   background: linear-gradient(174.5deg, transparent 0%, rgba(8, 13, 26, 0.5) 20%, #080d1a 38%);
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
-  margin-top: -10vh;
+  margin-top: -1px;
   overflow: hidden;
   height: 100vh;
 }
@@ -2635,13 +2635,14 @@ body.minimal-body {
 .layer-8 {
   z-index: 60;
   background: #080d1a;
-  margin-top: -10vh;
+  margin-top: -1px;
   /* creates the slide-over effect */
-  min-height: 100vh;
-  height: auto;
-  position: relative;
-  overflow: visible !important;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto !important;
   display: block !important;
+  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
   /* the last section doesn't need to be sticky */
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
