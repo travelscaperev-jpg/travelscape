@@ -33,12 +33,12 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
-  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) no-repeat fixed;
 }
 
 body {
   font-family: var(--font-family);
-  background: transparent;
+  background: radial-gradient(circle at 50% 0%, #112a52 0%, #050b14 60%, #010204 100%);
+  background-attachment: fixed;
   color: #e2e8f0;
   overflow-x: hidden;
   width: 100%;
@@ -2004,7 +2004,8 @@ body.minimal-body {
 
 /* 3D Parallax Scroll Override */
 .parallax-body {
-  background: transparent !important;
+  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) !important;
+  /* Premium deep ocean background */
   color: #f1f5f9 !important;
   margin: 0;
   padding: 0;
@@ -2023,9 +2024,10 @@ body.minimal-body {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: 0;
-  opacity: 0.5;
-  /* Slightly faded so text is readable */
+  z-index: -100;
+  opacity: 1;
+  filter: brightness(0.5);
+  /* Darkened using brightness instead of opacity to prevent Mac white cast */
 }
 
 /* Global Video Background Slider */
@@ -2035,7 +2037,7 @@ body.minimal-body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0;
+  z-index: -100;
   overflow: hidden;
   background-color: transparent;
   -webkit-transform: translate3d(0, 0, 0);
@@ -2062,8 +2064,9 @@ body.minimal-body {
 }
 
 .global-hero-video-slide.active {
-  opacity: 0.5;
-  /* Match original design's opacity */
+  opacity: 1;
+  filter: brightness(0.5);
+  /* Match original design's darkness without opacity compositing bugs */
   z-index: 2;
 }
 
