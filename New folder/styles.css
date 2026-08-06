@@ -33,13 +33,12 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
-  background-color: #050b14;
+  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) no-repeat fixed;
 }
 
 body {
   font-family: var(--font-family);
-  background: radial-gradient(circle at 50% 0%, #112a52 0%, #050b14 60%, #010204 100%);
-  background-attachment: fixed;
+  background: transparent;
   color: #e2e8f0;
   overflow-x: hidden;
   width: 100%;
@@ -2005,8 +2004,7 @@ body.minimal-body {
 
 /* 3D Parallax Scroll Override */
 .parallax-body {
-  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) !important;
-  /* Premium deep ocean background */
+  background: transparent !important;
   color: #f1f5f9 !important;
   margin: 0;
   padding: 0;
