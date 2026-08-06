@@ -2543,6 +2543,11 @@ body.minimal-body {
   display: flex;
   align-items: center;
   overflow: hidden;
+  /* Hardware acceleration to fix sticky tearing/splitting and ensure smooth scroll */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
 }
 
 /* Layer stacking */
