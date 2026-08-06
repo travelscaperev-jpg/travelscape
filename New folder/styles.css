@@ -33,6 +33,7 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  background-color: #050b14;
 }
 
 body {
@@ -2038,7 +2039,7 @@ body.minimal-body {
   height: 100vh;
   z-index: -100;
   overflow: hidden;
-  background-color: transparent;
+  background-color: #050b14;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
@@ -2055,7 +2056,7 @@ body.minimal-body {
   opacity: 0;
   transition: opacity 1.5s ease-in-out;
   z-index: 1;
-  background-color: transparent;
+  background-color: #050b14;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
