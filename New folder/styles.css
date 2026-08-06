@@ -2023,7 +2023,7 @@ body.minimal-body {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  z-index: -1;
+  z-index: 1;
   opacity: 0.5;
   /* Slightly faded so text is readable */
 }
@@ -2035,7 +2035,7 @@ body.minimal-body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1;
+  z-index: 1;
   overflow: hidden;
   background-color: transparent;
   -webkit-transform: translate3d(0, 0, 0);
@@ -2526,6 +2526,7 @@ body.minimal-body {
 /* Parallax Scrolling Logic */
 .parallax-scroll-container {
   position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -4529,8 +4530,10 @@ nav {
 .card-img {
   position: relative;
 }
+
 .card-img::after {
-  content: '\f00e'; /* FontAwesome search-plus icon */
+  content: '\f00e';
+  /* FontAwesome search-plus icon */
   font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', sans-serif;
   font-weight: 900;
   position: absolute;
@@ -4553,6 +4556,7 @@ nav {
   backdrop-filter: blur(4px);
   z-index: 5;
 }
+
 .card-img:hover::after {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
