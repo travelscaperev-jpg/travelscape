@@ -2641,6 +2641,7 @@ body.minimal-body {
   height: auto;
   position: relative;
   overflow: visible !important;
+  display: block !important;
   /* the last section doesn't need to be sticky */
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
