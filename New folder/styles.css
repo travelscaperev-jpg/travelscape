@@ -2028,6 +2028,7 @@ body.minimal-body {
   opacity: 1;
   filter: brightness(0.5);
   /* Darkened using brightness instead of opacity to prevent Mac white cast */
+  background-color: #050b14;
 }
 
 /* Global Video Background Slider */
@@ -2039,7 +2040,7 @@ body.minimal-body {
   height: 100vh;
   z-index: -100;
   overflow: hidden;
-  background-color: transparent;
+  background-color: #050b14;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
@@ -2056,7 +2057,7 @@ body.minimal-body {
   opacity: 0;
   transition: opacity 1.5s ease-in-out;
   z-index: 1;
-  background-color: transparent;
+  background-color: #050b14;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
