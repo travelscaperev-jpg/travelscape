@@ -33,7 +33,7 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
-  background-color: #050b14;
+  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%);
 }
 
 body {
@@ -2005,8 +2005,8 @@ body.minimal-body {
 
 /* 3D Parallax Scroll Override */
 .parallax-body {
-  background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%) !important;
-  /* Premium deep ocean background */
+  background: transparent !important;
+  /* Premium deep ocean background moved to html to prevent video occlusion and Safari white cast */
   color: #f1f5f9 !important;
   margin: 0;
   padding: 0;
