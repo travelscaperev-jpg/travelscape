@@ -33,11 +33,13 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  background-color: #050b14;
   background: radial-gradient(circle at 50% 50%, #0b1a30 0%, #050a14 100%);
 }
 
 body {
   font-family: var(--font-family);
+  background-color: #050b14;
   background: radial-gradient(circle at 50% 0%, #112a52 0%, #050b14 60%, #010204 100%);
   background-attachment: fixed;
   color: #e2e8f0;
