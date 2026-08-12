@@ -4846,8 +4846,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Global Scroll Fade for Background Videos & Hero Elements ---
     window.addEventListener('scroll', () => {
-      const heroHeight = window.innerHeight || 800;
-      const opacity = Math.max(0, 1 - (window.scrollY / heroHeight));
+      const introLayer = document.querySelector('.intro-layer');
+      const heroHeight = introLayer ? introLayer.offsetHeight : 800;
+      const opacity = Math.min(1, Math.max(0, 1 - (window.scrollY / heroHeight)));
 
       // 1. Fade the hero text & animation if on homepage
       const layer1Content = document.querySelector('.intro-layer .layer-content');
@@ -4859,11 +4860,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const videoSlider = document.getElementById('hero-video-slider');
       if (videoSlider) {
         videoSlider.style.opacity = opacity;
+        videoSlider.style.display = opacity === 0 ? 'none' : 'block';
       }
 
       // 3. Fade/Hide static background videos on other pages
       document.querySelectorAll('.global-hero-video').forEach(vid => {
         vid.style.opacity = opacity * 0.5; // Maintain original max opacity of 0.5
+        vid.style.display = opacity === 0 ? 'none' : 'block';
       });
     });
 
