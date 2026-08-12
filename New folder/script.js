@@ -4847,7 +4847,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Global Scroll Fade for Background Videos & Hero Elements ---
     window.addEventListener('scroll', () => {
       const introLayer = document.querySelector('.intro-layer');
-      const heroHeight = introLayer ? introLayer.offsetHeight : 800;
+      const heroHeight = (introLayer && introLayer.offsetHeight) || 800;
       const opacity = Math.min(1, Math.max(0, 1 - (window.scrollY / heroHeight)));
 
       // 1. Fade the hero text & animation if on homepage
