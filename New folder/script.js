@@ -4859,13 +4859,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const videoSlider = document.getElementById('hero-video-slider');
       if (videoSlider) {
         videoSlider.style.opacity = opacity;
-        videoSlider.style.display = opacity === 0 ? 'none' : 'block';
       }
 
       // 3. Fade/Hide static background videos on other pages
       document.querySelectorAll('.global-hero-video').forEach(vid => {
         vid.style.opacity = opacity * 0.5; // Maintain original max opacity of 0.5
-        vid.style.display = opacity === 0 ? 'none' : 'block';
       });
     });
 
