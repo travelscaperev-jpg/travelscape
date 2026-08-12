@@ -33,6 +33,7 @@ html {
   width: 100%;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  background-color: #050b14;
 }
 
 body {
