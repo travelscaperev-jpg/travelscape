@@ -39,6 +39,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+function getOptimizedVideoUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  
+  // Avoid duplicating flags if already optimized
+  if (url.includes('f_auto,q_auto')) return url;
+
+  // Automatically injects auto-format, auto-quality, and 1280px caps
+  return url.replace('/upload/', '/upload/f_auto,q_auto,w_1280,h_1280,c_limit/');
+}
+
+function optimizeDataUrls(data) {
+  if (Array.isArray(data)) {
+    return data.map(optimizeDataUrls);
+  } else if (data !== null && typeof data === 'object') {
+    const optimized = {};
+    for (const key in data) {
+      optimized[key] = optimizeDataUrls(data[key]);
+    }
+    return optimized;
+  } else if (typeof data === 'string' && data.includes('res.cloudinary.com') && data.includes('/upload/')) {
+    return getOptimizedVideoUrl(data);
+  }
+  return data;
+}
+
 // Upload base64, buffer, OR file path to Cloudinary
 async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false, mimeType = '', isFilePath = false) {
   try {
@@ -52,7 +77,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
         resource_type: resourceType,
         chunk_size: 6000000
       });
-      return result.secure_url;
+      return getOptimizedVideoUrl(result.secure_url);
     }
 
     const isVideo = isBuffer 
@@ -65,7 +90,7 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
       return await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder, resource_type: resourceType, chunk_size: 6000000 },
-          (err, result) => { if (err) reject(err); else resolve(result.secure_url); }
+          (err, result) => { if (err) reject(err); else resolve(getOptimizedVideoUrl(result.secure_url)); }
         );
         stream.end(data);
       });
@@ -76,10 +101,10 @@ async function uploadToCloudinary(data, folder = 'travelscape', isBuffer = false
       const result = isVideo
         ? await cloudinary.uploader.upload_large(data, { folder, resource_type: 'video' })
         : await cloudinary.uploader.upload(data, { folder, resource_type: 'image' });
-      return result.secure_url;
+      return getOptimizedVideoUrl(result.secure_url);
     }
 
-    return data; // already a URL, return as-is
+    return getOptimizedVideoUrl(data); // already a URL, return as-is
   } catch (error) {
     console.error('Cloudinary upload error:', error.message);
     return typeof data === 'string' ? data : ''; // return original string if possible
@@ -303,7 +328,7 @@ function registerCollectionRoutes(routePath, dbKey) {
   app.get(`/api/${routePath}`, async (req, res) => {
     try {
       const list = await getCacheValue(dbKey, []);
-      res.json(list || []);
+      res.json(optimizeDataUrls(list || []));
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
