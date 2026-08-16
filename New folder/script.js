@@ -1080,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isResort = (ex.id && ex.id.startsWith('rs')) || ex.hasOwnProperty('hasDayVisit') || ex.hasOwnProperty('hasStayNight');
 
       let mediaLayoutHtml = '';
-      if (!isResort && subImg1 && subImg2) {
+      if (subImg1 && subImg2) {
         mediaLayoutHtml = `
           <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
             <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
-      } else if (!isResort && (subImg1 || subImg2)) {
+      } else if (subImg1 || subImg2) {
         const singleSub = subImg1 || subImg2;
         mediaLayoutHtml = `
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
