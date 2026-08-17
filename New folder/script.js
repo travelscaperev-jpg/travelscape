@@ -5395,6 +5395,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       return false;
     }
+  }, true);
+
   window.openBookingPreviewModal = (id) => {
     const bookings = getBookings();
     const b = bookings.find(x => x.id == id);
