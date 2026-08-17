@@ -4574,17 +4574,3 @@ nav {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
-
-.modal-content-minimal,
-[id="booking-modal"] .modal-content-minimal,
-#contact-details-modal .modal-content-minimal {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  border-radius: 0 !important;
-  overflow-y: auto !important;
-  padding: 2rem 10% !important;
-  margin: 0 !important;
-  border: none !important;
-}

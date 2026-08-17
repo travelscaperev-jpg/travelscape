@@ -134,22 +134,22 @@
           
           <div class="contact-form-wrap">
             <form id="contact-form" action="#">
-              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; width: 100%;">
+                <div class="form-group" style="margin: 0;">
                   <label for="contact-name">Your Name</label>
                   <input type="text" id="contact-name" class="form-control" placeholder="John Doe" required>
                 </div>
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="margin: 0;">
                   <label for="contact-email">Email Address</label>
                   <input type="email" id="contact-email" class="form-control" placeholder="john@example.com" required>
                 </div>
               </div>
-              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; width: 100%; margin-top: 1rem;">
+                <div class="form-group" style="margin: 0;">
                   <label for="contact-phone">Mobile No (Optional)</label>
                   <input type="tel" id="contact-phone" class="form-control" placeholder="+960 938 8008">
                 </div>
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="margin: 0;">
                   <label for="contact-subject">Subject</label>
                   <input type="text" id="contact-subject" class="form-control" placeholder="e.g. Booking Inquiry">
                 </div>

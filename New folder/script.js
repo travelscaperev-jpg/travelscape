@@ -3419,7 +3419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderRow = (b) => {
           const photoAddon = b.photographyId ? (getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId : null;
           return `
-            <tr>
+            <tr style="cursor: pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A' && event.target.tagName !== 'I') openBookingPreviewModal('${b.id}')">
               <td style="font-family:'JetBrains Mono', monospace; color:#fde047; font-weight:700; font-size:0.9rem;">
                 #${b.id}
               </td>
@@ -4709,7 +4709,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           return `
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); ${isUnread ? 'background: rgba(168, 85, 247, 0.05);' : ''}">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; ${isUnread ? 'background: rgba(168, 85, 247, 0.05);' : ''}" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A' && event.target.tagName !== 'I') openContactPreviewModal('${m.id}')">
               <td style="padding: 1rem 0;">
                 <strong style="color: #fff;">${m.name}</strong>
                 ${isUnread ? '<span style="display:inline-block; width:8px; height:8px; background:#a855f7; border-radius:50%; margin-left:6px; vertical-align:middle;"></span>' : ''}
@@ -5395,6 +5395,104 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       return false;
     }
-  }, true);
+  window.openBookingPreviewModal = (id) => {
+    const bookings = getBookings();
+    const b = bookings.find(x => x.id == id);
+    if (!b) return;
+    let modal = document.getElementById('preview-fullscreen-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'preview-fullscreen-modal';
+      modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;padding:2rem;box-sizing:border-box;';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
+    }
+    const photoAddon = b.photographyId ? (getPhotography().find(p => p.id === b.photographyId) || {}).title || b.photographyId : null;
+    modal.innerHTML = `
+      <div style="width: 100%; max-width: 1200px; height: 100%; background: #121824; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 2.5rem; overflow-y: auto; display: flex; flex-direction: column; box-sizing:border-box;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+          <h2 style="margin:0; color:#fff; font-size: 1.8rem;"><i class="fa-solid fa-calendar-check" style="color:#10b981; margin-right: 10px;"></i> Booking Preview <span style="color:#fde047; font-family:'JetBrains Mono', monospace; font-size: 1.5rem; margin-left: 10px;">#${b.id}</span></h2>
+          <button onclick="document.getElementById('preview-fullscreen-modal').style.display='none'" style="background:none;border:none;font-size:2rem;cursor:pointer;color:#858e8e;">&times;</button>
+        </div>
+        <div style="color:#cbd5e1; font-size: 1.1rem; line-height: 1.8; flex: 1;">
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+             <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+               <h4 style="color:#38bdf8; margin-top:0; margin-bottom:1rem; font-size:1.2rem; border-bottom: 1px solid rgba(56, 189, 248, 0.2); padding-bottom: 0.5rem;">Customer Info</h4>
+               <p style="margin-bottom: 0.5rem;"><strong>Name:</strong> <span style="color:#fff;">${b.customerName||'—'}</span></p>
+               <p style="margin-bottom: 0.5rem;"><strong>Email:</strong> <a href="mailto:${b.customerEmail}" style="color:#38bdf8;text-decoration:none;">${b.customerEmail||'—'}</a></p>
+               <p style="margin-bottom: 0;"><strong>Contact:</strong> <a href="https://wa.me/${(b.customerContact||'').replace(/[^0-9]/g, '')}" target="_blank" style="color:#10b981;text-decoration:none;">${b.customerContact||'—'}</a></p>
+             </div>
+             <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+               <h4 style="color:#a855f7; margin-top:0; margin-bottom:1rem; font-size:1.2rem; border-bottom: 1px solid rgba(168, 85, 247, 0.2); padding-bottom: 0.5rem;">Package Info</h4>
+               <p style="margin-bottom: 0.5rem;"><strong>Title:</strong> <span style="color:#fff;">${b.excursionTitle||'—'}</span> ${b.isPrivate ? '<span style="color:#ef4444; font-size:0.9rem; font-weight:700;">[Private]</span>' : ''}</p>
+               <p style="margin-bottom: 0.5rem;"><strong>Type:</strong> ${b.bookingType||'Individual'} ${b.bookingType === 'Group' || b.bookingType === 'Transfer' ? `(Adults: ${b.adults||1}, Kids: ${b.kids||0})` : ''}</p>
+               <p style="margin-bottom: 0.5rem;"><strong>Date:</strong> <span style="color:#fde047;">${b.bookingDate||'—'}</span></p>
+               <p style="margin-bottom: 0;"><strong>Time/Entry:</strong> ${b.entryTime||'N/A'}</p>
+             </div>
+             <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+               <h4 style="color:#fde047; margin-top:0; margin-bottom:1rem; font-size:1.2rem; border-bottom: 1px solid rgba(253, 224, 71, 0.2); padding-bottom: 0.5rem;">Payment</h4>
+               <p style="margin-bottom: 0.5rem;"><strong>Total Price:</strong> <span style="color:#10b981; font-weight:700; font-size:1.2rem;">$${parseFloat(b.totalPrice||0).toFixed(2)}</span></p>
+               <p style="margin-bottom: 0.5rem;"><strong>Basis:</strong> ${b.paymentBasis||'Cash'}</p>
+               <p style="margin-bottom: 0.5rem;"><strong>Status:</strong> <span style="${b.status === 'Confirmed' ? 'color:#10b981;' : 'color:#fde047;'} font-weight:700;">${b.status||'Pending'}</span></p>
+               <p style="margin-bottom: 0;"><strong>Promo Code:</strong> ${b.offerCode ? `<span style="color:#10b981;">${b.offerCode}</span>` : 'None'}</p>
+             </div>
+          </div>
+          ${photoAddon || b.notes || b.kidsAges ? `
+          <div style="margin-top: 1.5rem; background:rgba(0,0,0,0.3); padding:1.5rem; border-radius:8px; border: 1px solid rgba(255,255,255,0.05);">
+            <h4 style="color:#fff; margin-top:0; margin-bottom:1rem; font-size:1.2rem;">Additional Information</h4>
+            ${photoAddon ? `<p style="margin-bottom: 0.5rem;"><strong>Photography Add-on:</strong> ${photoAddon}</p>` : ''}
+            ${b.kidsAges ? `<p style="margin-bottom: 0.5rem;"><strong>Kids Ages:</strong> ${b.kidsAges}</p>` : ''}
+            ${b.notes ? `<p style="margin-bottom: 0;"><strong>Notes:</strong><br>${b.notes}</p>` : ''}
+          </div>` : ''}
+          <div style="margin-top: 1.5rem; font-size: 0.9rem; color: #64748b; text-align: right;">
+            <p style="margin: 0;">Created By: ${b.bookedBy || 'Guest'}</p>
+            ${b.editedBy ? `<p style="margin: 0; margin-top: 0.25rem;">Last Edited By: ${b.editedBy}</p>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  };
+
+  window.openContactPreviewModal = (id) => {
+    const msgs = getContactMessages();
+    const m = msgs.find(x => x.id == id);
+    if (!m) return;
+    let modal = document.getElementById('preview-fullscreen-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'preview-fullscreen-modal';
+      modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;padding:2rem;box-sizing:border-box;';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
+    }
+    modal.innerHTML = `
+      <div style="width: 100%; max-width: 1200px; height: 100%; background: #121824; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 2.5rem; overflow-y: auto; display: flex; flex-direction: column; box-sizing:border-box;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+          <h2 style="margin:0; color:#fff; font-size: 1.8rem;"><i class="fa-solid fa-envelope" style="color:#38bdf8; margin-right: 10px;"></i> Contact Message Preview</h2>
+          <button onclick="document.getElementById('preview-fullscreen-modal').style.display='none'" style="background:none;border:none;font-size:2rem;cursor:pointer;color:#858e8e;">&times;</button>
+        </div>
+        <div style="color:#cbd5e1; font-size: 1.1rem; line-height: 1.8; flex: 1;">
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+             <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+               <p style="margin-bottom: 0.5rem;"><strong>Sender:</strong> <span style="color:#fff;">${m.name||'Unknown'}</span></p>
+               <p style="margin-bottom: 0.5rem;"><strong>Email:</strong> <a href="mailto:${m.email}" style="color:#38bdf8;text-decoration:none;">${m.email||'—'}</a></p>
+               <p style="margin-bottom: 0;"><strong>Mobile No:</strong> <a href="https://wa.me/${(m.phone||'').replace(/[^0-9]/g, '')}" target="_blank" style="color:#10b981;text-decoration:none;">${m.phone||'—'}</a></p>
+             </div>
+             <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+               <p style="margin-bottom: 0.5rem;"><strong>Subject:</strong> <span style="color:#fde047;">${m.subject||'—'}</span></p>
+               <p style="margin-bottom: 0.5rem;"><strong>Received:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : '—'}</p>
+               <p style="margin-bottom: 0;"><strong>Status:</strong> <span style="color:#a855f7;">${m.status||'—'}</span></p>
+             </div>
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:2rem; border-radius:8px; white-space:pre-wrap; word-break:break-word; border: 1px solid rgba(255,255,255,0.05); min-height: 200px;">
+            <h4 style="color:#fff; margin-top:0; margin-bottom:1rem; font-size:1.2rem;">Message Content:</h4>
+            ${m.message||'—'}
+          </div>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  };
 
 });

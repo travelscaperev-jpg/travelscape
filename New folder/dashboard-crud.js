@@ -518,7 +518,7 @@
       msgs = [...msgs].sort((a,b)=>(b.timestamp||'').localeCompare(a.timestamp||''));
       window.contactCRUD.msgs = msgs;
       tbody.innerHTML = msgs.map(m => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A') contactCRUD.openModal('${m.id}')">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A') { if (typeof openContactPreviewModal !== 'undefined') openContactPreviewModal('${m.id}'); else contactCRUD.openModal('${m.id}'); }">
           <td style="padding:0.9rem 0">
             <strong style="color:#fff">${m.name||'Unknown'}</strong>
             ${m.email ? `<div style="font-size:0.8rem;color:#38bdf8">${m.email}</div>` : ''}
