@@ -505,7 +505,7 @@
     const markAllBtn = S('mark-all-read-btn');
 
     async function renderMessages() {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#94a3b8">Loading messages…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:#94a3b8">Loading messages…</td></tr>';
       let msgs = await api('GET', 'contact_messages');
       if (!msgs || !msgs.length) {
         tbody.innerHTML = '';
@@ -516,15 +516,18 @@
       if (noMsgDiv) noMsgDiv.style.display = 'none';
       if (badge) { badge.style.display='inline'; badge.textContent=msgs.length; }
       msgs = [...msgs].sort((a,b)=>(b.timestamp||'').localeCompare(a.timestamp||''));
+      window.contactCRUD.msgs = msgs;
       tbody.innerHTML = msgs.map(m => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.06)">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A') contactCRUD.openModal('${m.id}')">
           <td style="padding:0.9rem 0">
             <strong style="color:#fff">${m.name||'Unknown'}</strong>
             ${m.email ? `<div style="font-size:0.8rem;color:#38bdf8">${m.email}</div>` : ''}
-            ${m.phone ? `<div style="font-size:0.78rem;color:#10b981">${m.phone}</div>` : ''}
+          </td>
+          <td style="padding:0.9rem 0.5rem">
+            ${m.phone ? `<div style="font-size:0.85rem;color:#10b981">${m.phone}</div>` : '—'}
           </td>
           <td style="padding:0.9rem 0.5rem;color:#fde047;font-size:0.85rem">${m.subject||'—'}</td>
-          <td style="padding:0.9rem 0.5rem;color:#cbd5e1;font-size:0.85rem;max-width:300px;word-break:break-word">${m.message||''}</td>
+          <td style="padding:0.9rem 0.5rem;color:#cbd5e1;font-size:0.85rem;max-width:300px;word-break:break-word">${(m.message||'').length > 50 ? (m.message||'').substring(0, 50) + '...' : m.message||''}</td>
           <td style="padding:0.9rem 0.5rem;color:#64748b;font-size:0.8rem;white-space:nowrap">${m.timestamp ? new Date(m.timestamp).toLocaleString() : '—'}</td>
           <td style="padding:0.9rem 0.5rem"><span style="background:rgba(56,189,248,0.1);color:#38bdf8;font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700">New</span></td>
           <td style="padding:0.9rem 0.5rem">
@@ -535,6 +538,38 @@
     }
 
     window.contactCRUD = {
+      msgs: [],
+      openModal(id) {
+        const m = this.msgs.find(x => x.id === id);
+        if (!m) return;
+        let modal = document.getElementById('contact-details-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'contact-details-modal';
+          modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999999;justify-content:center;align-items:center;';
+          document.body.appendChild(modal);
+          modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
+        }
+        modal.innerHTML = `
+          <div class="modal-content-minimal" style="max-width: 600px; width: 90%; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: 8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+              <h3 style="margin:0; color:#fff;">Contact Message Details</h3>
+              <button onclick="document.getElementById('contact-details-modal').style.display='none'" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#858e8e;">&times;</button>
+            </div>
+            <div style="color:#cbd5e1; font-size: 0.9rem; line-height: 1.6;">
+              <p><strong>Sender:</strong> <span style="color:#fff;">${m.name||'Unknown'}</span></p>
+              <p><strong>Email:</strong> <a href="mailto:${m.email}" style="color:#38bdf8;text-decoration:none;">${m.email||'—'}</a></p>
+              <p><strong>Mobile No:</strong> <a href="https://wa.me/${(m.phone||'').replace(/[^0-9]/g, '')}" target="_blank" style="color:#10b981;text-decoration:none;">${m.phone||'—'}</a></p>
+              <p><strong>Subject:</strong> <span style="color:#fde047;">${m.subject||'—'}</span></p>
+              <p><strong>Received:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : '—'}</p>
+              <hr style="border:0; border-top:1px solid rgba(255,255,255,0.08); margin: 1.5rem 0;" />
+              <p><strong>Message:</strong></p>
+              <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:6px; white-space:pre-wrap; word-break:break-word;">${m.message||'—'}</div>
+            </div>
+          </div>
+        `;
+        modal.style.display = 'flex';
+      },
       async del(id) {
         if (!confirm('Delete this message?')) return;
         await api('DELETE', `contact_messages/${id}`);
