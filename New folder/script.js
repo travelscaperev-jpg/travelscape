@@ -4715,6 +4715,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${isUnread ? '<span style="display:inline-block; width:8px; height:8px; background:#a855f7; border-radius:50%; margin-left:6px; vertical-align:middle;"></span>' : ''}
                 <div style="font-size:0.8rem; color:#64748b; margin-top:2px;"><a href="mailto:${m.email}" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-envelope"></i> ${m.email}</a></div>
               </td>
+              <td style="padding: 1rem 0; color: #10b981; font-weight: 600;">${m.phone || '—'}</td>
               <td style="padding: 1rem 0; color: #cbd5e1; font-weight: 600;">${m.subject || 'General Inquiry'}</td>
               <td style="padding: 1rem 0; color: #94a3b8; font-size: 0.85rem; max-width: 300px;"><div style="overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${m.message}</div></td>
               <td style="padding: 1rem 0; color: #64748b; font-size: 0.85rem; white-space: nowrap;">${timeStr}</td>
