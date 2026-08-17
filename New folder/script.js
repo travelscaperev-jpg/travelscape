@@ -3095,6 +3095,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const name = document.getElementById('contact-name').value.trim();
         const email = document.getElementById('contact-email').value.trim();
+        const phoneInput = document.getElementById('contact-phone');
+        const phone = phoneInput ? phoneInput.value.trim() : '';
         const subject = document.getElementById('contact-subject').value.trim() || 'General Inquiry';
         const message = document.getElementById('contact-message').value.trim();
 
@@ -3104,6 +3106,7 @@ document.addEventListener('DOMContentLoaded', () => {
           id: 'cm-' + Date.now(),
           name,
           email,
+          phone,
           subject,
           message,
           timestamp: new Date().toISOString(),
