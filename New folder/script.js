@@ -727,6 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCardGridFn('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
       renderCardGridFn('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
       renderCardGridFn('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
+      renderCardGridFn('photography-grid', getPhotography(), 'Book Photography', 'Photography', 'photography');
     }
     // Re-render testimonials
     if (typeof renderTestimonialsFn === 'function') renderTestimonialsFn();
@@ -1272,6 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCardGrid('private-grid', getPrivate(), 'Book Private', 'Private Booking', 'private');
     renderCardGrid('freediving-grid', getFreeDiving(), 'Book Now', 'Free Diving', 'freediving');
     renderCardGrid('resorts-grid', getResorts(), 'Book Resort', 'Resort', 'resorts');
+    renderCardGrid('photography-grid', getPhotography(), 'Book Photography', 'Photography', 'photography');
 
     // --- Render Testimonials (Home Page) ---
     const renderTestimonials = () => {
@@ -1506,6 +1508,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bookBtn) bookBtn.addEventListener('click', (e) => { openBookingModal(e.target.dataset.id, e.target.dataset.title); });
             detailsOverlay.querySelector(`.layer${layerNum}-floating-details`).addEventListener('click', (e) => {
               const id = e.target.dataset.id;
+              if (layerNum === 6) {
+                window.location.href = 'photography.html';
+                return;
+              }
               const found = listData.find(item => item.id === id);
               if (found) openExcursionDetailsModal(found);
             });
@@ -1657,7 +1663,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ...getExcursions().map(e => ({ id: e.id, title: e.title, group: 'Excursions' })),
         ...getPrivate().map(e => ({ id: e.id, title: e.title, group: 'Private Charters' })),
         ...getFreeDiving().map(e => ({ id: e.id, title: e.title, group: 'Free Diving' })),
-        ...getResorts().map(e => ({ id: e.id, title: e.title, group: 'Resorts' }))
+        ...getResorts().map(e => ({ id: e.id, title: e.title, group: 'Resorts' })),
+        ...getPhotography().map(e => ({ id: e.id, title: e.title, group: 'Photography' }))
       ];
 
       bookingModal.innerHTML = `
@@ -1722,7 +1729,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ...getExcursions(),
           ...getPrivate(),
           ...getFreeDiving(),
-          ...getResorts()
+          ...getResorts(),
+          ...getPhotography()
         ];
         const pkg = allPackages.find(x => x.id === id);
         if (!pkg) return;
@@ -1779,7 +1787,220 @@ document.addEventListener('DOMContentLoaded', () => {
       const pkgObj = allPkgs.find(x => x.id === id) || {};
       const isBoatTransfer = isPrivateCharter && pkgObj.isTransfer === true;
 
-      if (isResort) {
+      const isPhotography = getPhotography().some(item => item.id === id);
+
+      if (isPhotography) {
+        bookingModal.innerHTML = `
+          <div class="modal-content-minimal" style="max-width: 460px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 style="color: #fff; margin: 0; font-size: 1.4rem;">Book Photography</h3>
+              <button id="close-booking-modal-btn" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #858e8e; outline: none; line-height: 1;">&times;</button>
+            </div>
+            <h4 style="color: #94a3b8; margin: 0 0 1.5rem 0; font-weight: 500; font-size: 1rem;">Package: <span style="color: #38bdf8; font-weight: 700;">${title}</span></h4>
+            <form id="booking-form-dynamic" style="display: flex; flex-direction: column; gap: 1rem;">
+              <input type="hidden" id="booking-excursion-id" value="${id}">
+              <input type="hidden" id="booking-excursion-title" value="${title}">
+              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Full Name</label><input type="text" id="booking-name" required placeholder="Your full name" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Contact Number</label><input type="tel" id="booking-contact" required placeholder="e.g. +960 938 8008" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Email ID</label><input type="email" id="booking-email" required placeholder="e.g. guest@example.com" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Date of Session</label><input type="date" id="booking-date" required style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"><div id="booking-slots-info" style="margin-top: 4px; font-size: 0.85rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              
+              <div id="booking-type-container" style="display:none;"><select id="booking-type"><option value="Group">Group</option></select></div>
+              <input type="checkbox" id="booking-private" style="display:none;" />
+              
+              ${pkgObj.hasIndividuals || pkgObj.hasKids ? `
+              <div id="booking-group-details" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                ${pkgObj.hasIndividuals ? `<div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Individuals</label><input type="number" id="booking-adults" min="1" value="1" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>` : '<input type="hidden" id="booking-adults" value="1">'}
+                ${pkgObj.hasKids ? `<div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Number of Kids</label><input type="number" id="booking-kids" min="0" value="0" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>
+                <div id="booking-kids-ages-group" style="display: none;"><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Kids' Ages (comma separated)</label><input type="text" id="booking-kids-ages" placeholder="e.g. 4, 7" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;"></div>` : '<input type="hidden" id="booking-kids" value="0">'}
+              </div>
+              ` : '<input type="hidden" id="booking-adults" value="1"><input type="hidden" id="booking-kids" value="0">'}
+              
+              <div><label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Offer Code</label><input type="text" id="booking-offer-code" placeholder="Enter promo code if any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; text-transform: uppercase;"><div id="booking-offer-message" style="margin-top: 4px; font-size: 0.8rem; font-weight: 600; min-height: 1.2rem;"></div></div>
+              ${isOfficeUser ? `
+              <div>
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Office Discounted/Custom Price ($)</label>
+                <input type="number" id="booking-discounted-price" placeholder="Leave empty for auto-calculated price" min="0" step="any" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none;">
+              </div>
+              ` : ''}
+              
+              <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="color: #cbd5e1; font-size: 0.9rem;">Estimated Cost:</span>
+                <span id="booking-price-display" style="color: #38bdf8; font-weight: 800; font-size: 1.25rem;">$0</span>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 1rem; letter-spacing: 0.5px;">${(window.PAYMENT_LINK && !isOfficeUser) ? 'Confirm Booking and Payment' : 'Confirm Booking'}</button>
+            </form>
+          </div>
+        `;
+
+        const closeBtn = bookingModal.querySelector('#close-booking-modal-btn');
+        closeBtn.addEventListener('click', closeBookingModal);
+
+        const adultsInput = bookingModal.querySelector('#booking-adults');
+        const kidsInput = bookingModal.querySelector('#booking-kids');
+        const kidsAgesGroup = bookingModal.querySelector('#booking-kids-ages-group');
+        
+        const updateKidsAgesVisibility = () => {
+          if (kidsInput && parseInt(kidsInput.value) > 0) {
+            if (kidsAgesGroup) kidsAgesGroup.style.display = 'block';
+            if (bookingModal.querySelector('#booking-kids-ages')) bookingModal.querySelector('#booking-kids-ages').required = true;
+          } else {
+            if (kidsAgesGroup) kidsAgesGroup.style.display = 'none';
+            if (bookingModal.querySelector('#booking-kids-ages')) bookingModal.querySelector('#booking-kids-ages').required = false;
+          }
+        };
+
+        if (kidsInput) kidsInput.addEventListener('input', () => { updateKidsAgesVisibility(); updateTotalPrice(); });
+        if (adultsInput) adultsInput.addEventListener('input', updateTotalPrice);
+        if (bookingModal.querySelector('#booking-kids-ages')) bookingModal.querySelector('#booking-kids-ages').addEventListener('input', updateTotalPrice);
+
+        const updateTotalPrice = () => {
+          const priceDisplay = bookingModal.querySelector('#booking-price-display');
+          if (!priceDisplay) return;
+          
+          let total = 0;
+          const adults = parseInt(adultsInput.value) || 1;
+          const kids = kidsInput ? (parseInt(kidsInput.value) || 0) : 0;
+          const pax = adults + kids;
+          
+          const priceRaw = String(pkgObj.price || '0').trim();
+          
+          if (priceRaw.includes(':')) {
+            const tiers = priceRaw.split(',').map(s => {
+              const parts = s.split(':');
+              return { pax: parseInt(parts[0]), price: parseFloat(parts[1]) };
+            }).filter(t => !isNaN(t.pax) && !isNaN(t.price)).sort((a, b) => a.pax - b.pax);
+            
+            if (tiers.length > 0) {
+              const tier = tiers.find(t => pax <= t.pax);
+              total = tier ? tier.price : tiers[tiers.length - 1].price;
+            } else {
+              total = parseFloat(priceRaw) || 0;
+            }
+          } else {
+            const basePrice = parseFloat(priceRaw) || 0;
+            total = basePrice * adults;
+            
+            if (kids > 0) {
+              const kidsAgesStr = bookingModal.querySelector('#booking-kids-ages') ? bookingModal.querySelector('#booking-kids-ages').value || '' : '';
+              const kidsAges = kidsAgesStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+              const limitHalf = parseInt(pkgObj.kidHalfPriceAge) || 0;
+              const limitFree = parseInt(pkgObj.kidFreePriceAge) || 0;
+
+              for (let i = 0; i < kids; i++) {
+                const age = kidsAges[i] !== undefined ? kidsAges[i] : 99;
+                if (limitFree > 0 && age <= limitFree) {
+                  total += 0;
+                } else if (limitHalf > 0 && age <= limitHalf) {
+                  total += basePrice * 0.5;
+                } else {
+                  total += basePrice;
+                }
+              }
+            }
+          }
+
+          // Apply offer code
+          const offerCodeInput = bookingModal.querySelector('#booking-offer-code');
+          const offerMessage = bookingModal.querySelector('#booking-offer-message');
+          const code = offerCodeInput ? offerCodeInput.value.trim().toUpperCase() : '';
+          
+          if (code) {
+            const matchingOffer = getOffers().find(o => o.code === code);
+            if (matchingOffer && (matchingOffer.category === 'All' || matchingOffer.category === 'Photography')) {
+              let discount = 0;
+              if (matchingOffer.type === 'Percentage') discount = total * (parseFloat(matchingOffer.value) / 100);
+              else discount = parseFloat(matchingOffer.value);
+              total = Math.max(0, total - discount);
+              if (offerMessage) {
+                offerMessage.textContent = \`Offer applied!\`;
+                offerMessage.style.color = '#4ade80';
+              }
+            } else {
+              if (offerMessage) {
+                offerMessage.textContent = \`Invalid or inapplicable code.\`;
+                offerMessage.style.color = '#f87171';
+              }
+            }
+          } else {
+            if (offerMessage) offerMessage.textContent = '';
+          }
+
+          const discountInput = bookingModal.querySelector('#booking-discounted-price');
+          if (discountInput && discountInput.value !== '') {
+            total = parseFloat(discountInput.value) || 0;
+          }
+
+          priceDisplay.textContent = \`$\${total.toFixed(2)}\`;
+        };
+
+        const offerInput = bookingModal.querySelector('#booking-offer-code');
+        if (offerInput) offerInput.addEventListener('input', updateTotalPrice);
+
+        const discountInput = bookingModal.querySelector('#booking-discounted-price');
+        if (discountInput) discountInput.addEventListener('input', updateTotalPrice);
+
+        const dateInput = bookingModal.querySelector('#booking-date');
+        if (dateInput) {
+          const today = new Date().toISOString().split('T')[0];
+          dateInput.min = today;
+          dateInput.addEventListener('change', checkSlotsAvailability);
+        }
+
+        updateKidsAgesVisibility();
+        updateTotalPrice();
+
+        bookingModal.querySelector('#booking-form-dynamic').onsubmit = async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const customerName = form.querySelector('#booking-name').value;
+          const contactNumber = form.querySelector('#booking-contact').value;
+          const emailId = form.querySelector('#booking-email').value;
+          const bookingDate = form.querySelector('#booking-date').value;
+          
+          const adults = parseInt(form.querySelector('#booking-adults').value) || 1;
+          const kids = parseInt(form.querySelector('#booking-kids').value) || 0;
+          const kidsAges = form.querySelector('#booking-kids-ages') ? form.querySelector('#booking-kids-ages').value : '';
+
+          const priceDisp = document.getElementById('booking-price-display');
+          const totalPrice = priceDisp ? (parseFloat(priceDisp.textContent.replace('$', '')) || 0) : 0;
+          
+          if (totalPrice === 0) {
+            alert("This booking is not available, please contact us.");
+            return;
+          }
+
+          const isOfficeUser = localStorage.getItem('admin_logged') === 'true' || localStorage.getItem('staff_logged') === 'true';
+          const newBooking = {
+            id: Date.now().toString(), excursionId: id, excursionTitle: title, customerName, customerEmail: emailId,
+            customerContact: contactNumber, bookingDate, paymentBasis: isOfficeUser ? (form.querySelector('#booking-payment-basis') ? form.querySelector('#booking-payment-basis').value : 'Office Direct (No Payment)') : 'Payment Gateway', bookingType: 'Group', adults, kids, kidsAges,
+            isPrivate: false, photographyId: id, numPersons: adults + kids, status: isOfficeUser ? 'Pending' : 'Confirmed',
+            totalPrice: totalPrice,
+            offerCode: form.querySelector('#booking-offer-code') ? form.querySelector('#booking-offer-code').value.trim().toUpperCase() : '',
+            bookedBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            enteredBy: isOfficeUser ? (localStorage.getItem('admin_logged') === 'true' ? 'Admin' : localStorage.getItem('staff_name') || 'Staff') : 'Guest',
+            entryTime: new Date().toLocaleString(),
+            deviceType: getDeviceType()
+          };
+
+          const currentBookings = getBookings();
+          currentBookings.push(newBooking);
+          await setBookings(currentBookings);
+          showSystemNotification(newBooking);
+          closeBookingModal();
+          if (window.BML_ENABLED && !isOfficeUser) {
+            initiateBmlCheckout(newBooking);
+          } else {
+            showBookingConfirmationModal(newBooking, { type: 'Photography', total: totalPrice });
+            if (window.PAYMENT_LINK && !isOfficeUser) {
+              window.open(window.PAYMENT_LINK, '_blank');
+            }
+          }
+          if (typeof refreshAdminTablesFn === 'function') refreshAdminTablesFn();
+        };
+      } else if (isResort) {
         bookingModal.innerHTML = `
           <div class="modal-content-minimal" style="max-width: 480px; width: 90%; overflow-y: auto; max-height: 90vh; background: #121824; border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: var(--radius); cursor: default; box-shadow: 0 10px 35px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -2026,7 +2247,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...getExcursions(),
             ...getPrivate(),
             ...getFreeDiving(),
-            ...getResorts()
+            ...getResorts(),
+            ...getPhotography()
           ];
           const pkg = allPackages.find(x => x.id === id);
           if (pkg) {
@@ -2646,7 +2868,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const kidsAges = form.querySelector('#booking-kids-ages') ? form.querySelector('#booking-kids-ages').value : '';
 
           // Slots availability double check
-          const allPackages = [...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPackages()];
+          const allPackages = [...getExcursions(), ...getPrivate(), ...getFreeDiving(), ...getResorts(), ...getPackages(), ...getPhotography()];
           const pkg = allPackages.find(x => x.id === id);
           if (pkg) {
             const maxCap = parseInt(pkg.maxCapacity) || 20;
@@ -2973,7 +3195,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...getExcursions(),
             ...getPrivate(),
             ...getFreeDiving(),
-            ...getResorts()
+            ...getResorts(),
+            ...getPhotography()
           ];
           const pkg = allPackages.find(x => x.id === id);
           if (pkg) {

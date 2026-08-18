@@ -59,16 +59,8 @@
   /* ── Wait for DOM to be fully ready ─────────────────────────────────── */
   function whenReady(fn) {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
-    } else {
-      fn();
-    }
-  }
-
-  /* ── Photography ─────────────────────────────────────────────────────── */
-  async function initPhotography() {
-    const listEl = S('admin-photography-list');
-    const form   = S('admin-add-photo-form');
+      d    const listEl = S('admin-photography-list');
+    const form   = S('admin-add-photography-form');
     if (!listEl || !form) return;
     if (form && !isAdmin()) form.closest('.admin-form').style.display = 'none';
 
@@ -80,12 +72,12 @@
         return;
       }
       listEl.innerHTML = items.map(it => `
-        <div style="${card()}" id="photo-row-${it.id}">
+        <div style="${card()}" id="photography-row-${it.id}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div style="flex:1;min-width:0">
               ${it.image ? `<img src="${it.image}" style="width:80px;height:54px;object-fit:cover;border-radius:5px;margin-bottom:0.5rem">` : ''}
               <h4 style="color:#fff;margin:0 0 4px">${it.title}</h4>
-              <span style="color:#38bdf8;font-size:0.85rem">$${it.price || 0} · ${it.duration || ''}</span>
+              <span style="color:#38bdf8;font-size:0.85rem">${it.price || 0} • ${it.duration || ''}</span>
               <p style="color:#94a3b8;font-size:0.82rem;margin:4px 0 0">${it.description || ''}</p>
             </div>
             ${isAdmin() ? `<div style="display:flex;gap:6px;flex-shrink:0;margin-left:1rem">
@@ -102,19 +94,28 @@
       async edit(id) {
         const it = (await api('GET', 'photography')).find(x => x.id === id);
         if (!it) return;
-        S('photo-id').value = it.id;
-        S('photo-title').value = it.title || '';
-        S('photo-highlights').value = it.highlights || '';
-        S('photo-duration').value = it.duration || '';
-        S('photo-price').value = it.price || '';
-        S('photo-image').value = (it.image && !it.image.startsWith('data:')) ? it.image : '';
-        S('photo-video').value = (it.video && !it.video.startsWith('data:')) ? it.video : '';
-        S('photo-desc').value = it.description || '';
-        S('photo-full-desc').value = it.fullDescription || '';
-        S('photo-max-capacity').value = it.maxCapacity || 10;
-        S('photo-form-title').textContent = 'Edit Photography Package';
-        S('photo-submit-btn').textContent = 'Save Changes';
-        S('photo-cancel-btn').style.display = 'block';
+        S('photography-id').value = it.id;
+        S('photography-title').value = it.title || '';
+        S('photography-highlights').value = it.highlights || '';
+        S('photography-duration').value = it.duration || '';
+        S('photography-price').value = it.price || '';
+        S('photography-image').value = (it.image && !it.image.startsWith('data:')) ? it.image : '';
+        S('photography-video').value = (it.video && !it.video.startsWith('data:')) ? it.video : '';
+        S('photography-video-ratio').value = it.videoRatio || '16:9';
+        S('photography-desc').value = it.description || '';
+        S('photography-full-desc').value = it.fullDescription || '';
+        S('photography-max-capacity').value = it.maxCapacity || 20;
+        
+        S('photography-has-individuals').checked = it.hasIndividuals || false;
+        S('photography-has-kids').checked = it.hasKids || false;
+        S('photography-kid-half').value = it.kidHalfPriceAge || 0;
+        S('photography-kid-free').value = it.kidFreePriceAge || 0;
+        
+        S('photography-sub-images').value = (it.subImages && Array.isArray(it.subImages)) ? it.subImages.join(', ') : '';
+
+        S('photography-form-title').textContent = 'Edit Photography Package';
+        S('photography-submit-btn').textContent = 'Save Changes';
+        S('photography-cancel-btn').style.display = 'block';
         form.scrollIntoView({ behavior: 'smooth' });
       },
       async del(id) {
@@ -126,36 +127,52 @@
 
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const btn = S('photo-submit-btn');
-      btn.textContent = 'Saving…'; btn.disabled = true;
+      const btn = S('photography-submit-btn');
+      btn.textContent = 'Saving...'; btn.disabled = true;
       try {
-        const id = S('photo-id').value || uid();
-        let image = await maybeUpload(S('photo-image-file'), S('photo-image'), 'photography');
-        let video = await maybeUpload(S('photo-video-file'), S('photo-video'), 'photography');
+        const id = S('photography-id').value || uid();
+        let image = await maybeUpload(S('photography-image-file'), S('photography-image'), 'photography');
+        let video = await maybeUpload(S('photography-video-file'), S('photography-video'), 'photography');
+        
+        let subImages = [];
+        const subUrls = S('photography-sub-images').value.split(',').map(s => s.trim()).filter(Boolean);
+        const subFiles = S('photography-sub-images-file').files;
+        if (subFiles && subFiles.length > 0) {
+          for (let i = 0; i < subFiles.length; i++) {
+             const base64 = await toBase64(subFiles[i]);
+             subImages.push(base64);
+          }
+        }
+        subImages = [...subUrls, ...subImages];
+
         const item = {
-          id, title: S('photo-title').value, highlights: S('photo-highlights').value,
-          duration: S('photo-duration').value, price: parseFloat(S('photo-price').value) || 0,
-          image, video, videoRatio: S('photo-video-ratio').value,
-          description: S('photo-desc').value, fullDescription: S('photo-full-desc').value,
-          maxCapacity: parseInt(S('photo-max-capacity').value) || 10
+          id, title: S('photography-title').value, highlights: S('photography-highlights').value,
+          duration: S('photography-duration').value, price: S('photography-price').value,
+          image, video, videoRatio: S('photography-video-ratio').value,
+          description: S('photography-desc').value, fullDescription: S('photography-full-desc').value,
+          maxCapacity: parseInt(S('photography-max-capacity').value) || 20,
+          hasIndividuals: S('photography-has-individuals').checked,
+          hasKids: S('photography-has-kids').checked,
+          kidHalfPriceAge: parseInt(S('photography-kid-half').value) || 0,
+          kidFreePriceAge: parseInt(S('photography-kid-free').value) || 0,
+          subImages: subImages
         };
         await api('PUT', `photography/${id}`, item);
         toast('Photography package saved!');
-        form.reset(); S('photo-id').value = '';
-        S('photo-form-title').textContent = 'Add New Photography Package';
-        S('photo-submit-btn').textContent = 'Add Photography Package';
-        S('photo-cancel-btn').style.display = 'none';
+        form.reset(); S('photography-id').value = '';
+        S('photography-form-title').textContent = 'Add New Photography Package';
+        S('photography-submit-btn').textContent = 'Add Photography Package';
+        S('photography-cancel-btn').style.display = 'none';
         renderList();
       } catch(err) { toast('Error: ' + err.message, false); }
-      finally { btn.disabled = false; btn.textContent = btn.textContent.includes('Sav') ? (S('photo-id') && S('photo-id').value ? 'Save Changes' : 'Add Photography Package') : btn.textContent; }
+      finally { btn.disabled = false; btn.textContent = (S('photography-id') && S('photography-id').value ? 'Save Changes' : 'Add Photography Package'); }
     };
 
-    const cancelBtn = S('photo-cancel-btn');
-    if (cancelBtn) cancelBtn.onclick = () => {
-      form.reset(); S('photo-id').value = '';
-      S('photo-form-title').textContent = 'Add New Photography Package';
-      S('photo-submit-btn').textContent = 'Add Photography Package';
-      cancelBtn.style.display = 'none';
+    S('photography-cancel-btn').onclick = () => {
+      form.reset(); S('photography-id').value = '';
+      S('photography-form-title').textContent = 'Add New Photography Package';
+      S('photography-submit-btn').textContent = 'Add Photography Package';
+      S('photography-cancel-btn').style.display = 'none';
     };
 
     renderList();
