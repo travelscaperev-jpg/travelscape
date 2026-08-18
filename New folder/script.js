@@ -1184,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
       grid.innerHTML = itemsToRender.map(ex => {
         if (!ex) return '';
         
-        const isMinimalCard = (idPrefix === 'excursion' || idPrefix === 'freediving');
+        const isMinimalCard = (idPrefix === 'excursion' || idPrefix === 'freediving' || idPrefix === 'photography');
         const hasVid = ex.video && isMediaVideo(ex.video);
         
         let mediaHtml = '';
@@ -1197,8 +1197,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const ratioStyle = isMinimalCard ? 'height: auto; aspect-ratio: 9/16;' : 'height: 220px; aspect-ratio: 16/9;';
         
         let cardBodyHtml = '';
-        const bookBtnHtml = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>`;
-        const bookBtnHtmlStd = window.isBookingRestricted(ex) ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>`;
+        const isPhotoNoDirect = (idPrefix === 'photography' && !ex.notSellWithOthers && !ex.sellWithBoth);
+        const bookBtnHtml = window.isBookingRestricted(ex) || isPhotoNoDirect ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}" style="width: 100%; max-width: 200px;">${bookLabel}</button>`;
+        const bookBtnHtmlStd = window.isBookingRestricted(ex) || isPhotoNoDirect ? '' : `<button class="btn btn-primary book-btn" data-id="${ex.id}" data-title="${ex.title}">${bookLabel}</button>`;
 
         if (isMinimalCard) {
           const badgeHtml = getOfferBadgeHTML(offerCategory, true, ex.title);
@@ -4032,6 +4033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const indEl = document.getElementById('photography-has-individuals'); if (indEl) indEl.checked = !!item.hasIndividuals;
                 const kidsEl = document.getElementById('photography-has-kids'); if (kidsEl) kidsEl.checked = !!item.hasKids;
                 const nsEl = document.getElementById('photography-not-sell-with-others'); if (nsEl) nsEl.checked = !!item.notSellWithOthers;
+                const swbEl = document.getElementById('photography-sell-with-both'); if (swbEl) swbEl.checked = !!item.sellWithBoth;
               }
               document.getElementById(`${prefix}-form-title`).textContent = `Edit ${type}`;
               document.getElementById(`${prefix}-submit-btn`).textContent = `Save Changes`;
@@ -4040,7 +4042,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'photography') { const c1 = document.getElementById('photography-has-individuals'); if (c1) c1.checked = false; const c2 = document.getElementById('photography-has-kids'); if (c2) c2.checked = false; const c3 = document.getElementById('photography-not-sell-with-others'); if (c3) c3.checked = false; } if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; } };
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'photography') { const c1 = document.getElementById('photography-has-individuals'); if (c1) c1.checked = false; const c2 = document.getElementById('photography-has-kids'); if (c2) c2.checked = false; const c3 = document.getElementById('photography-not-sell-with-others'); if (c3) c3.checked = false; const c4 = document.getElementById('photography-sell-with-both'); if (c4) c4.checked = false; } if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; } };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -4123,6 +4125,8 @@ document.addEventListener('DOMContentLoaded', () => {
               itemData.hasKids = kidsEl ? kidsEl.checked : false;
               const nsEl = document.getElementById('photography-not-sell-with-others');
               itemData.notSellWithOthers = nsEl ? nsEl.checked : false;
+              const swbEl = document.getElementById('photography-sell-with-both');
+              itemData.sellWithBoth = swbEl ? swbEl.checked : false;
             }
             if (prefix === 'private') {
               itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
