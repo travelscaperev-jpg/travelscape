@@ -59,7 +59,15 @@
   /* ── Wait for DOM to be fully ready ─────────────────────────────────── */
   function whenReady(fn) {
     if (document.readyState === 'loading') {
-      d    const listEl = S('admin-photography-list');
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
+  }
+
+  /* ── Init Photography ─────────────────────────────────────────── */
+  function initPhotography() {
+    const listEl = S('admin-photography-list');
     const form   = S('admin-add-photography-form');
     if (!listEl || !form) return;
     if (form && !isAdmin()) form.closest('.admin-form').style.display = 'none';

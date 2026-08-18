@@ -1915,12 +1915,12 @@ document.addEventListener('DOMContentLoaded', () => {
               else discount = parseFloat(matchingOffer.value);
               total = Math.max(0, total - discount);
               if (offerMessage) {
-                offerMessage.textContent = \`Offer applied!\`;
+                offerMessage.textContent = 'Offer applied!';
                 offerMessage.style.color = '#4ade80';
               }
             } else {
               if (offerMessage) {
-                offerMessage.textContent = \`Invalid or inapplicable code.\`;
+                offerMessage.textContent = 'Invalid or inapplicable code.';
                 offerMessage.style.color = '#f87171';
               }
             }
@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
             total = parseFloat(discountInput.value) || 0;
           }
 
-          priceDisplay.textContent = \`$\${total.toFixed(2)}\`;
+          priceDisplay.textContent = `$${total.toFixed(2)}`;
         };
 
         const offerInput = bookingModal.querySelector('#booking-offer-code');
