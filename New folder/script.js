@@ -4026,6 +4026,11 @@ document.addEventListener('DOMContentLoaded', () => {
               const kidHalfEl = document.getElementById(`${prefix}-kid-half`); if (kidHalfEl) kidHalfEl.value = item.kidAgeHalf || 0;
               const kidFreeEl = document.getElementById(`${prefix}-kid-free`); if (kidFreeEl) kidFreeEl.value = item.kidAgeFree || 0;
               const maxCapEl = document.getElementById(`${prefix}-max-capacity`); if (maxCapEl) maxCapEl.value = item.maxCapacity || 20;
+              if (prefix === 'photography') {
+                const indEl = document.getElementById('photography-has-individuals'); if (indEl) indEl.checked = !!item.hasIndividuals;
+                const kidsEl = document.getElementById('photography-has-kids'); if (kidsEl) kidsEl.checked = !!item.hasKids;
+                const nsEl = document.getElementById('photography-not-sell-with-others'); if (nsEl) nsEl.checked = !!item.notSellWithOthers;
+              }
               document.getElementById(`${prefix}-form-title`).textContent = `Edit ${type}`;
               document.getElementById(`${prefix}-submit-btn`).textContent = `Save Changes`;
               document.getElementById(`${prefix}-cancel-btn`).style.display = 'block';
@@ -4033,7 +4038,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; } };
+        const resetForm = () => { form.reset(); document.getElementById(`${prefix}-id`).value = ''; document.getElementById(`${prefix}-form-title`).textContent = `Add New ${type}`; document.getElementById(`${prefix}-submit-btn`).textContent = `Add ${type} Card`; document.getElementById(`${prefix}-cancel-btn`).style.display = 'none'; const kh = document.getElementById(`${prefix}-kid-half`); if (kh) kh.value = '0'; const kf = document.getElementById(`${prefix}-kid-free`); if (kf) kf.value = '0'; const mc = document.getElementById(`${prefix}-max-capacity`); if (mc) mc.value = '20'; const vr = document.getElementById(`${prefix}-video-ratio`); if (vr) vr.value = '16:9'; if (prefix === 'photography') { const c1 = document.getElementById('photography-has-individuals'); if (c1) c1.checked = false; const c2 = document.getElementById('photography-has-kids'); if (c2) c2.checked = false; const c3 = document.getElementById('photography-not-sell-with-others'); if (c3) c3.checked = false; } if (prefix === 'resort') { const dc = document.getElementById('resort-has-day-visit'); if (dc) { dc.checked = false; dc.dispatchEvent(new Event('change')); } const sc = document.getElementById('resort-has-stay-night'); if (sc) { sc.checked = false; sc.dispatchEvent(new Event('change')); } } if (prefix === 'private') { const isls = document.getElementById('private-islands-container'); if (isls) isls.innerHTML = ''; } };
         const cancelBtn = document.getElementById(`${prefix}-cancel-btn`); if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
 
         form.onsubmit = async (e) => {
@@ -4110,6 +4115,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prefix === 'photography') {
               const priceEl = document.getElementById('photography-price');
               itemData.price = priceEl ? priceEl.value.trim() : '0';
+              const indEl = document.getElementById('photography-has-individuals');
+              itemData.hasIndividuals = indEl ? indEl.checked : false;
+              const kidsEl = document.getElementById('photography-has-kids');
+              itemData.hasKids = kidsEl ? kidsEl.checked : false;
+              const nsEl = document.getElementById('photography-not-sell-with-others');
+              itemData.notSellWithOthers = nsEl ? nsEl.checked : false;
             }
             if (prefix === 'private') {
               itemData.isTransfer = true; // Hardcoded since we renamed this to Boat Transfers
