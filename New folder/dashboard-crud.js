@@ -116,6 +116,7 @@
         
         S('photography-has-individuals').checked = it.hasIndividuals || false;
         S('photography-has-kids').checked = it.hasKids || false;
+        S('photography-not-sell-with-others').checked = it.notSellWithOthers || false;
         S('photography-kid-half').value = it.kidHalfPriceAge || 0;
         S('photography-kid-free').value = it.kidFreePriceAge || 0;
         
@@ -161,6 +162,7 @@
           maxCapacity: parseInt(S('photography-max-capacity').value) || 20,
           hasIndividuals: S('photography-has-individuals').checked,
           hasKids: S('photography-has-kids').checked,
+          notSellWithOthers: S('photography-not-sell-with-others').checked,
           kidHalfPriceAge: parseInt(S('photography-kid-half').value) || 0,
           kidFreePriceAge: parseInt(S('photography-kid-free').value) || 0,
           subImages: subImages

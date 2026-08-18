@@ -1664,7 +1664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ...getPrivate().map(e => ({ id: e.id, title: e.title, group: 'Private Charters' })),
         ...getFreeDiving().map(e => ({ id: e.id, title: e.title, group: 'Free Diving' })),
         ...getResorts().map(e => ({ id: e.id, title: e.title, group: 'Resorts' })),
-        ...getPhotography().map(e => ({ id: e.id, title: e.title, group: 'Photography' }))
+        ...getPhotography().filter(e => !e.notSellWithOthers).map(e => ({ id: e.id, title: e.title, group: 'Photography' }))
       ];
 
       bookingModal.innerHTML = `
@@ -2976,7 +2976,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <label style="display: block; color: #94a3b8; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 600;">Add Professional Photography</label>
                 <select id="booking-photography" style="width: 100%; padding: 0.75rem; background: #080d1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;">
                   <option value="" data-price="0">None</option>
-                  ${getPhotography().map(p => `<option value="${p.id}" data-price="${p.price}">${p.title}</option>`).join('')}
+                  ${getPhotography().filter(p => !p.notSellWithOthers).map(p => `<option value="${p.id}" data-price="${p.price}">${p.title}</option>`).join('')}
                 </select>
               </div>
 
