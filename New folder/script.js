@@ -1851,9 +1851,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
-        if (kidsInput) kidsInput.addEventListener('input', () => { updateKidsAgesVisibility(); updateTotalPrice(); });
-        if (adultsInput) adultsInput.addEventListener('input', updateTotalPrice);
-        if (bookingModal.querySelector('#booking-kids-ages')) bookingModal.querySelector('#booking-kids-ages').addEventListener('input', updateTotalPrice);
+
 
         const updateTotalPrice = () => {
           const priceDisplay = bookingModal.querySelector('#booking-price-display');
@@ -1938,6 +1936,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const offerInput = bookingModal.querySelector('#booking-offer-code');
         if (offerInput) offerInput.addEventListener('input', updateTotalPrice);
+
+        if (kidsInput) kidsInput.addEventListener('input', () => { updateKidsAgesVisibility(); updateTotalPrice(); });
+        if (adultsInput) adultsInput.addEventListener('input', updateTotalPrice);
+        if (bookingModal.querySelector('#booking-kids-ages')) bookingModal.querySelector('#booking-kids-ages').addEventListener('input', updateTotalPrice);
 
         const discountInput = bookingModal.querySelector('#booking-discounted-price');
         if (discountInput) discountInput.addEventListener('input', updateTotalPrice);
