@@ -1081,22 +1081,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const isResort = (ex.id && ex.id.startsWith('rs')) || ex.hasOwnProperty('hasDayVisit') || ex.hasOwnProperty('hasStayNight');
 
       let mediaLayoutHtml = '';
-      if (subImg1 && subImg2) {
+      const allSubImages = (ex.subImages && ex.subImages.length > 0) ? ex.subImages : [];
+      if (allSubImages.length === 0) {
+        if (ex.subImg1) allSubImages.push(ex.subImg1);
+        if (ex.subImg2) allSubImages.push(ex.subImg2);
+      }
+
+      if (allSubImages.length >= 2) {
         mediaLayoutHtml = `
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-            <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div class="detail-media-clickable" data-src="${subImg1}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg1}') center/cover;"></div>
-              <div class="detail-media-clickable" data-src="${subImg2}" data-video="false" style="height: 85px; border-radius: 12px; background: url('${subImg2}') center/cover;"></div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 220px; border-radius: 12px; background: url('${ex.image}') center/cover; flex-shrink: 0;"></div>
+            <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
+              ${allSubImages.map(sub => `
+                <div class="detail-media-clickable" data-src="${sub}" data-video="false" style="height: 100px; min-width: 120px; border-radius: 8px; background: url('${sub}') center/cover; flex-shrink: 0;"></div>
+              `).join('')}
             </div>
           </div>
         `;
-      } else if (subImg1 || subImg2) {
-        const singleSub = subImg1 || subImg2;
+      } else if (allSubImages.length === 1) {
         mediaLayoutHtml = `
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="detail-media-clickable" data-src="${ex.image}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${ex.image}') center/cover;"></div>
-            <div class="detail-media-clickable" data-src="${singleSub}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${singleSub}') center/cover;"></div>
+            <div class="detail-media-clickable" data-src="${allSubImages[0]}" data-video="false" style="height: 180px; border-radius: 12px; background: url('${allSubImages[0]}') center/cover;"></div>
           </div>
         `;
       } else {
