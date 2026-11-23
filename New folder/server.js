@@ -869,6 +869,7 @@ app.post('/api/booking/create-bml-payment', async (req, res) => {
       const amountInMinorUnits = Math.round(totalAmount * 100);
 
       const payload = {
+        appId: bmlAppId,
         amount: amountInMinorUnits,
         currency: booking.currency || 'USD',
         provider: 'card',
