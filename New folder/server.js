@@ -850,43 +850,116 @@ app.post('/api/booking/create-bml-payment', async (req, res) => {
     if (isApiMode && bmlApiKey) {
       console.log(`[BML] Initiating API payment session for Booking ID: ${booking.id}`);
       const totalAmount = parseFloat(booking.totalPrice) || 0;
-      const endpoint = `${bmlEndpoint.replace(/\/$/, '')}/v1/checkout/sessions`;
+      const cleanApiKey = bmlApiKey.replace(/^Bearer\s+/i, '').trim();
       
+      // BML Connect API endpoints:
+      // Base: https://api.uat.merchants.bankofmaldives.com.mv/public
+      // Transaction endpoint is /public/v2/transactions or /public/transactions
+      let baseUrl = bmlEndpoint.replace(/\/$/, '');
+      let endpoint = baseUrl;
+      if (!baseUrl.endsWith('/transactions') && !baseUrl.endsWith('/sessions')) {
+        if (baseUrl.endsWith('/public')) {
+          endpoint = `${baseUrl}/v2/transactions`;
+        } else {
+          endpoint = `${baseUrl}/public/v2/transactions`;
+        }
+      }
+
+      // BML Connect requires amount in minor units (laari / cents: e.g. $10 = 1000)
+      const amountInMinorUnits = Math.round(totalAmount * 100);
+
+      const payload = {
+        amount: amountInMinorUnits,
+        currency: booking.currency || 'USD',
+        provider: 'card',
+        redirectUrl: callbackUrl,
+        localId: String(booking.id),
+        order: {
+          reference: String(booking.id),
+          description: `Travelscape Booking: ${booking.excursionTitle || 'Package'}`,
+          customer: {
+            name: booking.customerName || 'Guest',
+            email: booking.customerEmail || '',
+            phone: booking.customerContact || ''
+          }
+        }
+      };
+
       try {
-        const response = await fetch(endpoint, {
+        console.log(`[BML Request] POST ${endpoint}`);
+        let response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${bmlApiKey}`,
+            'Accept': 'application/json',
+            'Authorization': cleanApiKey,
             'X-Merchant-Id': bmlMerchantId,
-            'X-App-Id': bmlAppId
+            'X-App-Id': bmlAppId,
+            'X-Api-Key': cleanApiKey
           },
-          body: JSON.stringify({
-            amount: totalAmount,
-            currency: booking.currency || 'USD',
-            reference: booking.id,
-            description: `Travelscape Booking: ${booking.excursionTitle || 'Package'}`,
-            redirectUrl: callbackUrl,
-            customer: {
-              name: booking.customerName || 'Guest',
-              email: booking.customerEmail || '',
-              phone: booking.customerContact || ''
-            }
-          })
+          body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
-        if (response.ok && data.checkoutUrl) {
-          return res.json({ success: true, redirectUrl: data.checkoutUrl });
+        // If /v2/transactions is 404, fallback to /transactions
+        if (response.status === 404 && endpoint.includes('/v2/transactions')) {
+          const fallbackEndpoint = endpoint.replace('/v2/transactions', '/transactions');
+          console.log(`[BML Fallback Request] POST ${fallbackEndpoint}`);
+          response = await fetch(fallbackEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': cleanApiKey,
+              'X-Merchant-Id': bmlMerchantId,
+              'X-App-Id': bmlAppId,
+              'X-Api-Key': cleanApiKey
+            },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        const data = await response.json().catch(() => ({}));
+        console.log(`[BML Response Status: ${response.status}]`, JSON.stringify(data));
+
+        // BML Connect returns `url` or `short_url`
+        const redirectUrl = data.url || data.short_url || data.checkoutUrl || data.checkout_url || data.redirectUrl || data.paymentUrl;
+
+        if (response.ok && redirectUrl) {
+          return res.json({ success: true, redirectUrl: redirectUrl });
         } else {
           console.warn('[BML API Error Response]', data);
-          const simulatedUrl = `${callbackUrl}&status=success&paymentId=BML-SIM-${Date.now()}`;
-          return res.json({ success: true, redirectUrl: simulatedUrl });
+          const errorMsg = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : `HTTP ${response.status}`);
+          
+          // Mark booking as Failed in database/cache
+          try {
+            const bookings = await getCacheValue('bookings', []) || [];
+            const idx = bookings.findIndex(b => b.id === String(booking.id));
+            if (idx >= 0) {
+              bookings[idx].status = 'Failed';
+              bookings[idx].paymentBasis = 'BML Initiation Failed';
+              await setCacheValue('bookings', bookings);
+              io.emit('new_booking', { message: `Payment initiation failed for booking #${booking.id}` });
+            }
+          } catch(cacheErr) {}
+
+          return res.status(400).json({ success: false, error: `BML Gateway Error: ${errorMsg}` });
         }
       } catch (apiError) {
         console.error('[BML API Request failed]', apiError.message);
-        const simulatedUrl = `${callbackUrl}&status=success&paymentId=BML-SIM-${Date.now()}`;
-        return res.json({ success: true, redirectUrl: simulatedUrl });
+        
+        // Mark booking as Failed in database/cache
+        try {
+          const bookings = await getCacheValue('bookings', []) || [];
+          const idx = bookings.findIndex(b => b.id === String(booking.id));
+          if (idx >= 0) {
+            bookings[idx].status = 'Failed';
+            bookings[idx].paymentBasis = 'BML Connection Failed';
+            await setCacheValue('bookings', bookings);
+            io.emit('new_booking', { message: `Payment failed to connect for booking #${booking.id}` });
+          }
+        } catch(cacheErr) {}
+
+        return res.status(500).json({ success: false, error: `Gateway Connection Failed: ${apiError.message}` });
       }
     } else {
       const payLink = paymentLink;
@@ -906,50 +979,94 @@ app.post('/api/booking/create-bml-payment', async (req, res) => {
 // GET BML Callback Redirect
 app.get('/api/booking/bml-callback', async (req, res) => {
   try {
-    const { bookingId, status, paymentId } = req.query;
-    console.log(`[BML Callback] Received status: ${status} for Booking ID: ${bookingId}`);
+    const { bookingId, status, paymentId, state, transactionId, result } = req.query;
+    console.log(`[BML Callback] Received status: "${status}", state: "${state}", paymentId: "${paymentId || transactionId}" for Booking ID: ${bookingId}`);
+
+    const rawStatus = String(status || state || result || '').toLowerCase();
+    const isSuccess = ['success', 'completed', 'confirmed', 'paid'].includes(rawStatus) || (!rawStatus && paymentId);
 
     if (bookingId) {
       const bookings = await getCacheValue('bookings', []) || [];
       const idx = bookings.findIndex(b => b.id === bookingId);
       
       if (idx >= 0) {
-        bookings[idx].paymentBasis = paymentId ? `BML Card (${paymentId})` : 'BML Completed';
-        bookings[idx].status = 'Confirmed';
-        await setCacheValue('bookings', bookings);
+        if (isSuccess) {
+          bookings[idx].paymentBasis = paymentId || transactionId ? `BML Card (${paymentId || transactionId})` : 'BML Completed';
+          bookings[idx].status = 'Confirmed';
+          await setCacheValue('bookings', bookings);
 
-        io.emit('new_booking', { message: 'Booking confirmed via BML Payment' });
-        sendPushNotifications('Booking Paid!', `Guest ${bookings[idx].customerName} paid successfully via BML.`);
+          io.emit('new_booking', { message: `Booking #${bookingId} confirmed via BML Payment` });
+          sendPushNotifications('Booking Paid!', `Guest ${bookings[idx].customerName} paid successfully via BML.`);
+        } else {
+          bookings[idx].paymentBasis = `BML Failed (${rawStatus || 'Cancelled'})`;
+          bookings[idx].status = 'Failed';
+          await setCacheValue('bookings', bookings);
+
+          io.emit('new_booking', { message: `Payment failed for Booking #${bookingId}` });
+          sendPushNotifications('Payment Failed', `Guest ${bookings[idx].customerName}'s payment was not completed (${rawStatus || 'Failed'}).`);
+        }
       }
     }
 
-    res.send(`
-      <html>
-        <head>
-          <title>Payment Successful</title>
-          <style>
-            body { background: #0A0A10; color: #fff; font-family: 'Inter', sans-serif; text-align: center; padding: 4rem 2rem; }
-            .card { background: #121824; border: 1px solid rgba(255,255,255,0.07); padding: 3rem; border-radius: 12px; max-width: 480px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-            h2 { color: #10b981; margin-bottom: 1rem; }
-            p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
-            .btn { background: #38bdf8; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
-            .btn:hover { background: #0284c7; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <h2>🌊 Payment Confirmed!</h2>
-            <p>Your payment to Travelscape Maldives was received successfully. We are preparing your booking details now.</p>
-            <a href="/?booking-success=true&bookingId=${bookingId || ''}" class="btn">Return to Site</a>
-          </div>
-          <script>
-            setTimeout(() => {
-              window.location.href = "/?booking-success=true&bookingId=${bookingId || ''}";
-            }, 3000);
-          </script>
-        </body>
-      </html>
-    `);
+    if (isSuccess) {
+      res.send(`
+        <html>
+          <head>
+            <title>Payment Successful</title>
+            <style>
+              body { background: #0A0A10; color: #fff; font-family: 'Inter', sans-serif; text-align: center; padding: 4rem 2rem; }
+              .card { background: #121824; border: 1px solid rgba(255,255,255,0.07); padding: 3rem; border-radius: 12px; max-width: 480px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+              h2 { color: #10b981; margin-bottom: 1rem; }
+              p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
+              .btn { background: #38bdf8; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
+              .btn:hover { background: #0284c7; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h2>🌊 Payment Confirmed!</h2>
+              <p>Your payment to Travelscape Maldives was received successfully. We are preparing your booking details now.</p>
+              <a href="/?booking-success=true&bookingId=${bookingId || ''}" class="btn">Return to Site</a>
+            </div>
+            <script>
+              setTimeout(() => {
+                window.location.href = "/?booking-success=true&bookingId=${bookingId || ''}";
+              }, 3000);
+            </script>
+          </body>
+        </html>
+      `);
+    } else {
+      res.send(`
+        <html>
+          <head>
+            <title>Payment Failed</title>
+            <style>
+              body { background: #0A0A10; color: #fff; font-family: 'Inter', sans-serif; text-align: center; padding: 4rem 2rem; }
+              .card { background: #121824; border: 1px solid rgba(239,68,68,0.2); padding: 3rem; border-radius: 12px; max-width: 480px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+              h2 { color: #ef4444; margin-bottom: 1rem; }
+              p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
+              .status-tag { display: inline-block; background: rgba(239,68,68,0.15); color: #ef4444; padding: 0.35rem 0.8rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem; margin-bottom: 1.5rem; text-transform: uppercase; }
+              .btn { background: #ef4444; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
+              .btn:hover { background: #dc2626; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h2>❌ Payment Incomplete</h2>
+              <div class="status-tag">Status: ${rawStatus ? rawStatus.toUpperCase() : 'FAILED'}</div>
+              <p>Your payment through Bank of Maldives was not completed or was cancelled. Your booking (#${bookingId || 'N/A'}) has been saved and marked as <strong>Failed</strong> in the system.</p>
+              <a href="/?booking-failed=true&bookingId=${bookingId || ''}" class="btn">Return to Site</a>
+            </div>
+            <script>
+              setTimeout(() => {
+                window.location.href = "/?booking-failed=true&bookingId=${bookingId || ''}";
+              }, 4000);
+            </script>
+          </body>
+        </html>
+      `);
+    }
   } catch (error) {
     console.error('[BML Callback Error]', error.message);
     res.status(500).send('An error occurred during booking confirmation. Please contact support.');

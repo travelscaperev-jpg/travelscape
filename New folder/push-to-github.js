@@ -28,6 +28,8 @@ const FILES = [
   'admin.html',
   'staff.html',
   'script.js',
+  'server.js',
+  'styles.css',
 ];
 
 function ghRequest(method, apiPath, body) {

@@ -301,12 +301,30 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = data.redirectUrl;
       } else {
         loader.remove();
-        alert('Could not initiate BML payment. Please try again or contact support.');
+        try {
+          const list = getBookings();
+          const found = list.find(b => b.id === booking.id);
+          if (found) {
+            found.status = 'Failed';
+            found.paymentBasis = 'Payment Failed';
+            await setBookings(list);
+          }
+        } catch(e) {}
+        alert(data.error || 'Could not initiate BML payment. Booking has been marked as Failed.');
       }
     } catch (err) {
       console.error('[BML Checkout Error]', err);
       loader.remove();
-      alert('Error connecting to payment gateway.');
+      try {
+        const list = getBookings();
+        const found = list.find(b => b.id === booking.id);
+        if (found) {
+          found.status = 'Failed';
+          found.paymentBasis = 'Payment Failed';
+          await setBookings(list);
+        }
+      } catch(e) {}
+      alert('Error connecting to payment gateway. Booking marked as Failed.');
     }
   };
 
@@ -1028,13 +1046,13 @@ document.addEventListener('DOMContentLoaded', () => {
             th { background-color: #f8fafc; color: #475569; font-weight: bold; }
             tr:nth-child(even) { background-color: #f8fafc; }
             .badge { background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-            .badge-confirmed { background: #d1fae5; color: #065f46; } .badge-pending { background: #fef3c7; color: #92400e; }
+            .badge-confirmed { background: #d1fae5; color: #065f46; } .badge-pending { background: #fef3c7; color: #92400e; } .badge-failed { background: #fee2e2; color: #991b1b; }
             .footer { margin-top: 3rem; text-align: center; font-size: 0.85rem; color: #94a3b8; }
           </style></head><body>
           <h2>Travelscape Maldives - Booking Manifest</h2>
           <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()} | <strong>Filter Mode:</strong> Active</p>
           <table><thead><tr><th>Booking ID</th><th>Guest Name</th><th>Excursion</th><th>Date</th><th>Trip Type</th><th>Payment Basis</th><th>Device</th><th>Status</th></tr></thead>
-          <tbody>${bookings.map(b => `<tr><td>#${b.id}</td><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'}">${b.status}</span></td></tr>`).join('')}</tbody></table>
+          <tbody>${bookings.map(b => `<tr><td>#${b.id}</td><td>${b.customerName}</td><td>${b.isPrivate ? `${b.excursionTitle} (Private - ${b.numPersons} Pax)` : b.excursionTitle}</td><td>${b.bookingDate}</td><td>${b.isPrivate ? `Private (${b.numPersons} Pax)` : 'Standard'}</td><td>${b.paymentBasis || 'Cash'}</td><td>${b.deviceType || 'PC'}</td><td><span class="badge ${b.status === 'Confirmed' ? 'badge-confirmed' : (b.status === 'Failed' ? 'badge-failed' : 'badge-pending')}">${b.status}</span></td></tr>`).join('')}</tbody></table>
           <div class="footer">End of Report</div>
           <script>window.onload = function() { window.print(); window.close(); }<\/script>
         </body></html>
@@ -3688,7 +3706,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>
                 ${b.status === 'Confirmed' 
                   ? `<span class="status-badge status-confirmed"><i class="fa-solid fa-circle-check"></i> Confirmed</span>` 
-                  : `<span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> Pending</span>`
+                  : (b.status === 'Failed'
+                      ? `<span class="status-badge status-failed"><i class="fa-solid fa-circle-xmark"></i> Failed</span>`
+                      : `<span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> Pending</span>`)
                 }
               </td>
               <td>
@@ -3697,7 +3717,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </td>
               <td style="text-align: right;">
                 <div style="display: flex; gap: 6px; justify-content: flex-end;">
-                  ${b.status === 'Pending' && (role === 'admin' || role === 'staff') ? `<button class="action-button-modern approve approve-btn" data-id="${b.id}"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
+                  ${(b.status === 'Pending' || b.status === 'Failed') && (role === 'admin' || role === 'staff') ? `<button class="action-button-modern approve approve-btn" data-id="${b.id}"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
                   <button class="action-button-modern print print-booking-btn" data-id="${b.id}"><i class="fa-solid fa-print"></i> Print</button>
                   ${role === 'admin' ? `<button class="action-button-modern cancel delete-booking-btn" data-id="${b.id}"><i class="fa-solid fa-trash-can"></i> Cancel</button>` : ''}
                 </div>
@@ -5681,7 +5701,7 @@ document.addEventListener('DOMContentLoaded', () => {
                <h4 style="color:#fde047; margin-top:0; margin-bottom:1rem; font-size:1.2rem; border-bottom: 1px solid rgba(253, 224, 71, 0.2); padding-bottom: 0.5rem;">Payment</h4>
                <p style="margin-bottom: 0.5rem;"><strong>Total Price:</strong> <span style="color:#10b981; font-weight:700; font-size:1.2rem;">$${parseFloat(b.totalPrice||0).toFixed(2)}</span></p>
                <p style="margin-bottom: 0.5rem;"><strong>Basis:</strong> ${b.paymentBasis||'Cash'}</p>
-               <p style="margin-bottom: 0.5rem;"><strong>Status:</strong> <span style="${b.status === 'Confirmed' ? 'color:#10b981;' : 'color:#fde047;'} font-weight:700;">${b.status||'Pending'}</span></p>
+               <p style="margin-bottom: 0.5rem;"><strong>Status:</strong> <span style="${b.status === 'Confirmed' ? 'color:#10b981;' : (b.status === 'Failed' ? 'color:#ef4444;' : 'color:#fde047;')} font-weight:700;">${b.status||'Pending'}</span></p>
                <p style="margin-bottom: 0;"><strong>Promo Code:</strong> ${b.offerCode ? `<span style="color:#10b981;">${b.offerCode}</span>` : 'None'}</p>
              </div>
           </div>

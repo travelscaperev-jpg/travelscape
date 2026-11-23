@@ -4307,6 +4307,12 @@ nav {
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+.status-badge.status-failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
 .contact-pill-link {
   display: inline-flex;
   align-items: center;
