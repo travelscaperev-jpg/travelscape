@@ -227,16 +227,17 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/config', async (req, res) => {
   try {
     const config = await getCacheValue('payment_config', {});
-    const mode = process.env.BML_MODE || config.mode || 'link';
+    const rawMode = process.env.BML_MODE || config.mode || 'link';
+    const isApiMode = ['api', 'uat', 'uta', 'sandbox', 'test', 'live', 'prod'].includes(String(rawMode).toLowerCase().trim());
     const paymentLink = process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '';
-    const bmlEnabled = mode === 'api' 
+    const bmlEnabled = isApiMode 
       ? !!(process.env.BML_API_KEY || config.bmlApiKey)
       : !!paymentLink;
 
     res.json({
       paymentLink: paymentLink,
       bmlEnabled: bmlEnabled,
-      mode: mode
+      mode: isApiMode ? 'api' : 'link'
     });
   } catch (e) {
     res.json({
@@ -827,18 +828,26 @@ app.post('/api/booking/create-bml-payment', async (req, res) => {
     }
 
     const config = await getCacheValue('payment_config', {});
-    const mode = process.env.BML_MODE || config.mode || 'link';
-    const bmlEndpoint = process.env.BML_ENDPOINT || config.bmlEndpoint || 'https://api.uat.merchants.bankofmaldives.com.mv/public';
-    const bmlMerchantId = process.env.BML_MERCHANT_ID || config.bmlMerchantId || '';
-    const bmlAppId = process.env.BML_APP_ID || config.bmlAppId || '';
-    const bmlApiKey = process.env.BML_API_KEY || config.bmlApiKey || '';
-    const paymentLink = process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '';
+    const rawMode = process.env.BML_MODE || config.mode || 'link';
+    const isApiMode = ['api', 'uat', 'uta', 'sandbox', 'test', 'live', 'prod'].includes(String(rawMode).toLowerCase().trim());
+    
+    let bmlEndpoint = (process.env.BML_ENDPOINT || config.bmlEndpoint || 'https://api.uat.merchants.bankofmaldives.com.mv/public').trim();
+    // Fix typos like https//: or missing merchants subdomain
+    bmlEndpoint = bmlEndpoint.replace(/^https?\/\/:\/?/, 'https://').replace(/^https?:\/\/\/?/, 'https://');
+    if (bmlEndpoint.includes('bankofmaldives.com.mv') && !bmlEndpoint.includes('merchants.bankofmaldives.com.mv')) {
+      bmlEndpoint = 'https://api.uat.merchants.bankofmaldives.com.mv/public';
+    }
+
+    const bmlMerchantId = (process.env.BML_MERCHANT_ID || config.bmlMerchantId || '').trim();
+    const bmlAppId = (process.env.BML_APP_ID || config.bmlAppId || '').trim();
+    const bmlApiKey = (process.env.BML_API_KEY || config.bmlApiKey || '').trim();
+    const paymentLink = (process.env.BML_PAYMENT_LINK || config.paymentLink || process.env.PAYMENT_LINK || '').trim();
 
     const protocol = req.secure ? 'https' : 'http';
     const host = req.get('host');
     const callbackUrl = `${protocol}://${host}/api/booking/bml-callback?bookingId=${booking.id}`;
 
-    if (mode === 'api' && bmlApiKey) {
+    if (isApiMode && bmlApiKey) {
       console.log(`[BML] Initiating API payment session for Booking ID: ${booking.id}`);
       const totalAmount = parseFloat(booking.totalPrice) || 0;
       const endpoint = `${bmlEndpoint.replace(/\/$/, '')}/v1/checkout/sessions`;
